@@ -61,7 +61,7 @@ type ComputeProofRequest struct {
 	Rand        abi.PoStRandomness
 }
 
-type WalletConnectedRequest struct {
+type ConnectedCompleted struct {
 	ChannelId uuid.UUID
 }
 

@@ -63,7 +63,7 @@ func NewWalletClient() jsonrpc.ClientCloser {
 	for event := range eventCh {
 		switch event.Method {
 		case "InitConnect":
-			req := types.WalletConnectedRequest{}
+			req := types.ConnectedCompleted{}
 			err := json.Unmarshal(event.Payload, &req)
 			if err != nil {
 				pvc.ResponseWalletEvent(ctx, &types.ResponseEvent{

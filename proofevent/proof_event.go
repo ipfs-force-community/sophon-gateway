@@ -99,7 +99,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, mAddr address.A
 	channelStore.addChanel(channel)
 	log.Infof("add new connections %s for miner %s", channel.ChannelId, mAddr)
 	go func() {
-		connectBytes, err := json.Marshal(types.WalletConnectedRequest{
+		connectBytes, err := json.Marshal(types.ConnectedCompleted{
 			ChannelId: channel.ChannelId,
 		})
 		if err != nil {

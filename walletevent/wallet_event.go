@@ -62,7 +62,7 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, supportAccoun
 		log.Infof("add new connections %s", walletChannelInfo.ChannelId)
 		//todo rescan address to add new address or remove
 
-		connectBytes, err := json.Marshal(types.WalletConnectedRequest{
+		connectBytes, err := json.Marshal(types.ConnectedCompleted{
 			ChannelId: walletChannelInfo.ChannelId,
 		})
 		if err != nil {
