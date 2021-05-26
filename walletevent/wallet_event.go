@@ -28,17 +28,21 @@ type WalletEventStream struct {
 	cfg           *types.Config
 }
 
-func NewWalletEventStream(cfg *types.Config) *WalletEventStream {
-	return &WalletEventStream{
+func NewWalletEventStream(ctx context.Context, cfg *types.Config) *WalletEventStream {
+	walletEventStream := &WalletEventStream{
 		reqLk:         sync.RWMutex{},
 		idRequest:     make(map[uuid.UUID]*types.RequestEvent),
 		walletConnMgr: newWalletConnMgr(),
 		cfg:           cfg,
 	}
+
+	go walletEventStream.cleanRequests(ctx)
+	return walletEventStream
 }
 
 func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, supportAccounts []string) (chan *types.RequestEvent, error) {
 	walletAccount := ctx.Value(types.AccountKey).(string)
+	ip := ctx.Value(types.IPKey).(string)
 	out := make(chan *types.RequestEvent, e.cfg.RequestQueueSize)
 
 	go func() {
@@ -50,7 +54,7 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, supportAccoun
 			return
 		}
 		fmt.Println("scan address", addrs)
-		walletChannelInfo := newWalletChannelInfo(types.NewChannelInfo(out), addrs)
+		walletChannelInfo := newWalletChannelInfo(types.NewChannelInfo(ip, out), addrs)
 
 		err = e.walletConnMgr.AddNewConn(walletAccount, supportAccounts, addrs, walletChannelInfo)
 		if err != nil {
@@ -92,6 +96,27 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, supportAccoun
 		}
 	}()
 	return out, nil
+}
+
+func (e *WalletEventStream) cleanRequests(ctx context.Context) {
+	tm := time.NewTicker(time.Minute * 5)
+	go func() {
+		for {
+			select {
+			case <-tm.C:
+				e.reqLk.Lock()
+				for id, request := range e.idRequest {
+					if time.Now().Sub(request.CreateTime) > e.cfg.RequestTimeout {
+						delete(e.idRequest, id)
+					}
+				}
+				e.reqLk.Unlock()
+			case <-ctx.Done():
+				log.Warnf("return clean request")
+				return
+			}
+		}
+	}()
 }
 
 func (e *WalletEventStream) SupportNewAccount(ctx context.Context, channelId, account string) error {
@@ -137,11 +162,6 @@ func (e *WalletEventStream) sendRequest(ctx context.Context, req *walletPayloadR
 	case conn.OutBound <- request:
 	case <-ctx.Done():
 		return xerrors.Errorf("send request cancel by context")
-	case <-time.After(e.cfg.RequestTimeout):
-		e.reqLk.Lock()
-		delete(e.idRequest, id)
-		e.reqLk.Unlock()
-		return xerrors.Errorf("request %s too long not response", id)
 	}
 
 	return nil

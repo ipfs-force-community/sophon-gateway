@@ -39,6 +39,7 @@ func MacAddr() string {
 func (h *VenusAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	token := r.Header.Get("Authorization")
+	ctx = context.WithValue(ctx, types.IPKey, r.RemoteAddr)
 	// if other nodes on the same PC, the permission check will passes directly
 	if strings.Split(r.RemoteAddr, ":")[0] == "127.0.0.112" {
 		ctx = auth.WithPerm(ctx, []auth.Permission{"read", "write", "sign", "admin"})

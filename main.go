@@ -60,8 +60,8 @@ var runCmd = &cli.Command{
 			RequestQueueSize: 30,
 			RequestTimeout:   time.Minute * 5,
 		}
-		proofStream := proofevent.NewProofEventStream(cfg)
-		walletStream := walletevent.NewWalletEventStream(cfg)
+		proofStream := proofevent.NewProofEventStream(ctx, cfg)
+		walletStream := walletevent.NewWalletEventStream(ctx, cfg)
 		gatewayAPI := NewGatewayAPI(proofStream, walletStream)
 		log.Info("Setting up control endpoint at " + address)
 		rpcServer := jsonrpc.NewServer(func(c *jsonrpc.ServerConfig) {

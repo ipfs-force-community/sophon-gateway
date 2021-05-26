@@ -23,5 +23,6 @@ type WalletDetail struct {
 type ConnectState struct {
 	Addrs        []address.Address
 	ChannelId    uuid.UUID
+	Ip           string
 	RequestCount int
 }

@@ -29,14 +29,16 @@ type ProofEventStream struct {
 	cfg *types.Config
 }
 
-func NewProofEventStream(cfg *types.Config) *ProofEventStream {
-	return &ProofEventStream{
+func NewProofEventStream(ctx context.Context, cfg *types.Config) *ProofEventStream {
+	proofEventStream := &ProofEventStream{
 		connLk:           sync.RWMutex{},
 		minerConnections: make(map[address.Address]*channelStore),
 		reqLk:            sync.RWMutex{},
 		idRequest:        make(map[uuid.UUID]*types.RequestEvent),
 		cfg:              cfg,
 	}
+	go proofEventStream.cleanRequests(ctx)
+	return proofEventStream
 }
 
 func (e *ProofEventStream) sendRequest(ctx context.Context, req *minerPayloadRequest) error {
@@ -72,20 +74,38 @@ func (e *ProofEventStream) sendRequest(ctx context.Context, req *minerPayloadReq
 		log.Infof("proof send request %s to miner %s", id, req.Miner)
 	case <-ctx.Done():
 		return xerrors.Errorf("send request cancel by context")
-	case <-time.After(e.cfg.RequestTimeout):
-		e.reqLk.Lock()
-		delete(e.idRequest, id)
-		e.reqLk.Unlock()
-		return xerrors.Errorf("request %s too long not response", id)
 	}
 
 	return nil
 }
 
+func (e *ProofEventStream) cleanRequests(ctx context.Context) {
+	tm := time.NewTicker(time.Minute * 5)
+	go func() {
+		for {
+			select {
+			case <-tm.C:
+				e.reqLk.Lock()
+				for id, request := range e.idRequest {
+					if time.Now().Sub(request.CreateTime) > e.cfg.RequestTimeout {
+						delete(e.idRequest, id)
+					}
+				}
+				e.reqLk.Unlock()
+			case <-ctx.Done():
+				log.Warnf("return clean request")
+				return
+			}
+		}
+
+	}()
+}
+
 func (e *ProofEventStream) ListenProofEvent(ctx context.Context, mAddr address.Address) (chan *types.RequestEvent, error) {
+	ip := ctx.Value(types.IPKey).(string)
 	out := make(chan *types.RequestEvent, e.cfg.RequestQueueSize)
 	//todo validate mAddr is really belong of this miner
-	channel := types.NewChannelInfo(out)
+	channel := types.NewChannelInfo(ip, out)
 
 	e.connLk.Lock()
 	var channelStore *channelStore
@@ -172,16 +192,21 @@ func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Addre
 		return nil, err
 	}
 
-	respEvent := <-resultCh
-	if len(respEvent.Error) > 0 {
-		return nil, errors.New(respEvent.Error)
+	select {
+	case <-ctx.Done():
+		return nil, xerrors.Errorf("cancel by context")
+	case respEvent := <-resultCh:
+		if len(respEvent.Error) > 0 {
+			return nil, errors.New(respEvent.Error)
+		}
+		var result []proof.PoStProof
+		err = json.Unmarshal(respEvent.Payload, &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
 	}
-	var result []proof.PoStProof
-	err = json.Unmarshal(respEvent.Payload, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+
 }
 
 func (e *ProofEventStream) ListConnectedMiners(ctx context.Context) ([]address.Address, error) {

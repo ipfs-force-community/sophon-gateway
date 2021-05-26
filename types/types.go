@@ -14,6 +14,10 @@ type Account int
 
 var AccountKey Account
 
+type IP int
+
+var IPKey IP
+
 const (
 	WalletService = "wallet_service"
 	ProofService  = "proof_service"
@@ -46,13 +50,15 @@ type ResponseEvent struct {
 
 type ChannelInfo struct {
 	ChannelId uuid.UUID
+	Ip        string
 	OutBound  chan *RequestEvent
 }
 
-func NewChannelInfo(sendEvents chan *RequestEvent) *ChannelInfo {
+func NewChannelInfo(ip string, sendEvents chan *RequestEvent) *ChannelInfo {
 	return &ChannelInfo{
 		ChannelId: uuid.New(),
 		OutBound:  sendEvents,
+		Ip:        ip,
 	}
 }
 

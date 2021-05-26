@@ -185,6 +185,7 @@ func (w *walletConnMgr) ListWalletInfo(ctx context.Context) ([]*WalletDetail, er
 				Addrs:        addrs,
 				ChannelId:    channelId,
 				RequestCount: len(wallet.OutBound),
+				Ip:           wallet.Ip,
 			}
 			walletDetail.ConnectStates = append(walletDetail.ConnectStates, cstate)
 		}
@@ -212,6 +213,7 @@ func (w *walletConnMgr) ListWalletInfoByWallet(ctx context.Context, wallet strin
 			cstate := ConnectState{
 				Addrs:        addrs,
 				ChannelId:    channelId,
+				Ip:           wallet.Ip,
 				RequestCount: len(wallet.OutBound),
 			}
 			walletDetail.ConnectStates = append(walletDetail.ConnectStates, cstate)

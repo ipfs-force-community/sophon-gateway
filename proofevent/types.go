@@ -61,6 +61,7 @@ func (cs *channelStore) getChannelState() *MinerState {
 		cstate.Connections = append(cstate.Connections, &ConnectState{
 			Channel:      chid,
 			RequestCount: len(chanStore.OutBound),
+			Ip:           chanStore.Ip,
 		})
 	}
 	return cstate
@@ -74,6 +75,7 @@ func (cs *channelStore) empty() bool {
 
 type ConnectState struct {
 	Channel      uuid.UUID
+	Ip           string
 	RequestCount int
 }
 
