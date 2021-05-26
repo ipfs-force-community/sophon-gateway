@@ -10,7 +10,10 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
+	"github.com/multiformats/go-multiaddr"
+	manet "github.com/multiformats/go-multiaddr/net"
 	"github.com/urfave/cli/v2"
+	"net/url"
 )
 
 type GatewayAPI struct {
@@ -25,9 +28,32 @@ type GatewayAPI struct {
 
 func NewGatewayClient(ctx *cli.Context) (*GatewayAPI, jsonrpc.ClientCloser, error) {
 	var gatewayAPI = &GatewayAPI{}
-	closer, err := jsonrpc.NewMergeClient(ctx.Context, "ws://127.0.0.1:45132/rpc/v0", "Filecoin", []interface{}{gatewayAPI}, nil)
+	listen := ctx.String("listen")
+	addr, err := DialArgs(listen)
+	if err != nil {
+		return nil, nil, err
+	}
+	closer, err := jsonrpc.NewMergeClient(ctx.Context, addr, "Filecoin", []interface{}{gatewayAPI}, nil)
 	if err != nil {
 		return nil, nil, err
 	}
 	return gatewayAPI, closer, nil
+}
+
+func DialArgs(addr string) (string, error) {
+	ma, err := multiaddr.NewMultiaddr(addr)
+	if err == nil {
+		_, addr, err := manet.DialArgs(ma)
+		if err != nil {
+			return "", err
+		}
+
+		return "ws://" + addr + "/rpc/v0", nil
+	}
+
+	_, err = url.Parse(addr)
+	if err != nil {
+		return "", err
+	}
+	return addr + "/rpc/v0", nil
 }

@@ -72,10 +72,11 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, supportAccoun
 		}
 
 		out <- &types.RequestEvent{
-			Id:      uuid.New(),
-			Method:  "InitConnect",
-			Payload: connectBytes,
-			Result:  nil,
+			Id:         uuid.New(),
+			Method:     "InitConnect",
+			CreateTime: time.Now(),
+			Payload:    connectBytes,
+			Result:     nil,
 		} //not response
 
 		for {
@@ -122,10 +123,11 @@ func (e *WalletEventStream) sendRequest(ctx context.Context, req *walletPayloadR
 
 	id := uuid.New()
 	request := &types.RequestEvent{
-		Id:      id,
-		Method:  req.Method,
-		Payload: req.Payload,
-		Result:  req.Result,
+		Id:         id,
+		Method:     req.Method,
+		Payload:    req.Payload,
+		CreateTime: time.Now(),
+		Result:     req.Result,
 	}
 	e.reqLk.Lock()
 	e.idRequest[id] = request
@@ -197,10 +199,11 @@ func (e *WalletEventStream) getValidatedAddress(ctx context.Context, out chan *t
 	id := uuid.New()
 	resultCh := make(chan *types.ResponseEvent)
 	req := &types.RequestEvent{
-		Id:      id,
-		Method:  "WalletList",
-		Payload: nil,
-		Result:  resultCh,
+		Id:         id,
+		Method:     "WalletList",
+		Payload:    nil,
+		CreateTime: time.Now(),
+		Result:     resultCh,
 	}
 
 	e.reqLk.Lock()
@@ -226,10 +229,11 @@ func (e *WalletEventStream) validateAddress(ctx context.Context, addr address.Ad
 	id := uuid.New()
 	resultCh := make(chan *types.ResponseEvent)
 	req := &types.RequestEvent{
-		Id:      id,
-		Method:  "WalletValidate",
-		Payload: nil,
-		Result:  resultCh,
+		Id:         id,
+		Method:     "WalletValidate",
+		Payload:    nil,
+		CreateTime: time.Now(),
+		Result:     resultCh,
 	}
 
 	e.reqLk.Lock()

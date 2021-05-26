@@ -15,7 +15,7 @@ import (
 type WalletEventClient struct {
 	ResponseWalletEvent func(ctx context.Context, resp *types.ResponseEvent) error
 	ListenWalletEvent   func(ctx context.Context, supportAccounts []string) (chan *types.RequestEvent, error)
-	SupportNewAccount   func(ctx context.Context, channelId string, account string) error
+	SupportNewAccount   func(ctx context.Context, channelId uuid.UUID, account string) error
 }
 
 func main() {
@@ -57,7 +57,7 @@ func NewWalletClient() jsonrpc.ClientCloser {
 	cc := make(chan struct{})
 	go func() {
 		<-cc
-		pvc.SupportNewAccount(ctx, channel.String(), "stest")
+		pvc.SupportNewAccount(ctx, channel, "stest")
 	}()
 
 	for event := range eventCh {
@@ -77,10 +77,10 @@ func NewWalletClient() jsonrpc.ClientCloser {
 		case "WalletList":
 			fmt.Println("receive wallet list req")
 			addr1, _ := address.NewIDAddress(1)
-			xxxx, _ := json.Marshal([]address.Address{addr1})
+			addrBytes, _ := json.Marshal([]address.Address{addr1})
 			pvc.ResponseWalletEvent(ctx, &types.ResponseEvent{
 				Id:      event.Id,
-				Payload: xxxx,
+				Payload: addrBytes,
 				//		Error:   err.Error(),
 			})
 		case "WalletSign":

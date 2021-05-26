@@ -8,7 +8,6 @@ import (
 	auth2 "github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/core"
 	"github.com/ipfs-force-community/venus-gateway/types"
-	"github.com/prometheus/common/log"
 	"gopkg.in/resty.v1"
 	"net"
 	"net/http"

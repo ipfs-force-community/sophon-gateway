@@ -56,20 +56,20 @@ func (e *ProofEventStream) sendRequest(ctx context.Context, req *minerPayloadReq
 
 	id := uuid.New()
 	request := &types.RequestEvent{
-		Id:      id,
-		Method:  req.Method,
-		Payload: req.Payload,
-		Result:  req.Result,
+		Id:         id,
+		Method:     req.Method,
+		Payload:    req.Payload,
+		CreateTime: time.Now(),
+		Result:     req.Result,
 	}
 	e.reqLk.Lock()
 	e.idRequest[id] = request
 	e.reqLk.Unlock()
 
-	log.Infof("proof send request %s to miner %s", id, req.Miner)
 	//timeout here
-
 	select {
 	case selChannel.OutBound <- request:
+		log.Infof("proof send request %s to miner %s", id, req.Miner)
 	case <-ctx.Done():
 		return xerrors.Errorf("send request cancel by context")
 	case <-time.After(e.cfg.RequestTimeout):
@@ -109,10 +109,11 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, mAddr address.A
 		}
 
 		out <- &types.RequestEvent{
-			Id:      uuid.New(),
-			Method:  "InitConnect",
-			Payload: connectBytes,
-			Result:  nil,
+			Id:         uuid.New(),
+			Method:     "InitConnect",
+			Payload:    connectBytes,
+			CreateTime: time.Now(),
+			Result:     nil,
 		} //not response
 		for {
 			select {

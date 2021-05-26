@@ -60,13 +60,12 @@ func NewProofClient() {
 						ProofBytes: []byte{2, 3, 4},
 					},
 				}
-				xxxx, _ := json.Marshal(proof)
+				proofBytes, _ := json.Marshal(proof)
 				pvc.ResponseProofEvent(ctx, &types.ResponseEvent{
 					Id:      event.Id,
-					Payload: xxxx,
+					Payload: proofBytes,
 					Error:   "",
 				})
-
 			}
 		}
 	}

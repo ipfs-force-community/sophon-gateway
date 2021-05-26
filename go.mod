@@ -14,7 +14,7 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/ipfs/go-cid v0.0.7
 	github.com/ipfs/go-log/v2 v2.1.3
-	github.com/prometheus/common v0.25.0
+	github.com/multiformats/go-multiaddr v0.3.1 // indirect
 	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/exp v0.0.0-20200513190911-00229845015e
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1

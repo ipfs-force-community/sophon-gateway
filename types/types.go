@@ -7,6 +7,7 @@ import (
 	"github.com/filecoin-project/venus-wallet/core"
 	"github.com/google/uuid"
 	"golang.org/x/xerrors"
+	"time"
 )
 
 type Account int
@@ -30,10 +31,11 @@ func checkService(serviceType string) error {
 }
 
 type RequestEvent struct {
-	Id      uuid.UUID
-	Method  string
-	Payload []byte
-	Result  chan *ResponseEvent `json:"-"`
+	Id         uuid.UUID
+	Method     string
+	Payload    []byte
+	CreateTime time.Time           `json:"-"`
+	Result     chan *ResponseEvent `json:"-"`
 }
 
 type ResponseEvent struct {

@@ -9,13 +9,15 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
 	logging "github.com/ipfs/go-log/v2"
-	"github.com/prometheus/common/log"
+	multiaddr "github.com/multiformats/go-multiaddr"
+	manet "github.com/multiformats/go-multiaddr/net"
 	"github.com/urfave/cli/v2"
-	"net"
 	"net/http"
 	"os"
 	"time"
 )
+
+var log = logging.Logger("main")
 
 func main() {
 	logging.SetLogLevel("*", "INFO")
@@ -23,7 +25,13 @@ func main() {
 	app := &cli.App{
 		Name:  "venus-gateway",
 		Usage: "venus-gateway for proxy incoming wallet and proof",
-		Flags: []cli.Flag{},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "listen",
+				Usage: "host address and port the worker api will listen on",
+				Value: "/ip4/127.0.0.1/tcp/45132",
+			},
+		},
 		Commands: []*cli.Command{
 			runCmd, cmds.MinerCmds, cmds.WalletCmds,
 		},
@@ -39,11 +47,6 @@ var runCmd = &cli.Command{
 	Name:  "run",
 	Usage: "start venus-gateway daemon",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:  "listen",
-			Usage: "host address and port the worker api will listen on",
-			Value: "127.0.0.1:45132",
-		},
 		&cli.StringFlag{
 			Name:  "auth-url",
 			Usage: "venus auth url",
@@ -73,8 +76,15 @@ var runCmd = &cli.Command{
 				Next:   mux.ServeHTTP,
 			},
 		}
+		sigCh := make(chan os.Signal, 2)
 		go func() {
-			<-ctx.Done()
+			select {
+			case sig := <-sigCh:
+				log.Warnw("received shutdown", "signal", sig)
+			case <-ctx.Done():
+				log.Warn("received shutdown")
+			}
+
 			log.Warn("Shutting down...")
 			if err := srv.Shutdown(context.TODO()); err != nil {
 				log.Errorf("shutting down RPC server failed: %s", err)
@@ -82,10 +92,15 @@ var runCmd = &cli.Command{
 			log.Warn("Graceful shutdown successful")
 		}()
 
-		nl, err := net.Listen("tcp", address)
+		addr, err := multiaddr.NewMultiaddr(address)
 		if err != nil {
 			return err
 		}
-		return srv.Serve(nl)
+
+		nl, err := manet.Listen(addr)
+		if err != nil {
+			return err
+		}
+		return srv.Serve(manet.NetListener(nl))
 	},
 }
