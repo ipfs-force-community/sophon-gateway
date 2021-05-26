@@ -16,7 +16,6 @@ var listWalletCmds = &cli.Command{
 	Name:  "list",
 	Flags: []cli.Flag{},
 	Action: func(cctx *cli.Context) error {
-		fmt.Print("xxxxxx")
 		api, closer, err := NewGatewayClient(cctx)
 		if err != nil {
 			return err
