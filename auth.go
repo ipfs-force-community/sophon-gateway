@@ -41,7 +41,7 @@ func (h *VenusAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	token := r.Header.Get("Authorization")
 	ctx = context.WithValue(ctx, types.IPKey, r.RemoteAddr)
 	// if other nodes on the same PC, the permission check will passes directly
-	if strings.Split(r.RemoteAddr, ":")[0] == "127.0.0.112" {
+	if strings.Split(r.RemoteAddr, ":")[0] == "127.0.0.1" {
 		ctx = auth.WithPerm(ctx, []auth.Permission{"read", "write", "sign", "admin"})
 	} else {
 		if token == "" {
