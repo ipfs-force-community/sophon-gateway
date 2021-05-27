@@ -59,3 +59,13 @@ var getWalletStateCmds = &cli.Command{
 		return nil
 	},
 }
+
+var versionCmds = &cli.Command{
+	Name:    "version",
+	Aliases: []string{"v"},
+	Flags:   []cli.Flag{},
+	Action: func(cctx *cli.Context) error {
+		fmt.Println()
+		return nil
+	},
+}

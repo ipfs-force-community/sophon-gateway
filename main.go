@@ -7,6 +7,7 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/cmds"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/venus-gateway/version"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
 	logging "github.com/ipfs/go-log/v2"
 	multiaddr "github.com/multiformats/go-multiaddr"
@@ -36,7 +37,7 @@ func main() {
 			runCmd, cmds.MinerCmds, cmds.WalletCmds,
 		},
 	}
-
+	app.Version = version.UserVersion + "--" + version.CurrentCommit
 	if err := app.Run(os.Args); err != nil {
 		log.Warn(err)
 		os.Exit(1)
