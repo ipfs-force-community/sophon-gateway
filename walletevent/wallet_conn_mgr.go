@@ -97,7 +97,11 @@ func (w *walletConnMgr) RemoveConn(walletAccount string, info *walletChannelInfo
 
 	if walletInfo, ok := w.walletInfos[walletAccount]; ok {
 		delete(walletInfo.Connections, info.ChannelId)
+		if len(walletInfo.Connections) == 0 {
+			delete(w.walletInfos, walletAccount)
+		}
 	}
+
 	log.Infof("wallet %v remove connection %s", walletAccount, info.ChannelId)
 	return nil
 }
