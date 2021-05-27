@@ -39,38 +39,37 @@ func MacAddr() string {
 func (h *VenusAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	token := r.Header.Get("Authorization")
+	if token == "" {
+		token = r.FormValue("token")
+		if token != "" {
+			token = "Bearer " + token
+		}
+	}
 	ctx = context.WithValue(ctx, types.IPKey, r.RemoteAddr)
 	// if other nodes on the same PC, the permission check will passes directly
+	if token != "" {
+		if !strings.HasPrefix(token, "Bearer ") {
+			log.Warn("missing Bearer prefix in venusauth header")
+			w.WriteHeader(401)
+			return
+		}
+		token = strings.TrimPrefix(token, "Bearer ")
+		res, err := h.Verify(MacAddr(), "lotus", r.RemoteAddr, r.Host, token)
+		if err != nil {
+			log.Warnf("JWT Verification failed (originating from %s): %s", r.RemoteAddr, err)
+			w.WriteHeader(401)
+			return
+		}
+		ctx = context.WithValue(ctx, types.AccountKey, res.Name)
+		perms := core.AdaptOldStrategy(res.Perm)
+		perms2 := make([]auth.Permission, 0)
+		for _, v := range perms {
+			perms2 = append(perms2, auth.Permission(v))
+		}
+		ctx = auth.WithPerm(ctx, perms2)
+	}
 	if strings.Split(r.RemoteAddr, ":")[0] == "127.0.0.1" {
 		ctx = auth.WithPerm(ctx, []auth.Permission{"read", "write", "sign", "admin"})
-	} else {
-		if token == "" {
-			token = r.FormValue("token")
-			if token != "" {
-				token = "Bearer " + token
-			}
-		}
-		if token != "" {
-			if !strings.HasPrefix(token, "Bearer ") {
-				log.Warn("missing Bearer prefix in venusauth header")
-				w.WriteHeader(401)
-				return
-			}
-			token = strings.TrimPrefix(token, "Bearer ")
-			res, err := h.Verify(MacAddr(), "lotus", r.RemoteAddr, r.Host, token)
-			if err != nil {
-				log.Warnf("JWT Verification failed (originating from %s): %s", r.RemoteAddr, err)
-				w.WriteHeader(401)
-				return
-			}
-			ctx = context.WithValue(ctx, types.AccountKey, res.Name)
-			perms := core.AdaptOldStrategy(res.Perm)
-			perms2 := make([]auth.Permission, 0)
-			for _, v := range perms {
-				perms2 = append(perms2, auth.Permission(v))
-			}
-			ctx = auth.WithPerm(ctx, perms2)
-		}
 	}
 	h.Next(w, r.WithContext(ctx))
 }

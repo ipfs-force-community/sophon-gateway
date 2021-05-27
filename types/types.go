@@ -49,16 +49,18 @@ type ResponseEvent struct {
 }
 
 type ChannelInfo struct {
-	ChannelId uuid.UUID
-	Ip        string
-	OutBound  chan *RequestEvent
+	ChannelId  uuid.UUID
+	Ip         string
+	OutBound   chan *RequestEvent
+	CreateTime time.Time
 }
 
 func NewChannelInfo(ip string, sendEvents chan *RequestEvent) *ChannelInfo {
 	return &ChannelInfo{
-		ChannelId: uuid.New(),
-		OutBound:  sendEvents,
-		Ip:        ip,
+		ChannelId:  uuid.New(),
+		OutBound:   sendEvents,
+		Ip:         ip,
+		CreateTime: time.Now(),
 	}
 }
 

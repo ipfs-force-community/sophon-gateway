@@ -24,7 +24,7 @@ func newWalletChannelInfo(channelInfo *types.ChannelInfo, addrs []address.Addres
 }
 
 type WalletInfo struct {
-	Account         string
+	WalletAccount   string
 	SupportAccounts map[string]struct{}
 	Connections     map[uuid.UUID]*walletChannelInfo
 }
@@ -71,7 +71,7 @@ func (w *walletConnMgr) AddNewConn(walletAccount string, accounts []string, addr
 		}
 	} else {
 		walletInfo = &WalletInfo{
-			Account:         walletAccount,
+			WalletAccount:   walletAccount,
 			SupportAccounts: make(map[string]struct{}),
 			Connections:     map[uuid.UUID]*walletChannelInfo{channel.ChannelId: channel},
 		}
@@ -186,6 +186,7 @@ func (w *walletConnMgr) ListWalletInfo(ctx context.Context) ([]*WalletDetail, er
 				ChannelId:    channelId,
 				RequestCount: len(wallet.OutBound),
 				Ip:           wallet.Ip,
+				CreateTime:   wallet.CreateTime,
 			}
 			walletDetail.ConnectStates = append(walletDetail.ConnectStates, cstate)
 		}
@@ -200,7 +201,7 @@ func (w *walletConnMgr) ListWalletInfoByWallet(ctx context.Context, wallet strin
 
 	if walletInfo, ok := w.walletInfos[wallet]; ok {
 		walletDetail := &WalletDetail{}
-		walletDetail.Account = walletInfo.Account
+		walletDetail.Account = walletInfo.WalletAccount
 		for account, _ := range walletInfo.SupportAccounts {
 			walletDetail.SupportAccount = append(walletDetail.SupportAccount, account)
 		}
@@ -215,6 +216,7 @@ func (w *walletConnMgr) ListWalletInfoByWallet(ctx context.Context, wallet strin
 				ChannelId:    channelId,
 				Ip:           wallet.Ip,
 				RequestCount: len(wallet.OutBound),
+				CreateTime:   wallet.CreateTime,
 			}
 			walletDetail.ConnectStates = append(walletDetail.ConnectStates, cstate)
 		}

@@ -6,6 +6,7 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"golang.org/x/xerrors"
 	"sync"
+	"time"
 )
 
 type minerPayloadRequest struct {
@@ -62,6 +63,7 @@ func (cs *channelStore) getChannelState() *MinerState {
 			Channel:      chid,
 			RequestCount: len(chanStore.OutBound),
 			Ip:           chanStore.Ip,
+			CreateTime:   chanStore.CreateTime,
 		})
 	}
 	return cstate
@@ -77,6 +79,7 @@ type ConnectState struct {
 	Channel      uuid.UUID
 	Ip           string
 	RequestCount int
+	CreateTime   time.Time
 }
 
 type MinerState struct {

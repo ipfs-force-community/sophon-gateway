@@ -4,6 +4,7 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
+	"time"
 )
 
 type walletPayloadRequest struct {
@@ -25,4 +26,5 @@ type ConnectState struct {
 	ChannelId    uuid.UUID
 	Ip           string
 	RequestCount int
+	CreateTime   time.Time
 }
