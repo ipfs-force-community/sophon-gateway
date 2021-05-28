@@ -3,16 +3,12 @@ package walletevent
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/filecoin-project/venus-wallet/core"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	logging "github.com/ipfs/go-log/v2"
-	"golang.org/x/xerrors"
-	"sync"
 	"time"
 )
 
@@ -21,42 +17,38 @@ var log = logging.Logger("event_stream")
 var _ IWalletEvent = (*WalletEventStream)(nil)
 
 type WalletEventStream struct {
-	reqLk     sync.RWMutex
-	idRequest map[uuid.UUID]*types.RequestEvent
-
 	walletConnMgr IWalletConnMgr
-	cfg           *types.Config
+	*types.BaseEventStream
+	cfg *types.Config
 }
 
 func NewWalletEventStream(ctx context.Context, cfg *types.Config) *WalletEventStream {
 	walletEventStream := &WalletEventStream{
-		reqLk:         sync.RWMutex{},
-		idRequest:     make(map[uuid.UUID]*types.RequestEvent),
-		walletConnMgr: newWalletConnMgr(),
-		cfg:           cfg,
+		walletConnMgr:   newWalletConnMgr(),
+		BaseEventStream: types.NewBaseEventStream(ctx, cfg),
+		cfg:             cfg,
 	}
-
-	go walletEventStream.cleanRequests(ctx)
 	return walletEventStream
 }
 
-func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, supportAccounts []string) (chan *types.RequestEvent, error) {
+func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *WalletRegisterPolicy) (chan *types.RequestEvent, error) {
 	walletAccount := ctx.Value(types.AccountKey).(string)
 	ip := ctx.Value(types.IPKey).(string)
 	out := make(chan *types.RequestEvent, e.cfg.RequestQueueSize)
 
 	go func() {
+		channel := types.NewChannelInfo(ip, out)
 		//todo validate the account exit or not
-		addrs, err := e.getValidatedAddress(ctx, out)
+		addrs, err := e.getValidatedAddress(ctx, channel)
 		if err != nil {
 			close(out)
 			log.Errorf("validate address error %v", err)
 			return
 		}
-		fmt.Println("scan address", addrs)
-		walletChannelInfo := newWalletChannelInfo(types.NewChannelInfo(ip, out), addrs)
 
-		err = e.walletConnMgr.AddNewConn(walletAccount, supportAccounts, addrs, walletChannelInfo)
+		walletChannelInfo := newWalletChannelInfo(channel, addrs)
+
+		err = e.walletConnMgr.AddNewConn(walletAccount, policy.SupportAccounts, addrs, walletChannelInfo)
 		if err != nil {
 			close(out)
 			log.Errorf("validate address error %v", err)
@@ -98,73 +90,9 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, supportAccoun
 	return out, nil
 }
 
-func (e *WalletEventStream) cleanRequests(ctx context.Context) {
-	tm := time.NewTicker(time.Minute * 5)
-	go func() {
-		for {
-			select {
-			case <-tm.C:
-				e.reqLk.Lock()
-				for id, request := range e.idRequest {
-					if time.Now().Sub(request.CreateTime) > e.cfg.RequestTimeout {
-						delete(e.idRequest, id)
-					}
-				}
-				e.reqLk.Unlock()
-			case <-ctx.Done():
-				log.Warnf("return clean request")
-				return
-			}
-		}
-	}()
-}
-
 func (e *WalletEventStream) SupportNewAccount(ctx context.Context, channelId, account string) error {
 	walletAccount := ctx.Value(types.AccountKey).(string)
 	return e.walletConnMgr.AddSupportAccount(walletAccount, account)
-}
-
-func (e *WalletEventStream) ResponseEvent(ctx context.Context, resp *types.ResponseEvent) error {
-	e.reqLk.Lock()
-	event, ok := e.idRequest[resp.Id]
-	if ok {
-		delete(e.idRequest, resp.Id)
-	} else {
-		log.Errorf("id request not exit %v", resp)
-	}
-	e.reqLk.Unlock()
-	if ok {
-		event.Result <- resp
-	}
-	return nil
-}
-
-func (e *WalletEventStream) sendRequest(ctx context.Context, req *walletPayloadRequest) error {
-	//select connections
-	conn, err := e.walletConnMgr.GetChannel(req.Account, req.Addr)
-	if err != nil {
-		return xerrors.Errorf("cannot find any connection address %s, account %s", req.Addr, req.Account)
-	}
-
-	id := uuid.New()
-	request := &types.RequestEvent{
-		Id:         id,
-		Method:     req.Method,
-		Payload:    req.Payload,
-		CreateTime: time.Now(),
-		Result:     req.Result,
-	}
-	e.reqLk.Lock()
-	e.idRequest[id] = request
-	e.reqLk.Unlock()
-	//timeout here
-	select {
-	case conn.OutBound <- request:
-	case <-ctx.Done():
-		return xerrors.Errorf("send request cancel by context")
-	}
-
-	return nil
 }
 
 func (e *WalletEventStream) WalletHas(ctx context.Context, supportAccount string, addr address.Address) (bool, error) {
@@ -181,30 +109,17 @@ func (e *WalletEventStream) WalletSign(ctx context.Context, account string, addr
 		return nil, err
 	}
 
-	resultCh := make(chan *types.ResponseEvent)
-	req := &walletPayloadRequest{
-		Account: account,
-		Addr:    addr,
-		Method:  "WalletSign",
-		Payload: payload,
-		Result:  resultCh,
-	}
-
-	err = e.sendRequest(ctx, req)
+	channels, err := e.walletConnMgr.GetChannels(account, addr)
 	if err != nil {
 		return nil, err
 	}
 
-	respEvent := <-resultCh
-	if len(respEvent.Error) > 0 {
-		return nil, errors.New(respEvent.Error)
-	}
-	var has crypto.Signature
-	err = json.Unmarshal(respEvent.Payload, &has)
+	var result crypto.Signature
+	err = e.SendRequest(ctx, channels, "WalletSign", payload, &result)
 	if err != nil {
 		return nil, err
 	}
-	return &has, nil
+	return &result, nil
 }
 
 func (e *WalletEventStream) ListWalletInfo(ctx context.Context) ([]*WalletDetail, error) {
@@ -215,58 +130,19 @@ func (e *WalletEventStream) ListWalletInfoByWallet(ctx context.Context, wallet s
 	return e.walletConnMgr.ListWalletInfoByWallet(ctx, wallet)
 }
 
-func (e *WalletEventStream) getValidatedAddress(ctx context.Context, out chan *types.RequestEvent) ([]address.Address, error) {
-	id := uuid.New()
-	resultCh := make(chan *types.ResponseEvent)
-	req := &types.RequestEvent{
-		Id:         id,
-		Method:     "WalletList",
-		Payload:    nil,
-		CreateTime: time.Now(),
-		Result:     resultCh,
-	}
-
-	e.reqLk.Lock()
-	e.idRequest[id] = req
-	e.reqLk.Unlock()
-	out <- req
-
-	respEvent := <-resultCh
-	if len(respEvent.Error) > 0 {
-		return nil, errors.New(respEvent.Error)
-	}
+func (e *WalletEventStream) getValidatedAddress(ctx context.Context, channel *types.ChannelInfo) ([]address.Address, error) {
 	var result []address.Address
-	err := json.Unmarshal(respEvent.Payload, &result)
+	err := e.SendRequest(ctx, []*types.ChannelInfo{channel}, "WalletList", nil, &result)
 	if err != nil {
 		return nil, err
 	}
 	//todo validate the wallet is really has the address
-
 	return result, nil
 }
 
-func (e *WalletEventStream) validateAddress(ctx context.Context, addr address.Address, out chan *types.RequestEvent) (bool, error) {
-	id := uuid.New()
-	resultCh := make(chan *types.ResponseEvent)
-	req := &types.RequestEvent{
-		Id:         id,
-		Method:     "WalletValidate",
-		Payload:    nil,
-		CreateTime: time.Now(),
-		Result:     resultCh,
-	}
-
-	e.reqLk.Lock()
-	e.idRequest[id] = req
-	e.reqLk.Unlock()
-	out <- req
-
-	respEvent := <-resultCh
-	if len(respEvent.Error) > 0 {
-		return false, errors.New(respEvent.Error)
-	}
+func (e *WalletEventStream) validateAddress(ctx context.Context, addr address.Address, channel *types.ChannelInfo) (bool, error) {
 	var result bool
-	err := json.Unmarshal(respEvent.Payload, &result)
+	err := e.SendRequest(ctx, []*types.ChannelInfo{channel}, "WalletValidate", nil, &result)
 	if err != nil {
 		return false, err
 	}

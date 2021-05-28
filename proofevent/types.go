@@ -9,13 +9,6 @@ import (
 	"time"
 )
 
-type minerPayloadRequest struct {
-	Miner   address.Address
-	Method  string
-	Payload []byte
-	Result  chan *types.ResponseEvent
-}
-
 type channelStore struct {
 	channels map[uuid.UUID]*types.ChannelInfo
 	lk       sync.RWMutex
@@ -28,13 +21,26 @@ func newChannelStore() *channelStore {
 	}
 }
 
-func (cs *channelStore) selectChannel() (*types.ChannelInfo, error) {
+func (cs *channelStore) getChannelByMiners() (*types.ChannelInfo, error) {
 	cs.lk.RLock()
 	defer cs.lk.RUnlock()
 	for _, channel := range cs.channels {
 		return channel, nil
 	}
 	return nil, xerrors.Errorf("no any connection")
+}
+
+func (cs *channelStore) getChannelListByMiners() ([]*types.ChannelInfo, error) {
+	cs.lk.RLock()
+	defer cs.lk.RUnlock()
+	if len(cs.channels) == 0 {
+		return nil, xerrors.Errorf("no any connection")
+	}
+	var channels []*types.ChannelInfo
+	for _, channel := range cs.channels {
+		channels = append(channels, channel)
+	}
+	return channels, nil
 }
 
 func (cs *channelStore) addChanel(ch *types.ChannelInfo) error {
@@ -85,4 +91,8 @@ type ConnectState struct {
 type MinerState struct {
 	Connections     []*ConnectState
 	ConnectionCount int
+}
+
+type ProofRegisterPolicy struct {
+	MinerAddress address.Address
 }

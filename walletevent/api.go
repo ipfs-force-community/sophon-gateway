@@ -18,7 +18,7 @@ type IWalletEvent interface {
 
 type IWalletEventAPI interface {
 	ResponseWalletEvent(ctx context.Context, resp *types.ResponseEvent) error
-	ListenWalletEvent(ctx context.Context, supportAccounts []string) (chan *types.RequestEvent, error)
+	ListenWalletEvent(ctx context.Context, policy *WalletRegisterPolicy) (chan *types.RequestEvent, error)
 	SupportNewAccount(ctx context.Context, channelId, account string) error
 }
 
@@ -36,8 +36,8 @@ func (w *WalletEventAPI) ResponseWalletEvent(ctx context.Context, resp *types.Re
 	return w.walletEvent.ResponseEvent(ctx, resp)
 }
 
-func (w *WalletEventAPI) ListenWalletEvent(ctx context.Context, supportAccounts []string) (chan *types.RequestEvent, error) {
-	return w.walletEvent.ListenWalletEvent(ctx, supportAccounts)
+func (w *WalletEventAPI) ListenWalletEvent(ctx context.Context, policy *WalletRegisterPolicy) (chan *types.RequestEvent, error) {
+	return w.walletEvent.ListenWalletEvent(ctx, policy)
 }
 
 func (w *WalletEventAPI) SupportNewAccount(ctx context.Context, channelId, account string) error {

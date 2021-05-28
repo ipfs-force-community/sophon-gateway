@@ -3,17 +3,8 @@ package walletevent
 import (
 	"github.com/filecoin-project/go-address"
 	"github.com/google/uuid"
-	"github.com/ipfs-force-community/venus-gateway/types"
 	"time"
 )
-
-type walletPayloadRequest struct {
-	Account string
-	Addr    address.Address
-	Method  string
-	Payload []byte
-	Result  chan *types.ResponseEvent
-}
 
 type WalletDetail struct {
 	Account         string
@@ -27,4 +18,8 @@ type ConnectState struct {
 	Ip           string
 	RequestCount int
 	CreateTime   time.Time
+}
+
+type WalletRegisterPolicy struct {
+	SupportAccounts []string
 }

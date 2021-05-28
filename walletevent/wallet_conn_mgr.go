@@ -5,7 +5,6 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
-	"golang.org/x/exp/rand"
 	"golang.org/x/xerrors"
 	"sync"
 )
@@ -33,7 +32,7 @@ type IWalletConnMgr interface {
 	AddNewConn(string, []string, []address.Address, *walletChannelInfo) error
 	RemoveConn(string, *walletChannelInfo) error
 	AddSupportAccount(string, string) error
-	GetChannel(string, address.Address) (*walletChannelInfo, error)
+	GetChannels(string, address.Address) ([]*types.ChannelInfo, error)
 	NewAddress(walletAccount string, channelId uuid.UUID, addrs []address.Address) error
 	HasWalletChannel(supportAccount string, from address.Address) (bool, error)
 
@@ -116,16 +115,16 @@ func (w *walletConnMgr) AddSupportAccount(walletAccount string, supportAccount s
 	return nil
 }
 
-func (w *walletConnMgr) GetChannel(supportAccount string, from address.Address) (*walletChannelInfo, error) {
+func (w *walletConnMgr) GetChannels(supportAccount string, from address.Address) ([]*types.ChannelInfo, error) {
 	w.infoLk.Lock()
 	defer w.infoLk.Unlock()
 
-	var channels []*walletChannelInfo
+	var channels []*types.ChannelInfo
 	for _, walletInfo := range w.walletInfos {
 		if _, ok := walletInfo.SupportAccounts[supportAccount]; ok {
 			for _, conn := range walletInfo.Connections {
 				if _, ok = conn.addrs[from]; ok {
-					channels = append(channels, conn)
+					channels = append(channels, conn.ChannelInfo)
 				}
 			}
 		}
@@ -133,7 +132,7 @@ func (w *walletConnMgr) GetChannel(supportAccount string, from address.Address) 
 	if len(channels) == 0 {
 		return nil, xerrors.Errorf("no connect found for account %s and from %s", supportAccount, from)
 	}
-	return channels[rand.Intn(len(channels))], nil
+	return channels, nil
 }
 
 func (w *walletConnMgr) HasWalletChannel(supportAccount string, from address.Address) (bool, error) {
