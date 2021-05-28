@@ -3,13 +3,14 @@ package cmds
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ipfs-force-community/venus-gateway/walletevent"
 	"github.com/urfave/cli/v2"
 )
 
 var WalletCmds = &cli.Command{
 	Name:        "wallet",
 	Usage:       "wallet cmds",
-	Subcommands: []*cli.Command{listWalletCmds, getWalletStateCmds},
+	Subcommands: []*cli.Command{listWalletCmds, getWalletStateCmds, getWalletByAccountCmds},
 }
 
 var listWalletCmds = &cli.Command{
@@ -60,12 +61,37 @@ var getWalletStateCmds = &cli.Command{
 	},
 }
 
-var versionCmds = &cli.Command{
-	Name:    "version",
-	Aliases: []string{"v"},
-	Flags:   []cli.Flag{},
+var getWalletByAccountCmds = &cli.Command{
+	Name:      "list-support",
+	Usage:     "query which wallet support the account",
+	Flags:     []cli.Flag{},
+	ArgsUsage: "account",
 	Action: func(cctx *cli.Context) error {
-		fmt.Println()
+		api, closer, err := NewGatewayClient(cctx)
+		if err != nil {
+			return err
+		}
+		defer closer()
+
+		wallets, err := api.ListWalletInfo(cctx.Context)
+		if err != nil {
+			return err
+		}
+
+		account := cctx.Args().Get(0)
+		var supportWallets []*walletevent.WalletDetail
+		for _, wallet := range wallets {
+			for _, supportAccount := range wallet.SupportAccounts {
+				if supportAccount == account {
+					supportWallets = append(supportWallets, wallet)
+				}
+			}
+		}
+		minersBytes, err := json.MarshalIndent(supportWallets, " ", "\t")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(minersBytes))
 		return nil
 	},
 }

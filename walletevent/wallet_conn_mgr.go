@@ -177,7 +177,7 @@ func (w *walletConnMgr) ListWalletInfo(ctx context.Context) ([]*WalletDetail, er
 		walletDetail := &WalletDetail{}
 		walletDetail.Account = walletAccount
 		for account, _ := range walletInfo.SupportAccounts {
-			walletDetail.SupportAccount = append(walletDetail.SupportAccount, account)
+			walletDetail.SupportAccounts = append(walletDetail.SupportAccounts, account)
 		}
 		walletDetail.ConnectStates = []ConnectState{}
 		for channelId, wallet := range walletInfo.Connections {
@@ -207,7 +207,7 @@ func (w *walletConnMgr) ListWalletInfoByWallet(ctx context.Context, wallet strin
 		walletDetail := &WalletDetail{}
 		walletDetail.Account = walletInfo.WalletAccount
 		for account, _ := range walletInfo.SupportAccounts {
-			walletDetail.SupportAccount = append(walletDetail.SupportAccount, account)
+			walletDetail.SupportAccounts = append(walletDetail.SupportAccounts, account)
 		}
 		walletDetail.ConnectStates = []ConnectState{}
 		for channelId, wallet := range walletInfo.Connections {

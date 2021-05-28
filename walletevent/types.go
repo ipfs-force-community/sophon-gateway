@@ -16,9 +16,9 @@ type walletPayloadRequest struct {
 }
 
 type WalletDetail struct {
-	Account        string
-	SupportAccount []string
-	ConnectStates  []ConnectState
+	Account         string
+	SupportAccounts []string
+	ConnectStates   []ConnectState
 }
 
 type ConnectState struct {
