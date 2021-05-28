@@ -103,8 +103,10 @@ func (e *ProofEventStream) cleanRequests(ctx context.Context) {
 
 func (e *ProofEventStream) ListenProofEvent(ctx context.Context, mAddr address.Address) (chan *types.RequestEvent, error) {
 	ip := ctx.Value(types.IPKey).(string)
-	out := make(chan *types.RequestEvent, e.cfg.RequestQueueSize)
+	//account := ctx.Value(types.AccountKey).(string)
 	//todo validate mAddr is really belong of this miner
+	//todo get user by account and than check the address
+	out := make(chan *types.RequestEvent, e.cfg.RequestQueueSize)
 	channel := types.NewChannelInfo(ip, out)
 
 	e.connLk.Lock()
