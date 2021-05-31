@@ -5,6 +5,7 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/filecoin-project/venus-wallet/core"
+	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
@@ -19,7 +20,8 @@ type IWalletEvent interface {
 type IWalletEventAPI interface {
 	ResponseWalletEvent(ctx context.Context, resp *types.ResponseEvent) error
 	ListenWalletEvent(ctx context.Context, policy *WalletRegisterPolicy) (chan *types.RequestEvent, error)
-	SupportNewAccount(ctx context.Context, channelId, account string) error
+	SupportNewAccount(ctx context.Context, channelId uuid.UUID, account string) error
+	AddNewAddress(ctx context.Context, channelId uuid.UUID, newAddrs []address.Address) error
 }
 
 var _ IWalletEventAPI = (*WalletEventAPI)(nil)
@@ -40,6 +42,10 @@ func (w *WalletEventAPI) ListenWalletEvent(ctx context.Context, policy *WalletRe
 	return w.walletEvent.ListenWalletEvent(ctx, policy)
 }
 
-func (w *WalletEventAPI) SupportNewAccount(ctx context.Context, channelId, account string) error {
+func (w *WalletEventAPI) SupportNewAccount(ctx context.Context, channelId uuid.UUID, account string) error {
 	return w.walletEvent.SupportNewAccount(ctx, channelId, account)
+}
+
+func (w *WalletEventAPI) AddNewAddress(ctx context.Context, channelId uuid.UUID, newAddrs []address.Address) error {
+	return w.walletEvent.AddNewAddress(ctx, channelId, newAddrs)
 }

@@ -90,9 +90,14 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *Walle
 	return out, nil
 }
 
-func (e *WalletEventStream) SupportNewAccount(ctx context.Context, channelId, account string) error {
+func (e *WalletEventStream) SupportNewAccount(ctx context.Context, channelId uuid.UUID, account string) error {
 	walletAccount := ctx.Value(types.AccountKey).(string)
 	return e.walletConnMgr.AddSupportAccount(walletAccount, account)
+}
+
+func (e *WalletEventStream) AddNewAddress(ctx context.Context, channelId uuid.UUID, addrs []address.Address) error {
+	walletAccount := ctx.Value(types.AccountKey).(string)
+	return e.walletConnMgr.NewAddress(walletAccount, channelId, addrs)
 }
 
 func (e *WalletEventStream) WalletHas(ctx context.Context, supportAccount string, addr address.Address) (bool, error) {
