@@ -33,7 +33,7 @@ func NewGatewayClient(ctx *cli.Context) (*GatewayAPI, jsonrpc.ClientCloser, erro
 	if err != nil {
 		return nil, nil, err
 	}
-	closer, err := jsonrpc.NewMergeClient(ctx.Context, addr, "Filecoin", []interface{}{gatewayAPI}, nil)
+	closer, err := jsonrpc.NewMergeClient(ctx.Context, addr, "Gateway", []interface{}{gatewayAPI}, nil)
 	if err != nil {
 		return nil, nil, err
 	}
