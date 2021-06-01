@@ -18,15 +18,17 @@ var _ IWalletEvent = (*WalletEventStream)(nil)
 
 type WalletEventStream struct {
 	walletConnMgr IWalletConnMgr
+	cfg           *types.Config
+	authClient    types.IAuthClient
 	*types.BaseEventStream
-	cfg *types.Config
 }
 
-func NewWalletEventStream(ctx context.Context, cfg *types.Config) *WalletEventStream {
+func NewWalletEventStream(ctx context.Context, authClient types.IAuthClient, cfg *types.Config) *WalletEventStream {
 	walletEventStream := &WalletEventStream{
 		walletConnMgr:   newWalletConnMgr(),
 		BaseEventStream: types.NewBaseEventStream(ctx, cfg),
 		cfg:             cfg,
+		authClient:      authClient,
 	}
 	return walletEventStream
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/specs-actors/actors/runtime/proof"
+	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	logging "github.com/ipfs/go-log/v2"
@@ -22,14 +23,16 @@ type ProofEventStream struct {
 	connLk           sync.RWMutex
 	minerConnections map[address.Address]*channelStore
 	cfg              *types.Config
+	authClient       types.IAuthClient
 	*types.BaseEventStream
 }
 
-func NewProofEventStream(ctx context.Context, cfg *types.Config) *ProofEventStream {
+func NewProofEventStream(ctx context.Context, authClient types.IAuthClient, cfg *types.Config) *ProofEventStream {
 	proofEventStream := &ProofEventStream{
 		connLk:           sync.RWMutex{},
 		minerConnections: make(map[address.Address]*channelStore),
 		cfg:              cfg,
+		authClient:       authClient,
 		BaseEventStream:  types.NewBaseEventStream(ctx, cfg),
 	}
 	return proofEventStream
@@ -38,8 +41,11 @@ func NewProofEventStream(ctx context.Context, cfg *types.Config) *ProofEventStre
 func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRegisterPolicy) (chan *types.RequestEvent, error) {
 	ip := ctx.Value(types.IPKey).(string)
 	//account := ctx.Value(types.AccountKey).(string)
-	//todo validate mAddr is really belong of this miner
-	//todo get user by account and than check the address
+	has, err := e.authClient.HasMiner(&auth.HasMinerRequest{Miner: policy.MinerAddress.String()})
+	if err != nil || !has {
+		return nil, xerrors.Errorf("address %s not exit", policy.MinerAddress)
+	}
+
 	out := make(chan *types.RequestEvent, e.cfg.RequestQueueSize)
 	channel := types.NewChannelInfo(ip, out)
 	mAddr := policy.MinerAddress

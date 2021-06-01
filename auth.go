@@ -2,17 +2,13 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"github.com/filecoin-project/go-jsonrpc/auth"
 	auth2 "github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/core"
 	"github.com/ipfs-force-community/venus-gateway/types"
-	"gopkg.in/resty.v1"
 	"net"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type VenusAuthHandler struct {
@@ -83,7 +79,7 @@ func (h *VenusAuthHandler) getClientIp(r *http.Request) string {
 	}
 }
 
-type JWTClient struct {
+/*type JWTClient struct {
 	cli *resty.Client
 }
 
@@ -129,3 +125,4 @@ func (c *JWTClient) Verify(spanId, serviceName, preHost, host, token string) (*a
 		return nil, fmt.Errorf("response code is : %d, msg:%s", response.StatusCode(), response.Body())
 	}
 }
+*/

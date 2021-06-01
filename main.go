@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/filecoin-project/go-jsonrpc"
+	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"github.com/gorilla/mux"
 	"github.com/ipfs-force-community/venus-gateway/cmds"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
@@ -61,8 +62,10 @@ var runCmd = &cli.Command{
 			RequestQueueSize: 30,
 			RequestTimeout:   time.Minute * 5,
 		}
-		proofStream := proofevent.NewProofEventStream(ctx, cfg)
-		walletStream := walletevent.NewWalletEventStream(ctx, cfg)
+		cli := jwtclient.NewJWTClient(cctx.String("auth-url"))
+
+		proofStream := proofevent.NewProofEventStream(ctx, cli, cfg)
+		walletStream := walletevent.NewWalletEventStream(ctx, cli, cfg)
 		gatewayAPI := NewGatewayAPI(proofStream, walletStream)
 		log.Info("Setting up control endpoint at " + address)
 		rpcServer := jsonrpc.NewServer(func(c *jsonrpc.ServerConfig) {
@@ -70,7 +73,7 @@ var runCmd = &cli.Command{
 		rpcServer.Register("Gateway", gatewayAPI)
 		mux.Handle("/rpc/v0", rpcServer)
 		mux.PathPrefix("/").Handler(http.DefaultServeMux) // pprof
-		cli := NewJWTClient(cctx.String("auth-url"))
+
 		srv := &http.Server{
 			Handler: &VenusAuthHandler{
 				Verify: cli.Verify,

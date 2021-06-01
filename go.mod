@@ -8,7 +8,7 @@ require (
 	github.com/filecoin-project/go-state-types v0.1.0
 	github.com/filecoin-project/specs-actors v0.9.13
 	github.com/filecoin-project/specs-actors/v3 v3.1.1 // indirect
-	github.com/filecoin-project/venus-auth v1.1.0
+	github.com/filecoin-project/venus-auth v1.1.1-0.20210601062027-260b83ff0191 // indirect
 	github.com/filecoin-project/venus-wallet v1.1.0
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.7.4
