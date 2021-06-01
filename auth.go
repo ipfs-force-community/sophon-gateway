@@ -45,7 +45,7 @@ func (h *VenusAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			token = "Bearer " + token
 		}
 	}
-	ctx = context.WithValue(ctx, types.IPKey, r.RemoteAddr)
+	ctx = context.WithValue(ctx, types.IPKey, h.getClientIp(r))
 	// if other nodes on the same PC, the permission check will passes directly
 	if token != "" {
 		if !strings.HasPrefix(token, "Bearer ") {
@@ -72,6 +72,15 @@ func (h *VenusAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx = auth.WithPerm(ctx, []auth.Permission{"read", "write", "sign", "admin"})
 	}
 	h.Next(w, r.WithContext(ctx))
+}
+
+func (h *VenusAuthHandler) getClientIp(r *http.Request) string {
+	realIp := r.Header.Get("X-Real-IP")
+	if len(realIp) == 0 {
+		return r.RemoteAddr
+	} else {
+		return realIp
+	}
 }
 
 type JWTClient struct {
