@@ -67,7 +67,7 @@ var runCmd = &cli.Command{
 		log.Info("Setting up control endpoint at " + address)
 		rpcServer := jsonrpc.NewServer(func(c *jsonrpc.ServerConfig) {
 		})
-		rpcServer.Register("Filecoin", gatewayAPI)
+		rpcServer.Register("Gateway", gatewayAPI)
 		mux.Handle("/rpc/v0", rpcServer)
 		mux.PathPrefix("/").Handler(http.DefaultServeMux) // pprof
 		cli := NewJWTClient(cctx.String("auth-url"))
