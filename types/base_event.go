@@ -68,7 +68,7 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 
 func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, method string, payload []byte) (*ResponseEvent, error) {
 	id := uuid.New()
-	resultCh := make(chan *ResponseEvent)
+	resultCh := make(chan *ResponseEvent, 1)
 	request := &RequestEvent{
 		Id:         id,
 		Method:     method,
