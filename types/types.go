@@ -1,13 +1,17 @@
 package types
 
 import (
-	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/go-state-types/abi"
-	proof2 "github.com/filecoin-project/specs-actors/actors/runtime/proof"
-	"github.com/filecoin-project/venus-wallet/core"
+	"time"
+
 	"github.com/google/uuid"
 	"golang.org/x/xerrors"
-	"time"
+
+	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-state-types/abi"
+
+	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
+
+	"github.com/filecoin-project/venus-wallet/core"
 )
 
 type Account int
@@ -67,7 +71,7 @@ func NewChannelInfo(ip string, sendEvents chan *RequestEvent) *ChannelInfo {
 //request
 
 type ComputeProofRequest struct {
-	SectorInfos []proof2.SectorInfo
+	SectorInfos []proof5.SectorInfo
 	Rand        abi.PoStRandomness
 }
 
