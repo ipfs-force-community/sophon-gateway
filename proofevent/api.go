@@ -2,9 +2,12 @@ package proofevent
 
 import (
 	"context"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
-	"github.com/filecoin-project/specs-actors/actors/runtime/proof"
+
+	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
+
 	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
@@ -17,7 +20,7 @@ type IProofEvent interface {
 	ListConnectedMiners(ctx context.Context) ([]address.Address, error)
 	ListMinerConnection(ctx context.Context, addr address.Address) (*MinerState, error)
 
-	ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof.SectorInfo, rand abi.PoStRandomness) ([]proof.PoStProof, error)
+	ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error)
 }
 
 var _ IProofEventAPI = (*ProofEventAPI)(nil)

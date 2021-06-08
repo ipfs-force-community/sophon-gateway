@@ -4,13 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/go-jsonrpc"
-	"github.com/filecoin-project/specs-actors/actors/runtime/proof"
-	"github.com/ipfs-force-community/venus-gateway/types"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-jsonrpc"
+
+	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
+
+	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
 type ProofEventClient struct {
@@ -54,7 +57,7 @@ func NewProofClient() {
 					continue
 				}
 
-				proof := []proof.PoStProof{
+				proof := []proof5.PoStProof{
 					{
 						PoStProof:  0,
 						ProofBytes: []byte{2, 3, 4},

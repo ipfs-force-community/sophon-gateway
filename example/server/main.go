@@ -3,19 +3,23 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/ipfs/go-cid"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/crypto"
-	"github.com/filecoin-project/specs-actors/actors/runtime/proof"
+
+	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
+
 	"github.com/filecoin-project/venus-wallet/core"
-	"github.com/ipfs/go-cid"
-	"log"
-	"net/http"
 )
 
 type ProofEventClient struct {
-	ComputeProof func(ctx context.Context, miner address.Address, sectorInfos []proof.SectorInfo, rand abi.PoStRandomness) ([]proof.PoStProof, error)
+	ComputeProof func(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error)
 }
 
 func main() {
@@ -37,7 +41,7 @@ func SendComputeProof() {
 	defer closer()
 
 	actorAddr, _ := address.NewIDAddress(7)
-	result, err := pvc.ComputeProof(ctx, actorAddr, []proof.SectorInfo{{
+	result, err := pvc.ComputeProof(ctx, actorAddr, []proof5.SectorInfo{{
 		SealProof:    1,
 		SectorNumber: 0,
 		SealedCID:    cid.Undef,

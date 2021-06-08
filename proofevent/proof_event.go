@@ -3,16 +3,21 @@ package proofevent
 import (
 	"context"
 	"encoding/json"
-	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/go-state-types/abi"
-	"github.com/filecoin-project/specs-actors/actors/runtime/proof"
-	"github.com/filecoin-project/venus-auth/auth"
-	"github.com/google/uuid"
-	"github.com/ipfs-force-community/venus-gateway/types"
-	logging "github.com/ipfs/go-log/v2"
-	"golang.org/x/xerrors"
 	"sync"
 	"time"
+
+	logging "github.com/ipfs/go-log/v2"
+	"golang.org/x/xerrors"
+
+	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/google/uuid"
+
+	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
+
+	"github.com/filecoin-project/venus-auth/auth"
+
+	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
 var log = logging.Logger("proof_stream")
@@ -97,7 +102,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRe
 	return out, nil
 }
 
-func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof.SectorInfo, rand abi.PoStRandomness) ([]proof.PoStProof, error) {
+func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error) {
 	reqBody := types.ComputeProofRequest{
 		SectorInfos: sectorInfos,
 		Rand:        rand,
@@ -112,7 +117,7 @@ func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Addre
 	if err != nil {
 		return nil, err
 	}
-	var result []proof.PoStProof
+	var result []proof5.PoStProof
 	err = e.SendRequest(ctx, channels, "ComputeProof", payload, &result)
 	if err == nil {
 		return result, nil
