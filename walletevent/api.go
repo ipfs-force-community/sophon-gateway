@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
-	"github.com/filecoin-project/venus-wallet/core"
+	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
 )
@@ -14,7 +14,7 @@ type IWalletEvent interface {
 	ListWalletInfoByWallet(ctx context.Context, wallet string) (*WalletDetail, error)
 
 	WalletHas(ctx context.Context, supportAccount string, addr address.Address) (bool, error)
-	WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta core.MsgMeta) (*crypto.Signature, error)
+	WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error)
 }
 
 type IWalletEventAPI interface {

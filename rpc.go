@@ -9,7 +9,7 @@ import (
 
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 
-	"github.com/filecoin-project/venus-wallet/core"
+	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
@@ -52,7 +52,7 @@ func (g *GatewayAPI) WalletHas(ctx context.Context, supportAccount string, addr 
 	return g.we.WalletHas(ctx, supportAccount, addr)
 }
 
-func (g *GatewayAPI) WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta core.MsgMeta) (*crypto.Signature, error) {
+func (g *GatewayAPI) WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error) {
 	return g.we.WalletSign(ctx, account, addr, toSign, meta)
 }
 
