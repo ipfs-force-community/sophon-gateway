@@ -15,7 +15,7 @@ import (
 
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 
-	"github.com/filecoin-project/venus-wallet/core"
+	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 )
 
 type ProofEventClient struct {
@@ -56,7 +56,7 @@ func SendComputeProof() {
 
 type WalletEventClient struct {
 	WalletHas  func(ctx context.Context, supportAccount string, addr address.Address) (bool, error)
-	WalletSign func(ctx context.Context, account string, addr address.Address, toSign []byte, meta core.MsgMeta) (*crypto.Signature, error)
+	WalletSign func(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error)
 }
 
 func WalletHas() {
@@ -111,8 +111,8 @@ func WalletSign() {
 	defer closer()
 
 	actorAddr, _ := address.NewIDAddress(7)
-	result, err := pvc.WalletSign(ctx, "wtest", actorAddr, []byte{1, 2}, core.MsgMeta{
-		Type:  core.MTUnknown,
+	result, err := pvc.WalletSign(ctx, "wtest", actorAddr, []byte{1, 2}, wallet.MsgMeta{
+		Type:  wallet.MTUnknown,
 		Extra: nil,
 	})
 	if err != nil {

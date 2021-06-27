@@ -14,7 +14,7 @@ import (
 
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 
-	"github.com/filecoin-project/venus-wallet/core"
+	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -26,7 +26,7 @@ type GatewayAPI struct {
 	ListWalletInfo         func(ctx context.Context) ([]*walletevent.WalletDetail, error)
 	ListMinerConnection    func(ctx context.Context, addr address.Address) (*proofevent.MinerState, error)
 	ListConnectedMiners    func(ctx context.Context) ([]address.Address, error)
-	WalletSign             func(ctx context.Context, account string, addr address.Address, toSign []byte, meta core.MsgMeta) (*crypto.Signature, error)
+	WalletSign             func(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error)
 	WalletHas              func(ctx context.Context, supportAccount string, addr address.Address) (bool, error)
 	ComputeProof           func(ctx context.Context, miner address.Address, reqBody *types.ComputeProofRequest) ([]proof5.PoStProof, error)
 }

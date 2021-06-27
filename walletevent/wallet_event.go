@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
-	"github.com/filecoin-project/venus-wallet/core"
+	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	logging "github.com/ipfs/go-log/v2"
@@ -106,7 +106,7 @@ func (e *WalletEventStream) WalletHas(ctx context.Context, supportAccount string
 	return e.walletConnMgr.HasWalletChannel(supportAccount, addr)
 }
 
-func (e *WalletEventStream) WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta core.MsgMeta) (*crypto.Signature, error) {
+func (e *WalletEventStream) WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error) {
 	payload, err := json.Marshal(&types.WalletSignRequest{
 		Signer: addr,
 		ToSign: toSign,
