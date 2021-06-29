@@ -1,4 +1,5 @@
 ./venus*
 .idea
-
 venus-gateway
+server
+client

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"log"
 	"net/http"
 	"time"
@@ -18,7 +19,7 @@ import (
 
 type ProofEventClient struct {
 	ResponseProofEvent func(ctx context.Context, resp *types.ResponseEvent) error
-	ListenProofEvent   func(ctx context.Context, mAddr address.Address) (chan *types.RequestEvent, error)
+	ListenProofEvent   func(ctx context.Context, policy *proofevent.ProofRegisterPolicy) (chan *types.RequestEvent, error)
 }
 
 func NewProofClient() {
@@ -26,18 +27,18 @@ func NewProofClient() {
 		time.Sleep(time.Second)
 		ctx := context.Background()
 		headers := http.Header{}
-		headers.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3Rlc3QiLCJwZXJtIjoic2lnbiIsImV4dCI6IiJ9.FEPMm5aKcm7pyn7iDMRl4CEs0-X3MQpgjORPRy9WPso")
+		headers.Add("Authorization", token)
 		pvc := &ProofEventClient{}
-		closer, err := jsonrpc.NewMergeClient(ctx, "ws://127.0.0.1:45132/rpc/v0", "Filecoin", []interface{}{pvc}, headers)
+		closer, err := jsonrpc.NewMergeClient(ctx, "ws://127.0.0.1:45132/rpc/v0", "Gateway", []interface{}{pvc}, headers)
 		if err != nil {
 			log.Fatal(err)
 			continue
 		}
 		defer closer()
 
-		//rand.Seed(time.Now().Unix())
+		// rand.Seed(time.Now().Unix())
 		actorAddr, _ := address.NewIDAddress(7)
-		eventCh, err := pvc.ListenProofEvent(ctx, actorAddr)
+		eventCh, err := pvc.ListenProofEvent(ctx, &proofevent.ProofRegisterPolicy{MinerAddress: actorAddr})
 		if err != nil {
 			log.Fatal(err)
 			continue

@@ -5,6 +5,7 @@ import (
 	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"github.com/gorilla/mux"
+	"github.com/ipfs-force-community/metrics"
 	"github.com/ipfs-force-community/venus-gateway/cmds"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -14,8 +15,10 @@ import (
 	multiaddr "github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
 	"github.com/urfave/cli/v2"
+	"go.opencensus.io/plugin/ochttp"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -49,14 +52,34 @@ var runCmd = &cli.Command{
 	Name:  "run",
 	Usage: "start venus-gateway daemon",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:  "auth-url",
-			Usage: "venus auth url",
-		},
+		&cli.StringFlag{Name: "auth-url", Usage: "venus auth url"},
+		&cli.StringFlag{Name: "jaeger-proxy",
+			EnvVars: []string{"VENUS_GATEWAY_JAEGER_PROXY"},
+			Hidden:  true},
+		&cli.Float64Flag{Name: "trace-sampler",
+			EnvVars: []string{"VENUS_GATEWAY_TRACE_SAMPLER"},
+			Value:   1.0, Hidden: true},
+		&cli.StringFlag{Name: "trace_node_name", Value: "venus-gateway", Hidden: true},
+	},
+	Before: func(c *cli.Context) error {
+		var mCnf = &metrics.TraceConfig{}
+
+		var proxy, sampler, serverName = strings.TrimSpace(c.String("jaeger-proxy")),
+			c.Float64("trace-sampler"),
+			strings.TrimSpace(c.String("trace_node_name"))
+
+		if mCnf.JaegerTracingEnabled = len(proxy) != 0; mCnf.JaegerTracingEnabled {
+			mCnf.ProbabilitySampler, mCnf.JaegerEndpoint, mCnf.ServerName =
+				sampler, proxy, serverName
+		}
+
+		c.Context = context.WithValue(c.Context, "trace-config", mCnf)
+		return nil
 	},
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
 		mux := mux.NewRouter()
+
 		address := cctx.String("listen")
 		cfg := &types.Config{
 			RequestQueueSize: 30,
@@ -68,18 +91,30 @@ var runCmd = &cli.Command{
 		walletStream := walletevent.NewWalletEventStream(ctx, cli, cfg)
 		gatewayAPI := NewGatewayAPI(proofStream, walletStream)
 		log.Info("Setting up control endpoint at " + address)
-		rpcServer := jsonrpc.NewServer(func(c *jsonrpc.ServerConfig) {
-		})
+		rpcServer := jsonrpc.NewServer(func(c *jsonrpc.ServerConfig) {})
 		rpcServer.Register("Gateway", gatewayAPI)
-		mux.Handle("/rpc/v0", rpcServer)
-		mux.PathPrefix("/").Handler(http.DefaultServeMux) // pprof
 
-		srv := &http.Server{
-			Handler: &VenusAuthHandler{
-				Verify: cli.Verify,
-				Next:   mux.ServeHTTP,
-			},
+		mux.Handle("/rpc/v0", rpcServer)
+		mux.PathPrefix("/").Handler(http.DefaultServeMux)
+
+		handler := http.Handler(&VenusAuthHandler{
+			Verify: cli.Verify,
+			Next:   mux.ServeHTTP,
+		})
+
+		tCnf := cctx.Context.Value("trace-config").(*metrics.TraceConfig)
+		if repoter, err := metrics.RegisterJaeger(tCnf.ServerName, tCnf); err != nil {
+			log.Fatalf("register %s JaegerRepoter to %s failed:%s",
+				tCnf.ServerName, tCnf.JaegerEndpoint)
+		} else if repoter != nil {
+			log.Infof("register jaeger-tracing exporter to %s, with node-name:%s",
+				tCnf.JaegerEndpoint, tCnf.ServerName)
+			defer repoter.Flush()
+			handler = &ochttp.Handler{Handler: handler}
 		}
+
+		srv := &http.Server{Handler: handler}
+
 		sigCh := make(chan os.Signal, 2)
 		go func() {
 			select {

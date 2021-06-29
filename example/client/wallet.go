@@ -8,24 +8,25 @@ import (
 	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/venus-gateway/walletevent"
 	"log"
 	"net/http"
 )
 
 type WalletEventClient struct {
 	ResponseWalletEvent func(ctx context.Context, resp *types.ResponseEvent) error
-	ListenWalletEvent   func(ctx context.Context, supportAccounts []string) (chan *types.RequestEvent, error)
+	ListenWalletEvent   func(ctx context.Context, policy *walletevent.WalletRegisterPolicy) (chan *types.RequestEvent, error)
 	SupportNewAccount   func(ctx context.Context, channelId uuid.UUID, account string) error
 }
 
 func main() {
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1; i++ {
 		go func() {
 			fmt.Println("NewWalletClient")
 			NewWalletClient()
 		}()
 	}
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1; i++ {
 
 		go func() {
 			fmt.Println("NewProofClient")
@@ -36,18 +37,20 @@ func main() {
 	<-ch
 }
 
+var token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiemwiLCJwZXJtIjoiYWRtaW4iLCJleHQiOiIifQ.55uHOtkHCqRNCo8w7_enIUU4AsR33LTnPUdLaeLMl84"
+
 func NewWalletClient() jsonrpc.ClientCloser {
 	ctx := context.Background()
 	pvc := &WalletEventClient{}
 	headers := http.Header{}
-	headers.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoid3Rlc3QiLCJwZXJtIjoic2lnbiIsImV4dCI6IiJ9.Tkc9iwsT5k_UQakD9RJl5azKRm9Fzs_AkJXitEW5Krk")
-	closer, err := jsonrpc.NewMergeClient(ctx, "ws://127.0.0.1:45132/rpc/v0", "Filecoin", []interface{}{pvc}, headers)
+	headers.Add("Authorization", token)
+	closer, err := jsonrpc.NewMergeClient(ctx, "ws://127.0.0.1:45132/rpc/v0", "Gateway", []interface{}{pvc}, headers)
 	if err != nil {
 		log.Fatal(err)
 		return nil
 	}
 
-	eventCh, err := pvc.ListenWalletEvent(ctx, []string{"test"})
+	eventCh, err := pvc.ListenWalletEvent(ctx, &walletevent.WalletRegisterPolicy{SupportAccounts: []string{"test_user"}})
 	if err != nil {
 		log.Fatal(err)
 		return nil
