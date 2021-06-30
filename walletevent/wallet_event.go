@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
-	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 	logging "github.com/ipfs/go-log/v2"
 	"time"
 )
@@ -100,6 +100,11 @@ func (e *WalletEventStream) SupportNewAccount(ctx context.Context, channelId uui
 func (e *WalletEventStream) AddNewAddress(ctx context.Context, channelId uuid.UUID, addrs []address.Address) error {
 	walletAccount := ctx.Value(types.AccountKey).(string)
 	return e.walletConnMgr.NewAddress(walletAccount, channelId, addrs)
+}
+
+func (e *WalletEventStream) RemoveAddress(ctx context.Context, channelId uuid.UUID, addrs []address.Address) error {
+	walletAccount := ctx.Value(types.AccountKey).(string)
+	return e.walletConnMgr.RemoveAddress(walletAccount, channelId, addrs)
 }
 
 func (e *WalletEventStream) WalletHas(ctx context.Context, supportAccount string, addr address.Address) (bool, error) {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
-	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 )
 
 type IWalletEvent interface {
@@ -22,6 +22,7 @@ type IWalletEventAPI interface {
 	ListenWalletEvent(ctx context.Context, policy *WalletRegisterPolicy) (chan *types.RequestEvent, error)
 	SupportNewAccount(ctx context.Context, channelId uuid.UUID, account string) error
 	AddNewAddress(ctx context.Context, channelId uuid.UUID, newAddrs []address.Address) error
+	RemoveAddress(ctx context.Context, channelId uuid.UUID, newAddrs []address.Address) error
 }
 
 var _ IWalletEventAPI = (*WalletEventAPI)(nil)
@@ -48,4 +49,8 @@ func (w *WalletEventAPI) SupportNewAccount(ctx context.Context, channelId uuid.U
 
 func (w *WalletEventAPI) AddNewAddress(ctx context.Context, channelId uuid.UUID, newAddrs []address.Address) error {
 	return w.walletEvent.AddNewAddress(ctx, channelId, newAddrs)
+}
+
+func (w *WalletEventAPI) RemoveAddress(ctx context.Context, channelId uuid.UUID, newAddrs []address.Address) error {
+	return w.walletEvent.RemoveAddress(ctx, channelId, newAddrs)
 }
