@@ -34,6 +34,7 @@ type IWalletConnMgr interface {
 	AddSupportAccount(string, string) error
 	GetChannels(string, address.Address) ([]*types.ChannelInfo, error)
 	NewAddress(walletAccount string, channelId uuid.UUID, addrs []address.Address) error
+	RemoveAddress(walletAccount string, channelId uuid.UUID, addrs []address.Address) error
 	HasWalletChannel(supportAccount string, from address.Address) (bool, error)
 
 	ListWalletInfo(ctx context.Context) ([]*WalletDetail, error)
@@ -159,6 +160,22 @@ func (w *walletConnMgr) NewAddress(walletAccount string, channelId uuid.UUID, ad
 		if channel, ok := walletInfo.Connections[channelId]; ok {
 			for _, addr := range addrs {
 				channel.addrs[addr] = struct{}{}
+			}
+		} else {
+			return xerrors.Errorf("channel %s not found ", channelId.String())
+		}
+	}
+	return nil
+}
+
+func (w *walletConnMgr) RemoveAddress(walletAccount string, channelId uuid.UUID, addrs []address.Address) error {
+	w.infoLk.Lock()
+	defer w.infoLk.Unlock()
+
+	if walletInfo, ok := w.walletInfos[walletAccount]; ok {
+		if channel, ok := walletInfo.Connections[channelId]; ok {
+			for _, addr := range addrs {
+				delete(channel.addrs, addr)
 			}
 		} else {
 			return xerrors.Errorf("channel %s not found ", channelId.String())
