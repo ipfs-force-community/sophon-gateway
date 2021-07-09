@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sync"
+	"time"
+
 	"github.com/google/uuid"
 	logging "github.com/ipfs/go-log/v2"
 	"golang.org/x/xerrors"
-	"sync"
-	"time"
 )
 
 var log = logging.Logger("gateway_stream")
@@ -39,7 +40,7 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 	firstChanel := channels[0]
 	respEvent, err := e.sendOnce(ctx, firstChanel, method, payload)
 	if err == nil {
-		return json.Unmarshal(respEvent.Payload, &result)
+		return json.Unmarshal(respEvent.Payload, result)
 	}
 	if len(channels) == 1 {
 		return err
@@ -48,14 +49,14 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 	otherChannels := channels[1:]
 	respCh := make(chan *ResponseEvent)
 	for _, channel := range otherChannels {
-		go func() {
+		go func(channel *ChannelInfo) {
 			respEvent, err := e.sendOnce(ctx, channel, method, payload)
 			if err != nil {
-				log.Errorf("send request %s to %s failed", method, channel.Ip)
+				log.Errorf("send request %s to %s failed %v", method, channel.Ip, err)
 				return
 			}
 			respCh <- respEvent
-		}()
+		}(channel)
 	}
 
 	select {
@@ -108,7 +109,7 @@ func (e *BaseEventStream) cleanRequests(ctx context.Context) {
 			case <-tm.C:
 				e.reqLk.Lock()
 				for id, request := range e.idRequest {
-					if time.Now().Sub(request.CreateTime) > e.cfg.RequestTimeout {
+					if time.Since(request.CreateTime) > e.cfg.RequestTimeout {
 						delete(e.idRequest, id)
 					}
 				}

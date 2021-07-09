@@ -45,7 +45,6 @@ func NewProofEventStream(ctx context.Context, authClient types.IAuthClient, cfg 
 
 func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRegisterPolicy) (chan *types.RequestEvent, error) {
 	ip := ctx.Value(types.IPKey).(string)
-	//account := ctx.Value(types.AccountKey).(string)
 	has, err := e.authClient.HasMiner(&auth.HasMinerRequest{Miner: policy.MinerAddress.String()})
 	if err != nil || !has {
 		return nil, xerrors.Errorf("address %s not exit", policy.MinerAddress)
@@ -63,7 +62,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRe
 	}
 
 	e.connLk.Unlock()
-	channelStore.addChanel(channel)
+	_ = channelStore.addChanel(channel)
 	log.Infof("add new connections %s for miner %s", channel.ChannelId, mAddr)
 	go func() {
 		connectBytes, err := json.Marshal(types.ConnectedCompleted{
@@ -88,13 +87,13 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRe
 				e.connLk.Lock()
 				channelStore := e.minerConnections[mAddr]
 				e.connLk.Unlock()
-				channelStore.removeChanel(channel)
+				_ = channelStore.removeChanel(channel)
 				if channelStore.empty() {
 					e.connLk.Lock()
 					delete(e.minerConnections, mAddr)
 					e.connLk.Unlock()
 				}
-				log.Info("remove connections %s of miner ", channel.ChannelId, mAddr)
+				log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
 				return
 			}
 		}
@@ -147,7 +146,7 @@ func (e *ProofEventStream) ListConnectedMiners(ctx context.Context) ([]address.A
 	e.connLk.Lock()
 	defer e.connLk.Unlock()
 	var miners []address.Address
-	for miner, _ := range e.minerConnections {
+	for miner := range e.minerConnections {
 		miners = append(miners, miner)
 	}
 	return miners, nil

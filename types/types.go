@@ -25,6 +25,7 @@ const (
 	ProofService  = "proof_service"
 )
 
+// nolint
 func checkService(serviceType string) error {
 	switch serviceType {
 	case WalletService:

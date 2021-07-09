@@ -1,12 +1,13 @@
 package proofevent
 
 import (
+	"sync"
+	"time"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"golang.org/x/xerrors"
-	"sync"
-	"time"
 )
 
 type channelStore struct {
@@ -21,6 +22,7 @@ func newChannelStore() *channelStore {
 	}
 }
 
+// nolint
 func (cs *channelStore) getChannelByMiners() (*types.ChannelInfo, error) {
 	cs.lk.RLock()
 	defer cs.lk.RUnlock()

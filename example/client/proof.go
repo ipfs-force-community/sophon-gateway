@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/ipfs-force-community/venus-gateway/proofevent"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-jsonrpc"
@@ -32,9 +33,9 @@ func NewProofClient() {
 		closer, err := jsonrpc.NewMergeClient(ctx, "ws://127.0.0.1:45132/rpc/v0", "Gateway", []interface{}{pvc}, headers)
 		if err != nil {
 			log.Fatal(err)
+			closer()
 			continue
 		}
-		defer closer()
 
 		// rand.Seed(time.Now().Unix())
 		actorAddr, _ := address.NewIDAddress(7)
@@ -50,7 +51,7 @@ func NewProofClient() {
 				err := json.Unmarshal(event.Payload, &req)
 				if err != nil {
 					fmt.Println(event.Id.String())
-					pvc.ResponseProofEvent(ctx, &types.ResponseEvent{
+					_ = pvc.ResponseProofEvent(ctx, &types.ResponseEvent{
 						Id:      event.Id,
 						Payload: nil,
 						Error:   err.Error(),
@@ -65,12 +66,13 @@ func NewProofClient() {
 					},
 				}
 				proofBytes, _ := json.Marshal(proof)
-				pvc.ResponseProofEvent(ctx, &types.ResponseEvent{
+				_ = pvc.ResponseProofEvent(ctx, &types.ResponseEvent{
 					Id:      event.Id,
 					Payload: proofBytes,
 					Error:   "",
 				})
 			}
 		}
+		closer()
 	}
 }
