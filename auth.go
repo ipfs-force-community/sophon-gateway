@@ -5,13 +5,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/filecoin-project/go-jsonrpc/auth"
 	auth2 "github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/core"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"go.opencensus.io/trace"
-	"net/http"
-	"strings"
 )
 
 type VenusAuthHandler struct {
@@ -99,9 +100,11 @@ func (h *VenusAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		ctx = context.WithValue(ctx, types.AccountKey, res.Name)
 		perms := core.AdaptOldStrategy(res.Perm)
-		ctx = auth.WithPerm(ctx, append([]auth.Permission{}, perms...))
+		ctx = auth.WithPerm(ctx, perms)
 	}
-
+	if strings.Split(r.RemoteAddr, ":")[0] == "127.0.0.1" {
+		ctx = auth.WithPerm(ctx, []auth.Permission{"read", "write", "sign", "admin"})
+	}
 	h.Next(w, r.WithContext(ctx))
 }
 

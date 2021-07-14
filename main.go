@@ -2,10 +2,16 @@ package main
 
 import (
 	"context"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"github.com/gorilla/mux"
 	"github.com/ipfs-force-community/metrics"
+	"github.com/ipfs-force-community/venus-gateway/api"
 	"github.com/ipfs-force-community/venus-gateway/cmds"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -16,16 +22,12 @@ import (
 	manet "github.com/multiformats/go-multiaddr/net"
 	"github.com/urfave/cli/v2"
 	"go.opencensus.io/plugin/ochttp"
-	"net/http"
-	"os"
-	"strings"
-	"time"
 )
 
 var log = logging.Logger("main")
 
 func main() {
-	logging.SetLogLevel("*", "INFO")
+	_ = logging.SetLogLevel("*", "INFO")
 
 	app := &cli.App{
 		Name:  "venus-gateway",
@@ -78,7 +80,6 @@ var runCmd = &cli.Command{
 	},
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
-		mux := mux.NewRouter()
 
 		address := cctx.String("listen")
 		cfg := &types.Config{
@@ -91,9 +92,12 @@ var runCmd = &cli.Command{
 		walletStream := walletevent.NewWalletEventStream(ctx, cli, cfg)
 		gatewayAPI := NewGatewayAPI(proofStream, walletStream)
 		log.Info("Setting up control endpoint at " + address)
-		rpcServer := jsonrpc.NewServer(func(c *jsonrpc.ServerConfig) {})
-		rpcServer.Register("Gateway", gatewayAPI)
+		fullAPI := &api.FullStruct{}
+		api.PermissionProxy(gatewayAPI, fullAPI)
 
+		rpcServer := jsonrpc.NewServer(jsonrpc.WithProxyBind(jsonrpc.PBField))
+		rpcServer.Register("Gateway", fullAPI)
+		mux := mux.NewRouter()
 		mux.Handle("/rpc/v0", rpcServer)
 		mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
