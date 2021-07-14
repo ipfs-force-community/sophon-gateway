@@ -14,9 +14,7 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 )
 
-type Account int
-
-var AccountKey Account
+const AccountKey = "account"
 
 type IP int
 

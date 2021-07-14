@@ -2,38 +2,48 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"github.com/filecoin-project/go-jsonrpc/auth"
 	auth2 "github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/core"
 	"github.com/ipfs-force-community/venus-gateway/types"
-	"net"
+	"go.opencensus.io/trace"
 	"net/http"
 	"strings"
 )
 
 type VenusAuthHandler struct {
-	Verify func(spanId, serviceName, preHost, host, token string) (*auth2.VerifyResponse, error)
+	Verify func(ctx context.Context, token string) (*auth2.VerifyResponse, error)
 	Next   http.HandlerFunc
 }
 
-func MacAddr() string {
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		panic("net interfaces" + err.Error())
+func jwtUserFromToken(token string) (string, error) {
+	sks := strings.Split(token, ".")
+	if len(sks) != 3 {
+		return "", fmt.Errorf("invalid token")
+
 	}
-	mac := ""
-	for _, netInterface := range interfaces {
-		mac = netInterface.HardwareAddr.String()
-		if len(mac) == 0 {
-			continue
-		}
-		break
+
+	enc := []byte(sks[1])
+	encoding := base64.RawURLEncoding
+	dec := make([]byte, encoding.DecodedLen(len(enc)))
+	if _, err := encoding.Decode(dec, enc); err != nil {
+		return "", err
 	}
-	return mac
+	payload := &auth2.JWTPayload{}
+	err := json.Unmarshal(dec, payload)
+	return payload.Name, err
 }
 
 func (h *VenusAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	ctx, span := trace.StartSpan(r.Context(), "VenusAuthHandler.ServeHTTP",
+		func(so *trace.StartOptions) { so.Sampler = trace.AlwaysSample() })
+	defer span.End()
+
 	token := r.Header.Get("Authorization")
 	if token == "" {
 		token = r.FormValue("token")
@@ -41,32 +51,57 @@ func (h *VenusAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			token = "Bearer " + token
 		}
 	}
+
+	if len(token) == 0 {
+		// local call doesn't need a token
+		if strings.Split(r.RemoteAddr, ":")[0] == "127.0.0.1" {
+			ctx = auth.WithPerm(ctx, []auth.Permission{"read", "write", "sign", "admin"})
+		} else {
+			message := "JWT verifycation failed, empty token"
+			span.SetStatus(trace.Status{Code: trace.StatusCodeUnauthenticated, Message: message})
+			log.Warnf(message)
+			w.WriteHeader(401)
+			return
+		}
+	}
+
 	ctx = context.WithValue(ctx, types.IPKey, h.getClientIp(r))
+
 	// if other nodes on the same PC, the permission check will passes directly
 	if token != "" {
 		if !strings.HasPrefix(token, "Bearer ") {
-			log.Warn("missing Bearer prefix in venusauth header")
+			log.Warn("missing Bearer prefix in venus-auth header")
 			w.WriteHeader(401)
 			return
 		}
 		token = strings.TrimPrefix(token, "Bearer ")
-		res, err := h.Verify(MacAddr(), "lotus", r.RemoteAddr, r.Host, token)
+
+		if mayUser, _ := jwtUserFromToken(token); len(mayUser) != 0 {
+			span.AddAttributes(trace.StringAttribute("Account-Unverified", mayUser))
+		}
+
+		span.AddAttributes(trace.StringAttribute("X-Real-IP", r.RemoteAddr),
+			trace.StringAttribute("preHost", r.Host))
+
+		res, err := h.Verify(ctx, token)
+
 		if err != nil {
-			log.Warnf("JWT Verification failed (originating from %s): %s", r.RemoteAddr, err)
+			message := fmt.Sprintf("JWT Verification failed (originating from %s): %s", r.RemoteAddr, err.Error())
+			span.SetStatus(trace.Status{
+				Code:    trace.StatusCodeUnauthenticated,
+				Message: message})
+			log.Warnf(message)
 			w.WriteHeader(401)
 			return
 		}
+
+		span.AddAttributes(trace.StringAttribute("Account", res.Name))
+
 		ctx = context.WithValue(ctx, types.AccountKey, res.Name)
 		perms := core.AdaptOldStrategy(res.Perm)
-		perms2 := make([]auth.Permission, 0)
-		for _, v := range perms {
-			perms2 = append(perms2, auth.Permission(v))
-		}
-		ctx = auth.WithPerm(ctx, perms2)
+		ctx = auth.WithPerm(ctx, append([]auth.Permission{}, perms...))
 	}
-	if strings.Split(r.RemoteAddr, ":")[0] == "127.0.0.1" {
-		ctx = auth.WithPerm(ctx, []auth.Permission{"read", "write", "sign", "admin"})
-	}
+
 	h.Next(w, r.WithContext(ctx))
 }
 
