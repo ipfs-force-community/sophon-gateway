@@ -26,6 +26,16 @@ type IGatewayAPI interface {
 	IGatewayPushAPI
 }
 
+type GatewayStruct struct {
+	ComputeProof           func(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error)
+	WalletHas              func(ctx context.Context, supportAccount string, addr address.Address) (bool, error)
+	WalletSign             func(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error)
+	ListConnectedMiners    func(ctx context.Context) ([]address.Address, error)
+	ListMinerConnection    func(ctx context.Context, addr address.Address) (*proofevent.MinerState, error)
+	ListWalletInfo         func(ctx context.Context) ([]*walletevent.WalletDetail, error)
+	ListWalletInfoByWallet func(ctx context.Context, wallet string) (*walletevent.WalletDetail, error)
+}
+
 var _ IGatewayAPI = (*GatewayAPI)(nil)
 
 type GatewayAPI struct {

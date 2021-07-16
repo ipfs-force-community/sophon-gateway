@@ -11,7 +11,7 @@ import (
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"github.com/gorilla/mux"
 	"github.com/ipfs-force-community/metrics"
-	"github.com/ipfs-force-community/venus-gateway/api"
+	"github.com/ipfs-force-community/metrics/ratelimit"
 	"github.com/ipfs-force-community/venus-gateway/cmds"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -55,13 +55,10 @@ var runCmd = &cli.Command{
 	Usage: "start venus-gateway daemon",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "auth-url", Usage: "venus auth url"},
-		&cli.StringFlag{Name: "jaeger-proxy",
-			EnvVars: []string{"VENUS_GATEWAY_JAEGER_PROXY"},
-			Hidden:  true},
-		&cli.Float64Flag{Name: "trace-sampler",
-			EnvVars: []string{"VENUS_GATEWAY_TRACE_SAMPLER"},
-			Value:   1.0, Hidden: true},
+		&cli.StringFlag{Name: "jaeger_proxy", EnvVars: []string{"VENUS_GATEWAY_JAEGER_PROXY"}, Hidden: true},
+		&cli.Float64Flag{Name: "trace_sampler", EnvVars: []string{"VENUS_GATEWAY_TRACE_SAMPLER"}, Value: 1.0, Hidden: true},
 		&cli.StringFlag{Name: "trace_node_name", Value: "venus-gateway", Hidden: true},
+		&cli.StringFlag{Name: "rate_limit_redis", Hidden: true},
 	},
 	Before: func(c *cli.Context) error {
 		var mCnf = &metrics.TraceConfig{}
@@ -90,30 +87,46 @@ var runCmd = &cli.Command{
 
 		proofStream := proofevent.NewProofEventStream(ctx, cli, cfg)
 		walletStream := walletevent.NewWalletEventStream(ctx, cli, cfg)
-		gatewayAPI := NewGatewayAPI(proofStream, walletStream)
-		log.Info("Setting up control endpoint at " + address)
-		fullAPI := &api.FullStruct{}
-		api.PermissionProxy(gatewayAPI, fullAPI)
 
-		rpcServer := jsonrpc.NewServer(jsonrpc.WithProxyBind(jsonrpc.PBField))
-		rpcServer.Register("Gateway", fullAPI)
+		gatewayAPI := NewGatewayAPI(proofStream, walletStream)
+
+		log.Info("Setting up control endpoint at " + address)
+
+		serverOptions := make([]jsonrpc.ServerOption, 0)
+		serverOptions = append(serverOptions, jsonrpc.WithProxyBind(jsonrpc.PBField))
+		rpcServer := jsonrpc.NewServer(serverOptions...)
+
+		if cctx.IsSet("rate_limit_redis") {
+			limiter, err := ratelimit.NewRateLimitHandler(
+				cctx.String("rate_limit_redis"),
+				nil, &jwtclient.ValueFromCtx{},
+				jwtclient.WarpLimitFinder(cli),
+				logging.Logger("rate-limit"))
+			_ = logging.SetLogLevel("rate-limit", "info")
+			if err != nil {
+				return err
+			}
+
+			var rateLimitAPI GatewayStruct
+			limiter.WarpFunctions(gatewayAPI, &rateLimitAPI)
+			rpcServer.Register("Gateway", &struct{ GatewayStruct }{rateLimitAPI})
+		} else {
+			rpcServer.Register("Gateway", gatewayAPI)
+		}
 		mux := mux.NewRouter()
 		mux.Handle("/rpc/v0", rpcServer)
 		mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
-		handler := http.Handler(&VenusAuthHandler{
-			Verify: cli.Verify,
-			Next:   mux.ServeHTTP,
-		})
+		handler := (http.Handler)(jwtclient.NewAuthMux(nil,
+			jwtclient.WarpIJwtAuthClient(cli),
+			mux, logging.Logger("Auth")))
 
 		tCnf := cctx.Context.Value("trace-config").(*metrics.TraceConfig)
 		if repoter, err := metrics.RegisterJaeger(tCnf.ServerName, tCnf); err != nil {
-			log.Fatalf("register %s JaegerRepoter to %s failed:%s",
-				tCnf.ServerName, tCnf.JaegerEndpoint)
+			log.Fatalf("register %s JaegerRepoter to %s failed:%s", tCnf.ServerName, tCnf.JaegerEndpoint)
 		} else if repoter != nil {
-			log.Infof("register jaeger-tracing exporter to %s, with node-name:%s",
-				tCnf.JaegerEndpoint, tCnf.ServerName)
-			defer repoter.Flush()
+			log.Infof("register jaeger-tracing exporter to %s, with node-name:%s", tCnf.JaegerEndpoint, tCnf.ServerName)
+			defer metrics.UnregisterJaeger(repoter)
 			handler = &ochttp.Handler{Handler: handler}
 		}
 
