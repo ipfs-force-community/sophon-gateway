@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 
@@ -22,8 +23,6 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
 )
 
-const VenusGateWayLocalToken = "venus-gateway.local-token"
-
 type GatewayAPI struct {
 	ListWalletInfoByWallet func(ctx context.Context, wallet string) (*walletevent.WalletDetail, error)
 	ListWalletInfo         func(ctx context.Context) ([]*walletevent.WalletDetail, error)
@@ -43,12 +42,17 @@ func NewGatewayClient(ctx *cli.Context) (*GatewayAPI, jsonrpc.ClientCloser, erro
 	}
 	header := http.Header{}
 
-	// todo : use a real local token,
-	//  this is a temporary solution currently
-	header.Add("Authorization", "Bearer "+VenusGateWayLocalToken)
+	const tokenFile = "./token"
+	var token []byte
+
+	if token, err = ioutil.ReadFile(tokenFile); err != nil {
+		return nil, nil, err
+	}
+
+	header.Add("Authorization", "Bearer "+string(token))
+
 	closer, err := jsonrpc.NewMergeClient(ctx.Context, addr,
-		"Gateway",
-		[]interface{}{gatewayAPI}, header)
+		"Gateway", []interface{}{gatewayAPI}, header)
 	if err != nil {
 		return nil, nil, err
 	}

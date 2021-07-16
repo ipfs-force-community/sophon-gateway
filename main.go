@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/ipfs-force-community/metrics/ratelimit"
 	"net/http"
 	"os"
@@ -84,6 +85,12 @@ var runCmd = &cli.Command{
 			RequestQueueSize: 30,
 			RequestTimeout:   time.Minute * 5,
 		}
+
+		seckey, err := MakeToken()
+		if err != nil {
+			return fmt.Errorf("make token failed:%s", err.Error())
+		}
+
 		cli := jwtclient.NewJWTClient(cctx.String("auth-url"))
 
 		proofStream := proofevent.NewProofEventStream(ctx, cli, cfg)
@@ -118,7 +125,7 @@ var runCmd = &cli.Command{
 		mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
 		handler := (http.Handler)(jwtclient.NewAuthMux(
-			&localJwtClient{}, jwtclient.WarpIJwtAuthClient(cli),
+			&localJwtClient{seckey: seckey}, jwtclient.WarpIJwtAuthClient(cli),
 			mux, logging.Logger("Auth")))
 
 		tCnf := cctx.Context.Value("trace-config").(*metrics.TraceConfig)
