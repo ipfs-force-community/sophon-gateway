@@ -37,7 +37,7 @@ func main() {
 	<-ch
 }
 
-var token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiemwiLCJwZXJtIjoiYWRtaW4iLCJleHQiOiIifQ.55uHOtkHCqRNCo8w7_enIUU4AsR33LTnPUdLaeLMl84"
+var token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiemwiLCJwZXJtIjoicmVhZCIsImV4dCI6IiJ9.OvZu1F5OKnRsUChLhr9sVygTH0gOGC5au8hKOOZ0aX4"
 
 func NewWalletClient() jsonrpc.ClientCloser {
 	ctx := context.Background()
