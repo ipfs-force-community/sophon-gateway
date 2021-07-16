@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/ipfs-force-community/metrics/ratelimit"
 	"net/http"
 	"os"
 	"strings"
@@ -11,7 +12,7 @@ import (
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"github.com/gorilla/mux"
 	"github.com/ipfs-force-community/metrics"
-	"github.com/ipfs-force-community/metrics/ratelimit"
+	"github.com/ipfs-force-community/venus-gateway/api"
 	"github.com/ipfs-force-community/venus-gateway/cmds"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -55,17 +56,17 @@ var runCmd = &cli.Command{
 	Usage: "start venus-gateway daemon",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "auth-url", Usage: "venus auth url"},
-		&cli.StringFlag{Name: "jaeger_proxy", EnvVars: []string{"VENUS_GATEWAY_JAEGER_PROXY"}, Hidden: true},
-		&cli.Float64Flag{Name: "trace_sampler", EnvVars: []string{"VENUS_GATEWAY_TRACE_SAMPLER"}, Value: 1.0, Hidden: true},
-		&cli.StringFlag{Name: "trace_node_name", Value: "venus-gateway", Hidden: true},
-		&cli.StringFlag{Name: "rate_limit_redis", Hidden: true},
+		&cli.StringFlag{Name: "jaeger-proxy", EnvVars: []string{"VENUS_GATEWAY_JAEGER_PROXY"}, Hidden: true},
+		&cli.Float64Flag{Name: "trace-sampler", EnvVars: []string{"VENUS_GATEWAY_TRACE_SAMPLER"}, Value: 1.0, Hidden: true},
+		&cli.StringFlag{Name: "trace-node-name", Value: "venus-gateway", Hidden: true},
+		&cli.StringFlag{Name: "rate-limit-redis", Hidden: true},
 	},
 	Before: func(c *cli.Context) error {
 		var mCnf = &metrics.TraceConfig{}
 
 		var proxy, sampler, serverName = strings.TrimSpace(c.String("jaeger-proxy")),
 			c.Float64("trace-sampler"),
-			strings.TrimSpace(c.String("trace_node_name"))
+			strings.TrimSpace(c.String("trace-node-name"))
 
 		if mCnf.JaegerTracingEnabled = len(proxy) != 0; mCnf.JaegerTracingEnabled {
 			mCnf.ProbabilitySampler, mCnf.JaegerEndpoint, mCnf.ServerName =
@@ -92,33 +93,32 @@ var runCmd = &cli.Command{
 
 		log.Info("Setting up control endpoint at " + address)
 
-		serverOptions := make([]jsonrpc.ServerOption, 0)
-		serverOptions = append(serverOptions, jsonrpc.WithProxyBind(jsonrpc.PBField))
-		rpcServer := jsonrpc.NewServer(serverOptions...)
+		fullAPI := &api.FullStruct{}
+		api.PermissionProxy(gatewayAPI, fullAPI)
 
-		if cctx.IsSet("rate_limit_redis") {
-			limiter, err := ratelimit.NewRateLimitHandler(
-				cctx.String("rate_limit_redis"),
-				nil, &jwtclient.ValueFromCtx{},
+		rpcServer := jsonrpc.NewServer(jsonrpc.WithProxyBind(jsonrpc.PBField))
+		if cctx.IsSet("rate-limit-redis") {
+			limiter, err := ratelimit.NewRateLimitHandler(cctx.String("rate-limit-redis"), nil,
+				&jwtclient.ValueFromCtx{},
 				jwtclient.WarpLimitFinder(cli),
 				logging.Logger("rate-limit"))
 			_ = logging.SetLogLevel("rate-limit", "info")
 			if err != nil {
 				return err
 			}
-
-			var rateLimitAPI GatewayStruct
-			limiter.WarpFunctions(gatewayAPI, &rateLimitAPI)
-			rpcServer.Register("Gateway", &struct{ GatewayStruct }{rateLimitAPI})
-		} else {
-			rpcServer.Register("Gateway", gatewayAPI)
+			var rateLimitAPI api.FullStruct
+			limiter.WarperLimiter(*fullAPI, &rateLimitAPI)
+			fullAPI = &rateLimitAPI
 		}
+
+		rpcServer.Register("Gateway", fullAPI)
+
 		mux := mux.NewRouter()
 		mux.Handle("/rpc/v0", rpcServer)
 		mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
-		handler := (http.Handler)(jwtclient.NewAuthMux(nil,
-			jwtclient.WarpIJwtAuthClient(cli),
+		handler := (http.Handler)(jwtclient.NewAuthMux(
+			&localJwtClient{}, jwtclient.WarpIJwtAuthClient(cli),
 			mux, logging.Logger("Auth")))
 
 		tCnf := cctx.Context.Value("trace-config").(*metrics.TraceConfig)
