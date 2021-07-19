@@ -29,3 +29,5 @@ replace github.com/ipfs/go-ipfs-cmds => github.com/ipfs-force-community/go-ipfs-
 replace github.com/ipfs-force-community/venus-gateway => ./
 
 replace github.com/filecoin-project/venus-auth => github.com/filecoin-project/venus-auth v1.2.2-0.20210719042318-b502a60e3b30
+
+replace github.com/google/flatbuffers => github.com/google/flatbuffers v1.12.1
