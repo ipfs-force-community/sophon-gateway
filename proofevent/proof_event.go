@@ -3,6 +3,8 @@ package proofevent
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"sync"
 	"time"
 
@@ -44,7 +46,10 @@ func NewProofEventStream(ctx context.Context, authClient types.IAuthClient, cfg 
 }
 
 func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRegisterPolicy) (chan *types.RequestEvent, error) {
-	ip := ctx.Value(types.IPKey).(string)
+	ip, exist := jwtclient.CtxGetTokenLocation(ctx)
+	if !exist {
+		return nil, fmt.Errorf("ip not exist")
+	}
 	has, err := e.authClient.HasMiner(&auth.HasMinerRequest{Miner: policy.MinerAddress.String()})
 	if err != nil || !has {
 		return nil, xerrors.Errorf("address %s not exit", policy.MinerAddress)
@@ -80,7 +85,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRe
 			Payload:    connectBytes,
 			CreateTime: time.Now(),
 			Result:     nil,
-		} //not response
+		} // not response
 		for {
 			select {
 			case <-ctx.Done():

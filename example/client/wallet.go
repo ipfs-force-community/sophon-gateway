@@ -28,7 +28,6 @@ func main() {
 		}()
 	}
 	for i := 0; i < 1; i++ {
-
 		go func() {
 			fmt.Println("NewProofClient")
 			NewProofClient()
