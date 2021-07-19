@@ -8,7 +8,6 @@ import (
 	"github.com/filecoin-project/go-state-types/crypto"
 )
 
-
 type SigType = crypto.SigType
 
 const (
@@ -17,6 +16,7 @@ const (
 	SigTypeSecp256k1 = SigType(iota)
 	SigTypeBLS
 )
+
 type MsgType string
 type MsgMeta struct {
 	Type MsgType
@@ -24,3 +24,8 @@ type MsgMeta struct {
 	// signed bytes (e.g. CID(Extra).Bytes() == toSign)
 	Extra []byte
 }
+
+const  (
+	MTUnknown       = MsgType("")
+	MTVerifyAddress = MsgType("verifyaddress")
+)

@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
-	"log"
-	"net/http"
 )
 
 type WalletEventClient struct {
@@ -60,7 +61,7 @@ func NewWalletClient() jsonrpc.ClientCloser {
 	cc := make(chan struct{})
 	go func() {
 		<-cc
-		pvc.SupportNewAccount(ctx, channel, "stest")
+		_ = pvc.SupportNewAccount(ctx, channel, "stest")
 	}()
 
 	for event := range eventCh {
@@ -69,7 +70,7 @@ func NewWalletClient() jsonrpc.ClientCloser {
 			req := types.ConnectedCompleted{}
 			err := json.Unmarshal(event.Payload, &req)
 			if err != nil {
-				pvc.ResponseWalletEvent(ctx, &types.ResponseEvent{
+				_ = pvc.ResponseWalletEvent(ctx, &types.ResponseEvent{
 					Id:      event.Id,
 					Payload: nil,
 					Error:   err.Error(),
@@ -81,17 +82,17 @@ func NewWalletClient() jsonrpc.ClientCloser {
 			fmt.Println("receive wallet list req")
 			addr1, _ := address.NewIDAddress(1)
 			addrBytes, _ := json.Marshal([]address.Address{addr1})
-			pvc.ResponseWalletEvent(ctx, &types.ResponseEvent{
+			_ = pvc.ResponseWalletEvent(ctx, &types.ResponseEvent{
 				Id:      event.Id,
 				Payload: addrBytes,
 				//		Error:   err.Error(),
 			})
 		case "WalletSign":
 			req := types.WalletSignRequest{}
-			json.Unmarshal(event.Payload, &req)
+			_ = json.Unmarshal(event.Payload, &req)
 			fmt.Println("address", req.Signer)
 			fmt.Println("tosign", req.ToSign)
-			pvc.ResponseWalletEvent(ctx, &types.ResponseEvent{
+			_ = pvc.ResponseWalletEvent(ctx, &types.ResponseEvent{
 				Id:      event.Id,
 				Payload: []byte{1, 2, 3, 54, 6},
 				//		Error:   err.Error(),

@@ -1,9 +1,10 @@
 package walletevent
 
 import (
+	"time"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/google/uuid"
-	"time"
 )
 
 type WalletDetail struct {
@@ -22,4 +23,6 @@ type ConnectState struct {
 
 type WalletRegisterPolicy struct {
 	SupportAccounts []string
+	// a slice byte provide by wallet, using to verify address is really exist
+	SignBytes []byte
 }

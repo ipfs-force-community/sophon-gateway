@@ -2,20 +2,23 @@ package walletevent
 
 import (
 	"context"
+	"sync"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"golang.org/x/xerrors"
-	"sync"
 )
 
 type walletChannelInfo struct {
 	*types.ChannelInfo
 	addrs map[address.Address]struct{}
+	// a slice byte provide by wallet, using to verify address is really exist
+	signBytes []byte
 }
 
-func newWalletChannelInfo(channelInfo *types.ChannelInfo, addrs []address.Address) *walletChannelInfo {
-	walletInfo := &walletChannelInfo{ChannelInfo: channelInfo, addrs: make(map[address.Address]struct{})}
+func newWalletChannelInfo(channelInfo *types.ChannelInfo, addrs []address.Address, signBytes []byte) *walletChannelInfo {
+	walletInfo := &walletChannelInfo{ChannelInfo: channelInfo, addrs: make(map[address.Address]struct{}), signBytes: signBytes}
 	for _, addr := range addrs {
 		walletInfo.addrs[addr] = struct{}{}
 	}
@@ -29,7 +32,8 @@ type WalletInfo struct {
 }
 
 type IWalletConnMgr interface {
-	AddNewConn(string, []string, []address.Address, *walletChannelInfo) error
+	AddNewConn(string, *WalletRegisterPolicy, []address.Address, *walletChannelInfo) error
+	GetConn(walletAccount string, channelID uuid.UUID) (*walletChannelInfo, error)
 	RemoveConn(string, *walletChannelInfo) error
 	AddSupportAccount(string, string) error
 	GetChannels(string, address.Address) ([]*types.ChannelInfo, error)
@@ -55,7 +59,7 @@ func newWalletConnMgr() *walletConnMgr {
 	}
 }
 
-func (w *walletConnMgr) AddNewConn(walletAccount string, accounts []string, addrs []address.Address, channel *walletChannelInfo) error {
+func (w *walletConnMgr) AddNewConn(walletAccount string, policy *WalletRegisterPolicy, addrs []address.Address, channel *walletChannelInfo) error {
 	w.infoLk.Lock()
 	defer w.infoLk.Unlock()
 
@@ -63,7 +67,7 @@ func (w *walletConnMgr) AddNewConn(walletAccount string, accounts []string, addr
 	var ok bool
 	if walletInfo, ok = w.walletInfos[walletAccount]; ok {
 		walletInfo.Connections[channel.ChannelId] = channel
-		for _, supportAccount := range accounts {
+		for _, supportAccount := range policy.SupportAccounts {
 			_, ok := walletInfo.SupportAccounts[supportAccount]
 			if !ok {
 				walletInfo.SupportAccounts[supportAccount] = struct{}{}
@@ -76,7 +80,7 @@ func (w *walletConnMgr) AddNewConn(walletAccount string, accounts []string, addr
 			Connections:     map[uuid.UUID]*walletChannelInfo{channel.ChannelId: channel},
 		}
 
-		for _, supportAccount := range accounts {
+		for _, supportAccount := range policy.SupportAccounts {
 			walletInfo.SupportAccounts[supportAccount] = struct{}{}
 		}
 		w.walletInfos[walletAccount] = walletInfo
@@ -86,9 +90,23 @@ func (w *walletConnMgr) AddNewConn(walletAccount string, accounts []string, addr
 		"walletName", walletAccount,
 		"addrs", addrs,
 		"support", walletInfo.SupportAccounts,
+		"signBytes", policy.SignBytes,
 	)
 	return nil
 
+}
+
+func (w *walletConnMgr) GetConn(walletAccount string, channelID uuid.UUID) (*walletChannelInfo, error) {
+	w.infoLk.Lock()
+	defer w.infoLk.Unlock()
+
+	if walletInfo, ok := w.walletInfos[walletAccount]; ok {
+		if conn, ok := walletInfo.Connections[channelID]; ok {
+			return conn, nil
+		}
+	}
+
+	return nil, xerrors.Errorf("no connect found for wallet %s and channelID %s", walletAccount, channelID)
 }
 
 func (w *walletConnMgr) RemoveConn(walletAccount string, info *walletChannelInfo) error {
@@ -192,13 +210,13 @@ func (w *walletConnMgr) ListWalletInfo(ctx context.Context) ([]*WalletDetail, er
 	for walletAccount, walletInfo := range w.walletInfos {
 		walletDetail := &WalletDetail{}
 		walletDetail.Account = walletAccount
-		for account, _ := range walletInfo.SupportAccounts {
+		for account := range walletInfo.SupportAccounts {
 			walletDetail.SupportAccounts = append(walletDetail.SupportAccounts, account)
 		}
 		walletDetail.ConnectStates = []ConnectState{}
 		for channelId, wallet := range walletInfo.Connections {
 			var addrs []address.Address
-			for addr, _ := range wallet.addrs {
+			for addr := range wallet.addrs {
 				addrs = append(addrs, addr)
 			}
 			cstate := ConnectState{
@@ -222,13 +240,13 @@ func (w *walletConnMgr) ListWalletInfoByWallet(ctx context.Context, wallet strin
 	if walletInfo, ok := w.walletInfos[wallet]; ok {
 		walletDetail := &WalletDetail{}
 		walletDetail.Account = walletInfo.WalletAccount
-		for account, _ := range walletInfo.SupportAccounts {
+		for account := range walletInfo.SupportAccounts {
 			walletDetail.SupportAccounts = append(walletDetail.SupportAccounts, account)
 		}
 		walletDetail.ConnectStates = []ConnectState{}
 		for channelId, wallet := range walletInfo.Connections {
 			var addrs []address.Address
-			for addr, _ := range wallet.addrs {
+			for addr := range wallet.addrs {
 				addrs = append(addrs, addr)
 			}
 			cstate := ConnectState{
