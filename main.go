@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/ipfs-force-community/metrics/ratelimit"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/ipfs-force-community/metrics/ratelimit"
 
 	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
@@ -45,7 +46,7 @@ func main() {
 			runCmd, cmds.MinerCmds, cmds.WalletCmds,
 		},
 	}
-	app.Version = version.UserVersion + "--" + version.CurrentCommit
+	app.Version = version.UserVersion
 	if err := app.Run(os.Args); err != nil {
 		log.Warn(err)
 		os.Exit(1)
@@ -90,6 +91,8 @@ var runCmd = &cli.Command{
 		if err != nil {
 			return fmt.Errorf("make token failed:%s", err.Error())
 		}
+
+		log.Infof("venus-gateway current version %s, listen %s", version.UserVersion, address)
 
 		cli := jwtclient.NewJWTClient(cctx.String("auth-url"))
 

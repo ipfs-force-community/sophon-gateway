@@ -60,7 +60,7 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *Walle
 	go func() {
 		channel := types.NewChannelInfo(ip, out)
 		//todo validate the account exit or not
-		addrs, err := e.getValidatedAddress(ctx, channel, policy.SignBytes)
+		addrs, err := e.getValidatedAddress(ctx, channel, policy.SignBytes, walletAccount)
 		if err != nil {
 			close(out)
 			log.Error(err)
@@ -130,7 +130,7 @@ func (e *WalletEventStream) AddNewAddress(ctx context.Context, channelId uuid.UU
 		return err
 	}
 	for _, addr := range addrs {
-		if err := e.verifyAddress(ctx, addr, info.ChannelInfo, info.signBytes); err != nil {
+		if err := e.verifyAddress(ctx, addr, info.ChannelInfo, info.signBytes, walletAccount); err != nil {
 			return err
 		}
 	}
@@ -189,7 +189,7 @@ func (e *WalletEventStream) ListWalletInfoByWallet(ctx context.Context, wallet s
 	return e.walletConnMgr.ListWalletInfoByWallet(ctx, wallet)
 }
 
-func (e *WalletEventStream) getValidatedAddress(ctx context.Context, channel *types.ChannelInfo, signBytes []byte) ([]address.Address, error) {
+func (e *WalletEventStream) getValidatedAddress(ctx context.Context, channel *types.ChannelInfo, signBytes []byte, walletAccount string) ([]address.Address, error) {
 	var addrs []address.Address
 	err := e.SendRequest(ctx, []*types.ChannelInfo{channel}, "WalletList", nil, &addrs)
 	if err != nil {
@@ -199,7 +199,7 @@ func (e *WalletEventStream) getValidatedAddress(ctx context.Context, channel *ty
 	// validate the wallet is really has the address
 	validAddrs := make([]address.Address, 0, len(addrs))
 	for _, addr := range addrs {
-		if err := e.verifyAddress(ctx, addr, channel, signBytes); err != nil {
+		if err := e.verifyAddress(ctx, addr, channel, signBytes, walletAccount); err != nil {
 			return nil, err
 		}
 		validAddrs = append(validAddrs, addr)
@@ -208,7 +208,7 @@ func (e *WalletEventStream) getValidatedAddress(ctx context.Context, channel *ty
 	return validAddrs, nil
 }
 
-func (e *WalletEventStream) verifyAddress(ctx context.Context, addr address.Address, channel *types.ChannelInfo, signBytes []byte) error {
+func (e *WalletEventStream) verifyAddress(ctx context.Context, addr address.Address, channel *types.ChannelInfo, signBytes []byte, walletAccount string) error {
 	signData := hash256.Sum(append(e.randBytes, signBytes...))
 	payload, err := json.Marshal(&types.WalletSignRequest{
 		Signer: addr,
@@ -221,12 +221,12 @@ func (e *WalletEventStream) verifyAddress(ctx context.Context, addr address.Addr
 	var sig crypto.Signature
 	err = e.SendRequest(ctx, []*types.ChannelInfo{channel}, "WalletSign", payload, &sig)
 	if err != nil {
-		return xerrors.Errorf("verify address(%s), wallet sign: %v", addr.String(), err)
+		return xerrors.Errorf("wallet %s verify address %s failed, signed error %v", walletAccount, addr.String(), err)
 	}
 	if err := wcrypto.Verify(&sig, addr, signData); err != nil {
-		return xerrors.Errorf("verify address(%s) failed: %v", addr.String(), err)
+		return xerrors.Errorf("wallet %s verify address %s failed: %v", walletAccount, addr.String(), err)
 	}
-	log.Infof("verify address %s success, channel id %s", addr, channel.ChannelId)
+	log.Infof("wallet %s verify address %s success", walletAccount, addr)
 
 	return nil
 }

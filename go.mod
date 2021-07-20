@@ -10,6 +10,7 @@ require (
 	github.com/filecoin-project/venus-auth v1.2.1
 	github.com/filecoin-project/venus-wallet v1.2.0
 	github.com/gbrlsnchs/jwt/v3 v3.0.0
+	github.com/google/flatbuffers v1.12.1 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v0.0.0-20210716075100-f6c912bf4b47
