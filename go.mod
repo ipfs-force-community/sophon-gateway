@@ -12,7 +12,7 @@ require (
 	github.com/gbrlsnchs/jwt/v3 v3.0.0
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
-	github.com/ipfs-force-community/metrics v0.0.0-20210716075100-f6c912bf4b47
+	github.com/ipfs-force-community/metrics v0.0.0-20210721090333-ec5dd3d53773
 	github.com/ipfs/go-cid v0.0.7
 	github.com/ipfs/go-log/v2 v2.1.3
 	github.com/multiformats/go-multiaddr v0.3.3
@@ -22,7 +22,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 )
 
-replace github.com/filecoin-project/go-jsonrpc => github.com/ipfs-force-community/go-jsonrpc v0.1.4-0.20210521084414-5a2e6709d9bd
+replace github.com/filecoin-project/go-jsonrpc => github.com/ipfs-force-community/go-jsonrpc v0.1.4-0.20210721090446-4ad25dff868c
 
 replace github.com/ipfs/go-ipfs-cmds => github.com/ipfs-force-community/go-ipfs-cmds v0.6.1-0.20210521090123-4587df7fa0ab
 
