@@ -76,7 +76,7 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *Walle
 			return
 		}
 
-		log.Infof("add new connections %s", walletChannelInfo.ChannelId)
+		log.Infof("add new connections %s %s", walletAccount, walletChannelInfo.ChannelId)
 		//todo rescan address to add new address or remove
 
 		connectBytes, err := json.Marshal(types.ConnectedCompleted{
@@ -209,7 +209,9 @@ func (e *WalletEventStream) getValidatedAddress(ctx context.Context, channel *ty
 }
 
 func (e *WalletEventStream) verifyAddress(ctx context.Context, addr address.Address, channel *types.ChannelInfo, signBytes []byte, walletAccount string) error {
-	signData := hash256.Sum(append(e.randBytes, signBytes...))
+	hasher := sha256.New()
+	_, _ = hasher.Write(append(e.randBytes, signBytes...))
+	signData := hash256.Sum(nil)
 	payload, err := json.Marshal(&types.WalletSignRequest{
 		Signer: addr,
 		ToSign: signData,
