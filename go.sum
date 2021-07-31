@@ -473,8 +473,8 @@ github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 h1:W9WBk7
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
 github.com/ipfs-force-community/go-ipfs-cmds v0.6.1-0.20210521090123-4587df7fa0ab h1:+Jov61TTljdzTKBecQizmUWJ6IIoVgzjukKppVr5TgI=
 github.com/ipfs-force-community/go-ipfs-cmds v0.6.1-0.20210521090123-4587df7fa0ab/go.mod h1:ZgYiWVnCk43ChwoH8hAmI1IRbuVtq3GSTHwtRB/Kqhk=
-github.com/ipfs-force-community/go-jsonrpc v0.1.4-0.20210521084414-5a2e6709d9bd h1:ixRwQin8yWcnsTnyGvnk3EuL/i3aHmzmdLMnQuJYOqU=
-github.com/ipfs-force-community/go-jsonrpc v0.1.4-0.20210521084414-5a2e6709d9bd/go.mod h1:XBBpuKIMaXIIzeqzO1iucq4GvbF8CxmXRFoezRh+Cx4=
+github.com/ipfs-force-community/go-jsonrpc v0.1.4-0.20210731021807-68e5207079bc h1:L4JH2Ltl/Embq4qYezs3RsIYW1BB/fB9TfUkk42FOzU=
+github.com/ipfs-force-community/go-jsonrpc v0.1.4-0.20210731021807-68e5207079bc/go.mod h1:XBBpuKIMaXIIzeqzO1iucq4GvbF8CxmXRFoezRh+Cx4=
 github.com/ipfs-force-community/metrics v0.0.0-20210714124606-3d65e2d7cec1/go.mod h1:mn40SioMuKtjmRumHFy/fJ26Pn028XuDjUJE9dorjyw=
 github.com/ipfs-force-community/metrics v0.0.0-20210716075100-f6c912bf4b47 h1:ZJSDVkO3he5765itE+gOfEf2yPUVphb95yA41hAqV20=
 github.com/ipfs-force-community/metrics v0.0.0-20210716075100-f6c912bf4b47/go.mod h1:mn40SioMuKtjmRumHFy/fJ26Pn028XuDjUJE9dorjyw=
