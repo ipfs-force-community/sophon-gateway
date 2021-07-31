@@ -26,4 +26,4 @@ replace github.com/ipfs/go-ipfs-cmds => github.com/ipfs-force-community/go-ipfs-
 
 replace github.com/ipfs-force-community/venus-gateway => ./
 
-replace github.com/filecoin-project/go-jsonrpc => github.com/ipfs-force-community/go-jsonrpc v0.1.4-0.20210721095535-a67dff16de21
+replace github.com/filecoin-project/go-jsonrpc => github.com/ipfs-force-community/go-jsonrpc v0.1.4-0.20210731021807-68e5207079bc
