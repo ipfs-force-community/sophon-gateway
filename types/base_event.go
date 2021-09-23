@@ -98,14 +98,14 @@ func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, me
 	case channel.OutBound <- request:
 		log.Debug("send request %s to %s", method, channel.Ip)
 	case <-ctx.Done():
-		return nil, xerrors.Errorf("send request cancel by context")
+		return nil, xerrors.Errorf("send request cancel by context %w", ctx.Err())
 	}
 
 	//wait for result
 	//timeout here
 	select {
 	case <-ctx.Done():
-		return nil, xerrors.Errorf("cancel by context")
+		return nil, xerrors.Errorf("cancel by context %w", ctx.Err())
 	case respEvent := <-resultCh:
 		return respEvent, nil
 	}
