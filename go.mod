@@ -7,6 +7,7 @@ require (
 	github.com/filecoin-project/go-jsonrpc v0.1.4-0.20210217175800-45ea43ac2bec
 	github.com/filecoin-project/go-state-types v0.1.1-0.20210506134452-99b279731c48
 	github.com/filecoin-project/specs-actors/v5 v5.0.1
+	github.com/filecoin-project/specs-storage v0.1.1-0.20201105051918-5188d9774506
 	github.com/filecoin-project/venus-auth v1.2.2-0.20210721103851-593a379c4916
 	github.com/filecoin-project/venus-wallet v1.2.0
 	github.com/gbrlsnchs/jwt/v3 v3.0.0
@@ -15,6 +16,7 @@ require (
 	github.com/ipfs-force-community/metrics v1.0.0
 	github.com/ipfs/go-cid v0.0.7
 	github.com/ipfs/go-log/v2 v2.1.3
+	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/multiformats/go-multiaddr v0.3.3
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli/v2 v2.3.0

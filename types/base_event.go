@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/modern-go/reflect2"
 	"sync"
 	"time"
 
@@ -37,14 +38,26 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 	if len(channels) == 0 {
 		return xerrors.Errorf("send request must have channel")
 	}
+
+	processResp := func(resp *ResponseEvent) error {
+		if len(resp.Error) > 0 {
+			return errors.New(resp.Error)
+		}
+
+		if !reflect2.IsNil(result) {
+			return json.Unmarshal(resp.Payload, result)
+		}
+		return nil
+	}
 	firstChanel := channels[0]
-	respEvent, err := e.sendOnce(ctx, firstChanel, method, payload)
+	resp, err := e.sendOnce(ctx, firstChanel, method, payload)
 	if err == nil {
-		return json.Unmarshal(respEvent.Payload, result)
+		return processResp(resp)
 	}
 	if len(channels) == 1 {
 		return err
 	}
+
 	log.Warnf("the first channel is fail, try to other channesl")
 	otherChannels := channels[1:]
 	respCh := make(chan *ResponseEvent)
@@ -61,7 +74,7 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 
 	select {
 	case resp := <-respCh:
-		return json.Unmarshal(resp.Payload, &result)
+		return processResp(resp)
 	case <-ctx.Done():
 		return xerrors.Errorf("request cancel by context")
 	}
@@ -94,9 +107,6 @@ func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, me
 	case <-ctx.Done():
 		return nil, xerrors.Errorf("cancel by context")
 	case respEvent := <-resultCh:
-		if len(respEvent.Error) > 0 {
-			return nil, errors.New(respEvent.Error)
-		}
 		return respEvent, nil
 	}
 }
