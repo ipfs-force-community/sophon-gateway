@@ -14,6 +14,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v1.0.0
+	github.com/ipfs-force-community/venus-common-utils v0.0.0-20210924063144-1d3a5b30de87 // indirect
 	github.com/ipfs/go-cid v0.0.7
 	github.com/ipfs/go-log/v2 v2.3.0
 	github.com/modern-go/reflect2 v1.0.1

@@ -2,6 +2,7 @@ package marketevent
 
 import (
 	"context"
+	types2 "github.com/ipfs-force-community/venus-common-utils/types"
 	"github.com/ipfs/go-cid"
 
 	"github.com/filecoin-project/go-address"
@@ -20,10 +21,10 @@ type IMarketEvent interface {
 	ListMinerConnection(ctx context.Context, addr address.Address) (*MinerState, error)
 
 	//should use  storiface.UnpaddedByteIndex as type for offset
-	IsUnsealed(ctx context.Context, miner address.Address, sector storage.SectorRef, offset uint64, size abi.UnpaddedPieceSize) (bool, error)
+	IsUnsealed(ctx context.Context, miner address.Address, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error)
 	// SectorsUnsealPiece will Unseal a Sealed sector file for the given sector.
 	//should use  storiface.UnpaddedByteIndex as type for offset
-	SectorsUnsealPiece(ctx context.Context, miner address.Address, sector storage.SectorRef, offset uint64, size abi.UnpaddedPieceSize, randomness abi.SealRandomness, commd cid.Cid, dest string) error
+	SectorsUnsealPiece(ctx context.Context, miner address.Address, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, randomness abi.SealRandomness, commd cid.Cid, dest string) error
 }
 
 var _ IMarketEventAPI = (*MarketEventAPI)(nil)
