@@ -4,7 +4,6 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/specs-storage/storage"
 	types2 "github.com/ipfs-force-community/venus-common-utils/types"
-	"github.com/ipfs/go-cid"
 	"sync"
 	"time"
 
@@ -113,12 +112,10 @@ type IsUnsealResponse struct {
 }
 
 type UnsealRequest struct {
-	Sector     storage.SectorRef
-	Offset     types2.PaddedByteIndex
-	Size       abi.PaddedPieceSize
-	Randomness abi.SealRandomness
-	Commd      cid.Cid
-	Dest       string
+	Sector storage.SectorRef
+	Offset types2.PaddedByteIndex
+	Size   abi.PaddedPieceSize
+	Dest   string
 }
 
 type UnsealResponse struct {

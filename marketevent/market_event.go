@@ -7,7 +7,6 @@ import (
 	"github.com/filecoin-project/specs-storage/storage"
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	types2 "github.com/ipfs-force-community/venus-common-utils/types"
-	"github.com/ipfs/go-cid"
 	"sync"
 	"time"
 
@@ -132,14 +131,12 @@ func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Addres
 	}
 }
 
-func (e *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, randomness abi.SealRandomness, commd cid.Cid, dest string) error {
+func (e *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
 	reqBody := UnsealRequest{
-		Sector:     sector,
-		Offset:     offset,
-		Size:       size,
-		Randomness: randomness,
-		Commd:      commd,
-		Dest:       dest,
+		Sector: sector,
+		Offset: offset,
+		Size:   size,
+		Dest:   dest,
 	}
 
 	payload, err := json.Marshal(reqBody)
