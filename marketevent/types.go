@@ -4,6 +4,7 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/specs-storage/storage"
 	types2 "github.com/ipfs-force-community/venus-common-utils/types"
+	"github.com/ipfs/go-cid"
 	"sync"
 	"time"
 
@@ -103,19 +104,21 @@ type MarketRegisterPolicy struct {
 }
 
 type IsUnsealRequest struct {
-	Sector storage.SectorRef
-	Offset types2.PaddedByteIndex
-	Size   abi.PaddedPieceSize
+	PieceCid cid.Cid
+	Sector   storage.SectorRef
+	Offset   types2.PaddedByteIndex
+	Size     abi.PaddedPieceSize
 }
 
 type IsUnsealResponse struct {
 }
 
 type UnsealRequest struct {
-	Sector storage.SectorRef
-	Offset types2.PaddedByteIndex
-	Size   abi.PaddedPieceSize
-	Dest   string
+	PieceCid cid.Cid
+	Sector   storage.SectorRef
+	Offset   types2.PaddedByteIndex
+	Size     abi.PaddedPieceSize
+	Dest     string
 }
 
 type UnsealResponse struct {

@@ -7,6 +7,7 @@ import (
 	"github.com/filecoin-project/specs-storage/storage"
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	types2 "github.com/ipfs-force-community/venus-common-utils/types"
+	"github.com/ipfs/go-cid"
 	"sync"
 	"time"
 
@@ -106,11 +107,12 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *Marke
 	return out, nil
 }
 
-func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Address, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
+func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
 	reqBody := IsUnsealRequest{
-		Sector: sector,
-		Offset: offset,
-		Size:   size,
+		PieceCid: pieceCid,
+		Sector:   sector,
+		Offset:   offset,
+		Size:     size,
 	}
 
 	payload, err := json.Marshal(reqBody)
@@ -131,12 +133,13 @@ func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Addres
 	}
 }
 
-func (e *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
+func (e *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
 	reqBody := UnsealRequest{
-		Sector: sector,
-		Offset: offset,
-		Size:   size,
-		Dest:   dest,
+		PieceCid: pieceCid,
+		Sector:   sector,
+		Offset:   offset,
+		Size:     size,
+		Dest:     dest,
 	}
 
 	payload, err := json.Marshal(reqBody)
