@@ -152,7 +152,7 @@ func (e *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner addres
 		return err
 	}
 
-	return e.SendRequest(ctx, channels, "IsUnsealed", payload, nil)
+	return e.SendRequest(ctx, channels, "SectorsUnsealPiece", payload, nil)
 }
 
 func (e *MarketEventStream) getChannels(mAddr address.Address) ([]*types.ChannelInfo, error) {
