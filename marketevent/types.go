@@ -3,6 +3,7 @@ package marketevent
 import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/specs-storage/storage"
+	types2 "github.com/ipfs-force-community/venus-common-utils/types"
 	"github.com/ipfs/go-cid"
 	"sync"
 	"time"
@@ -104,8 +105,8 @@ type MarketRegisterPolicy struct {
 
 type IsUnsealRequest struct {
 	Sector storage.SectorRef
-	Offset uint64
-	Size   abi.UnpaddedPieceSize
+	Offset types2.PaddedByteIndex
+	Size   abi.PaddedPieceSize
 }
 
 type IsUnsealResponse struct {
@@ -113,8 +114,8 @@ type IsUnsealResponse struct {
 
 type UnsealRequest struct {
 	Sector     storage.SectorRef
-	Offset     uint64
-	Size       abi.UnpaddedPieceSize
+	Offset     types2.PaddedByteIndex
+	Size       abi.PaddedPieceSize
 	Randomness abi.SealRandomness
 	Commd      cid.Cid
 	Dest       string
