@@ -11,7 +11,7 @@ import (
 
 type IMarketEventAPI interface {
 	ResponseMarketEvent(ctx context.Context, resp *types.ResponseEvent) error
-	ListenMarketEvent(ctx context.Context, policy *MarketRegisterPolicy) (chan *types.RequestEvent, error)
+	ListenMarketEvent(ctx context.Context, policy *MarketRegisterPolicy) (<-chan *types.RequestEvent, error)
 }
 
 type IMarketEvent interface {
@@ -40,6 +40,6 @@ func (marketEventAPI *MarketEventAPI) ResponseMarketEvent(ctx context.Context, r
 	return marketEventAPI.marketEvent.ResponseEvent(ctx, resp)
 }
 
-func (marketEventAPI *MarketEventAPI) ListenMarketEvent(ctx context.Context, policy *MarketRegisterPolicy) (chan *types.RequestEvent, error) {
+func (marketEventAPI *MarketEventAPI) ListenMarketEvent(ctx context.Context, policy *MarketRegisterPolicy) (<-chan *types.RequestEvent, error) {
 	return marketEventAPI.marketEvent.ListenMarketEvent(ctx, policy)
 }
