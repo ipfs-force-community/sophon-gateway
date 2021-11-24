@@ -21,18 +21,19 @@ type FullStruct struct {
 }
 
 type IProofEventStruct struct {
-	ResponseProofEvent  func(ctx context.Context, resp *types.ResponseEvent) error                                                                             `perm:"read"`
-	ListenProofEvent    func(ctx context.Context, policy *proofevent.ProofRegisterPolicy) (chan *types.RequestEvent, error)                                    `perm:"read"`
-	ListConnectedMiners func(ctx context.Context) ([]address.Address, error)                                                                                   `perm:"read"`
-	ListMinerConnection func(ctx context.Context, addr address.Address) (*proofevent.MinerState, error)                                                        `perm:"read"`
-	ComputeProof        func(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error) `perm:"read"`
+	ListConnectedMiners func(ctx context.Context) ([]address.Address, error)                                                                                   `perm:"admin"`
+	ListMinerConnection func(ctx context.Context, addr address.Address) (*proofevent.MinerState, error)                                                        `perm:"admin"`
+	ComputeProof        func(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error) `perm:"admin"`
+
+	ResponseProofEvent func(ctx context.Context, resp *types.ResponseEvent) error                                          `perm:"read"`
+	ListenProofEvent   func(ctx context.Context, policy *proofevent.ProofRegisterPolicy) (chan *types.RequestEvent, error) `perm:"read"`
 }
 
 type IWalletEvent struct {
-	ListWalletInfo         func(ctx context.Context) ([]*walletevent.WalletDetail, error)                                                                 `perm:"read"`
-	ListWalletInfoByWallet func(ctx context.Context, wallet string) (*walletevent.WalletDetail, error)                                                    `perm:"read"`
-	WalletHas              func(ctx context.Context, supportAccount string, addr address.Address) (bool, error)                                           `perm:"read"`
-	WalletSign             func(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error) `perm:"read"`
+	ListWalletInfo         func(ctx context.Context) ([]*walletevent.WalletDetail, error)                                                                 `perm:"admin"`
+	ListWalletInfoByWallet func(ctx context.Context, wallet string) (*walletevent.WalletDetail, error)                                                    `perm:"admin"`
+	WalletHas              func(ctx context.Context, supportAccount string, addr address.Address) (bool, error)                                           `perm:"admin"`
+	WalletSign             func(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error) `perm:"admin"`
 
 	ResponseWalletEvent func(ctx context.Context, resp *types.ResponseEvent) error                                            `perm:"read"`
 	ListenWalletEvent   func(ctx context.Context, policy *walletevent.WalletRegisterPolicy) (chan *types.RequestEvent, error) `perm:"read"`
