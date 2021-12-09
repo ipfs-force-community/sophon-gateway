@@ -4,19 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/filecoin-project/specs-storage/storage"
-	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
-	types2 "github.com/ipfs-force-community/venus-common-utils/types"
-	"github.com/ipfs/go-cid"
+	"github.com/filecoin-project/venus-auth/auth"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
 	"golang.org/x/xerrors"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
-	"github.com/google/uuid"
+	"github.com/filecoin-project/specs-storage/storage"
+
+	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
+	types2 "github.com/ipfs-force-community/venus-common-utils/types"
 
 	"github.com/ipfs-force-community/venus-gateway/types"
 )
@@ -34,6 +36,17 @@ type MarketEventStream struct {
 }
 
 type MinerValidator func(miner address.Address) (bool, error)
+
+func NewMinerValidator(authClient types.IAuthClient) func(miner address.Address) (bool, error) {
+	return func(miner address.Address) (bool, error) {
+		has, err := authClient.HasMiner(&auth.HasMinerRequest{Miner: miner.String()})
+		if err != nil || !has {
+			return false, xerrors.Errorf("address %s not exit", miner.String())
+		}
+
+		return true, nil
+	}
+}
 
 func NewMarketEventStream(ctx context.Context, valaidator MinerValidator, cfg *types.Config) *MarketEventStream {
 	marketEventStream := &MarketEventStream{
@@ -170,25 +183,4 @@ func (e *MarketEventStream) getChannels(mAddr address.Address) ([]*types.Channel
 		return nil, xerrors.Errorf("cannot find any connection for miner %s", mAddr)
 	}
 	return channels, nil
-}
-
-func (e *MarketEventStream) ListConnectedMiners(ctx context.Context) ([]address.Address, error) {
-	e.connLk.Lock()
-	defer e.connLk.Unlock()
-	var miners []address.Address
-	for miner := range e.minerConnections {
-		miners = append(miners, miner)
-	}
-	return miners, nil
-}
-
-func (e *MarketEventStream) ListMinerConnection(ctx context.Context, addr address.Address) (*MinerState, error) {
-	e.connLk.Lock()
-	defer e.connLk.Unlock()
-
-	if store, ok := e.minerConnections[addr]; ok {
-		return store.getChannelState(), nil
-	} else {
-		return nil, xerrors.Errorf("miner %s not exit", addr)
-	}
 }

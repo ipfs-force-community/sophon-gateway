@@ -15,10 +15,8 @@ type IMarketEventAPI interface {
 	ListenMarketEvent(ctx context.Context, policy *MarketRegisterPolicy) (<-chan *types.RequestEvent, error)
 }
 
+// TODO: need ListConnectedMiners & ListConnectedMiners ?
 type IMarketEvent interface {
-	ListConnectedMiners(ctx context.Context) ([]address.Address, error)
-	ListMinerConnection(ctx context.Context, addr address.Address) (*MinerState, error)
-
 	//should use  storiface.UnpaddedByteIndex as type for offset
 	IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error)
 	// SectorsUnsealPiece will Unseal a Sealed sector file for the given sector.
