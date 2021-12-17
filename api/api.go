@@ -51,7 +51,7 @@ type IWalletEvent struct {
 }
 
 type IMarketEvent struct {
-	ListMarketConnectionsState func(ctx context.Context) []marketevent.MarketConnectionState                                                                                                            `perm:"admin"`
+	ListMarketConnectionsState func(ctx context.Context) ([]marketevent.MarketConnectionState, error)                                                                                                   `perm:"admin"`
 	IsUnsealed                 func(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error)      `perm:"admin"`
 	SectorsUnsealPiece         func(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error `perm:"admin"`
 

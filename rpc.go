@@ -92,5 +92,5 @@ func (g *GatewayAPI) SectorsUnsealPiece(ctx context.Context, miner address.Addre
 }
 
 func (g *GatewayAPI) ListMarketConnectionsState(ctx context.Context) ([]marketevent.MarketConnectionState, error) {
-	return g.me.ListMarketConnectionsState(ctx), nil
+	return g.me.ListMarketConnectionsState(ctx)
 }
