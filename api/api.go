@@ -25,6 +25,7 @@ import (
 type FullStruct struct {
 	IProofEventStruct
 	IWalletEvent
+	IMarketEvent
 }
 
 type IProofEventStruct struct {
@@ -50,9 +51,10 @@ type IWalletEvent struct {
 }
 
 type IMarketEvent struct {
+	ListMarketConnectionsState func(ctx context.Context) []marketevent.MarketConnectionState                                                                                                            `perm:"admin"`
+	IsUnsealed                 func(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error)      `perm:"admin"`
+	SectorsUnsealPiece         func(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error `perm:"admin"`
+
 	ResponseMarketEvent func(ctx context.Context, resp *types.ResponseEvent) error                                              `perm:"read"`
 	ListenMarketEvent   func(ctx context.Context, policy *marketevent.MarketRegisterPolicy) (<-chan *types.RequestEvent, error) `perm:"read"`
-
-	IsUnsealed         func(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error)      `perm:"admin"`
-	SectorsUnsealPiece func(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error `perm:"admin"`
 }

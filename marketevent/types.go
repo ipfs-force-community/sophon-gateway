@@ -65,10 +65,10 @@ func (cs *channelStore) removeChanel(ch *types.ChannelInfo) error {
 	return nil
 }
 
-func (cs *channelStore) getChannelState() *MinerState {
+func (cs *channelStore) getChannelState() *ConnState {
 	cs.lk.Lock()
 	defer cs.lk.Unlock()
-	cstate := &MinerState{}
+	cstate := &ConnState{}
 	for chid, chanStore := range cs.channels {
 		cstate.ConnectionCount++
 		cstate.Connections = append(cstate.Connections, &ConnectState{
@@ -94,11 +94,6 @@ type ConnectState struct {
 	CreateTime   time.Time
 }
 
-type MinerState struct {
-	Connections     []*ConnectState
-	ConnectionCount int
-}
-
 type MarketRegisterPolicy struct {
 	Miner address.Address
 }
@@ -122,4 +117,14 @@ type UnsealRequest struct {
 }
 
 type UnsealResponse struct {
+}
+
+type ConnState struct {
+	Connections     []*ConnectState
+	ConnectionCount int
+}
+
+type MarketConnectionState struct {
+	Addr address.Address
+	Conn ConnState
 }

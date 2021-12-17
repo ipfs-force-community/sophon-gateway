@@ -46,7 +46,7 @@ func main() {
 			},
 		},
 		Commands: []*cli.Command{
-			runCmd, cmds.MinerCmds, cmds.WalletCmds,
+			runCmd, cmds.MinerCmds, cmds.WalletCmds, cmds.MarketCmds,
 		},
 	}
 	app.Version = version.UserVersion

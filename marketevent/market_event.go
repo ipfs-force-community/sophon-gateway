@@ -120,6 +120,17 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *Marke
 	return out, nil
 }
 
+func (e *MarketEventStream) ListMarketConnectionsState(ctx context.Context) []MarketConnectionState {
+	var result []MarketConnectionState
+	for addr, conn := range e.minerConnections {
+		result = append(result, MarketConnectionState{
+			Addr: addr,
+			Conn: *conn.getChannelState(),
+		})
+	}
+	return result
+}
+
 func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
 	reqBody := IsUnsealRequest{
 		PieceCid: pieceCid,

@@ -90,3 +90,7 @@ func (g *GatewayAPI) IsUnsealed(ctx context.Context, miner address.Address, piec
 func (g *GatewayAPI) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
 	return g.me.SectorsUnsealPiece(ctx, miner, pieceCid, sector, offset, size, dest)
 }
+
+func (g *GatewayAPI) ListMarketConnectionsState(ctx context.Context) ([]marketevent.MarketConnectionState, error) {
+	return g.me.ListMarketConnectionsState(ctx), nil
+}
