@@ -30,7 +30,7 @@ var listMarketCmd = &cli.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Println(connBytes)
+		fmt.Println(string(connBytes))
 		return nil
 	},
 }
