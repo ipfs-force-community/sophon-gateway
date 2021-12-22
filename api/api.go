@@ -3,11 +3,18 @@ package api
 import (
 	"context"
 
+	"github.com/google/uuid"
+	"github.com/ipfs/go-cid"
+
+	"github.com/filecoin-project/specs-storage/storage"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/crypto"
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
-	"github.com/google/uuid"
+
+	types2 "github.com/ipfs-force-community/venus-common-utils/types"
+	"github.com/ipfs-force-community/venus-gateway/marketevent"
 
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -18,6 +25,7 @@ import (
 type FullStruct struct {
 	IProofEventStruct
 	IWalletEvent
+	IMarketEvent
 }
 
 type IProofEventStruct struct {
@@ -40,4 +48,13 @@ type IWalletEvent struct {
 	SupportNewAccount   func(ctx context.Context, channelId uuid.UUID, account string) error                                  `perm:"read"`
 	AddNewAddress       func(ctx context.Context, channelId uuid.UUID, newAddrs []address.Address) error                      `perm:"read"`
 	RemoveAddress       func(ctx context.Context, channelId uuid.UUID, newAddrs []address.Address) error                      `perm:"read"`
+}
+
+type IMarketEvent struct {
+	ListMarketConnectionsState func(ctx context.Context) ([]marketevent.MarketConnectionState, error)                                                                                                   `perm:"admin"`
+	IsUnsealed                 func(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error)      `perm:"admin"`
+	SectorsUnsealPiece         func(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error `perm:"admin"`
+
+	ResponseMarketEvent func(ctx context.Context, resp *types.ResponseEvent) error                                              `perm:"read"`
+	ListenMarketEvent   func(ctx context.Context, policy *marketevent.MarketRegisterPolicy) (<-chan *types.RequestEvent, error) `perm:"read"`
 }

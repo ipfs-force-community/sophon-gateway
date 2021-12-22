@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"context"
+	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -24,13 +25,14 @@ import (
 )
 
 type GatewayAPI struct {
-	ListWalletInfoByWallet func(ctx context.Context, wallet string) (*walletevent.WalletDetail, error)
-	ListWalletInfo         func(ctx context.Context) ([]*walletevent.WalletDetail, error)
-	ListMinerConnection    func(ctx context.Context, addr address.Address) (*proofevent.MinerState, error)
-	ListConnectedMiners    func(ctx context.Context) ([]address.Address, error)
-	WalletSign             func(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error)
-	WalletHas              func(ctx context.Context, supportAccount string, addr address.Address) (bool, error)
-	ComputeProof           func(ctx context.Context, miner address.Address, reqBody *types.ComputeProofRequest) ([]proof5.PoStProof, error)
+	ListWalletInfoByWallet     func(ctx context.Context, wallet string) (*walletevent.WalletDetail, error)
+	ListWalletInfo             func(ctx context.Context) ([]*walletevent.WalletDetail, error)
+	ListMinerConnection        func(ctx context.Context, addr address.Address) (*proofevent.MinerState, error)
+	ListConnectedMiners        func(ctx context.Context) ([]address.Address, error)
+	ListMarketConnectionsState func(ctx context.Context) ([]marketevent.MarketConnectionState, error)
+	WalletSign                 func(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error)
+	WalletHas                  func(ctx context.Context, supportAccount string, addr address.Address) (bool, error)
+	ComputeProof               func(ctx context.Context, miner address.Address, reqBody *types.ComputeProofRequest) ([]proof5.PoStProof, error)
 }
 
 func NewGatewayClient(ctx *cli.Context) (*GatewayAPI, jsonrpc.ClientCloser, error) {

@@ -25,7 +25,7 @@ type MsgMeta struct {
 	Extra []byte
 }
 
-const  (
+const (
 	MTUnknown       = MsgType("")
 	MTVerifyAddress = MsgType("verifyaddress")
 )

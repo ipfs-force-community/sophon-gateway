@@ -3,15 +3,20 @@ package main
 import (
 	"context"
 
+	"github.com/ipfs/go-cid"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/crypto"
+	"github.com/filecoin-project/specs-storage/storage"
 
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 
-	"github.com/ipfs-force-community/venus-gateway/types/wallet"
+	types2 "github.com/ipfs-force-community/venus-common-utils/types"
 
+	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
+	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
 )
 
@@ -26,44 +31,32 @@ type IGatewayAPI interface {
 	IGatewayPushAPI
 }
 
-type GatewayStruct struct {
-	ComputeProof           func(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error)
-	WalletHas              func(ctx context.Context, supportAccount string, addr address.Address) (bool, error)
-	WalletSign             func(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error)
-	ListConnectedMiners    func(ctx context.Context) ([]address.Address, error)
-	ListMinerConnection    func(ctx context.Context, addr address.Address) (*proofevent.MinerState, error)
-	ListWalletInfo         func(ctx context.Context) ([]*walletevent.WalletDetail, error)
-	ListWalletInfoByWallet func(ctx context.Context, wallet string) (*walletevent.WalletDetail, error)
-}
-
 var _ IGatewayAPI = (*GatewayAPI)(nil)
 
 type GatewayAPI struct {
 	proofevent.IProofEventAPI
-	walletevent.IWalletEventAPI
 	pe *proofevent.ProofEventStream
+
+	walletevent.IWalletEventAPI
 	we *walletevent.WalletEventStream
+
+	marketevent.IMarketEventAPI
+	me *marketevent.MarketEventStream
 }
 
-func NewGatewayAPI(pe *proofevent.ProofEventStream, we *walletevent.WalletEventStream) *GatewayAPI {
+func NewGatewayAPI(pe *proofevent.ProofEventStream, we *walletevent.WalletEventStream, me *marketevent.MarketEventStream) *GatewayAPI {
 	return &GatewayAPI{
 		IProofEventAPI:  proofevent.NewProofEventAPI(pe),
 		IWalletEventAPI: walletevent.NewWalletEventAPI(we),
+		IMarketEventAPI: marketevent.NewMarketEventAPI(me),
 		pe:              pe,
 		we:              we,
+		me:              me,
 	}
 }
 
 func (g *GatewayAPI) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error) {
 	return g.pe.ComputeProof(ctx, miner, sectorInfos, rand)
-}
-
-func (g *GatewayAPI) WalletHas(ctx context.Context, supportAccount string, addr address.Address) (bool, error) {
-	return g.we.WalletHas(ctx, supportAccount, addr)
-}
-
-func (g *GatewayAPI) WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error) {
-	return g.we.WalletSign(ctx, account, addr, toSign, meta)
 }
 
 func (g *GatewayAPI) ListConnectedMiners(ctx context.Context) ([]address.Address, error) {
@@ -74,10 +67,30 @@ func (g *GatewayAPI) ListMinerConnection(ctx context.Context, addr address.Addre
 	return g.pe.ListMinerConnection(ctx, addr)
 }
 
+func (g *GatewayAPI) WalletHas(ctx context.Context, supportAccount string, addr address.Address) (bool, error) {
+	return g.we.WalletHas(ctx, supportAccount, addr)
+}
+
+func (g *GatewayAPI) WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error) {
+	return g.we.WalletSign(ctx, account, addr, toSign, meta)
+}
+
 func (g *GatewayAPI) ListWalletInfo(ctx context.Context) ([]*walletevent.WalletDetail, error) {
 	return g.we.ListWalletInfo(ctx)
 }
 
 func (g *GatewayAPI) ListWalletInfoByWallet(ctx context.Context, wallet string) (*walletevent.WalletDetail, error) {
 	return g.we.ListWalletInfoByWallet(ctx, wallet)
+}
+
+func (g *GatewayAPI) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
+	return g.me.IsUnsealed(ctx, miner, pieceCid, sector, offset, size)
+}
+
+func (g *GatewayAPI) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
+	return g.me.SectorsUnsealPiece(ctx, miner, pieceCid, sector, offset, size, dest)
+}
+
+func (g *GatewayAPI) ListMarketConnectionsState(ctx context.Context) ([]marketevent.MarketConnectionState, error) {
+	return g.me.ListMarketConnectionsState(ctx)
 }

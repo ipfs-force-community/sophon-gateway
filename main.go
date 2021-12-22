@@ -8,23 +8,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ipfs-force-community/metrics/ratelimit"
-
 	"github.com/filecoin-project/go-jsonrpc"
-	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"github.com/gorilla/mux"
-	"github.com/ipfs-force-community/metrics"
-	"github.com/ipfs-force-community/venus-gateway/api"
-	"github.com/ipfs-force-community/venus-gateway/cmds"
-	"github.com/ipfs-force-community/venus-gateway/proofevent"
-	"github.com/ipfs-force-community/venus-gateway/types"
-	"github.com/ipfs-force-community/venus-gateway/version"
-	"github.com/ipfs-force-community/venus-gateway/walletevent"
 	logging "github.com/ipfs/go-log/v2"
 	multiaddr "github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
 	"github.com/urfave/cli/v2"
 	"go.opencensus.io/plugin/ochttp"
+
+	"github.com/ipfs-force-community/metrics/ratelimit"
+
+	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
+
+	"github.com/ipfs-force-community/metrics"
+	"github.com/ipfs-force-community/venus-gateway/api"
+	"github.com/ipfs-force-community/venus-gateway/cmds"
+	"github.com/ipfs-force-community/venus-gateway/marketevent"
+	"github.com/ipfs-force-community/venus-gateway/proofevent"
+	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/venus-gateway/version"
+	"github.com/ipfs-force-community/venus-gateway/walletevent"
 )
 
 var log = logging.Logger("main")
@@ -43,7 +46,7 @@ func main() {
 			},
 		},
 		Commands: []*cli.Command{
-			runCmd, cmds.MinerCmds, cmds.WalletCmds,
+			runCmd, cmds.MinerCmds, cmds.WalletCmds, cmds.MarketCmds,
 		},
 	}
 	app.Version = version.UserVersion
@@ -98,8 +101,12 @@ var runCmd = &cli.Command{
 
 		proofStream := proofevent.NewProofEventStream(ctx, cli, cfg)
 		walletStream := walletevent.NewWalletEventStream(ctx, cli, cfg)
+		marketStream := marketevent.NewMarketEventStream(ctx, marketevent.NewMinerValidator(cli), &types.Config{
+			RequestQueueSize: 30,
+			RequestTimeout:   time.Second * 30,
+		})
 
-		gatewayAPI := NewGatewayAPI(proofStream, walletStream)
+		gatewayAPI := NewGatewayAPI(proofStream, walletStream, marketStream)
 
 		log.Info("Setting up control endpoint at " + address)
 
