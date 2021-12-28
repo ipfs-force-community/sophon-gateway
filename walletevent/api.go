@@ -19,7 +19,7 @@ type IWalletEvent interface {
 
 type IWalletEventAPI interface {
 	ResponseWalletEvent(ctx context.Context, resp *types.ResponseEvent) error
-	ListenWalletEvent(ctx context.Context, policy *WalletRegisterPolicy) (chan *types.RequestEvent, error)
+	ListenWalletEvent(ctx context.Context, policy *WalletRegisterPolicy) (<-chan *types.RequestEvent, error)
 	SupportNewAccount(ctx context.Context, channelId uuid.UUID, account string) error
 	AddNewAddress(ctx context.Context, channelId uuid.UUID, newAddrs []address.Address) error
 	RemoveAddress(ctx context.Context, channelId uuid.UUID, newAddrs []address.Address) error
@@ -39,7 +39,7 @@ func (w *WalletEventAPI) ResponseWalletEvent(ctx context.Context, resp *types.Re
 	return w.walletEvent.ResponseEvent(ctx, resp)
 }
 
-func (w *WalletEventAPI) ListenWalletEvent(ctx context.Context, policy *WalletRegisterPolicy) (chan *types.RequestEvent, error) {
+func (w *WalletEventAPI) ListenWalletEvent(ctx context.Context, policy *WalletRegisterPolicy) (<-chan *types.RequestEvent, error) {
 	return w.walletEvent.ListenWalletEvent(ctx, policy)
 }
 
