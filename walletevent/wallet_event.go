@@ -98,7 +98,7 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *Walle
 			Result:     nil,
 		} //not response
 
-		for {
+		for { // nolint:gosimple
 			select {
 			case <-ctx.Done():
 				err := e.walletConnMgr.RemoveConn(walletAccount, walletChannelInfo)
