@@ -128,7 +128,7 @@ var runCmd = &cli.Command{
 		}
 
 		rpcServer.Register("Gateway", gatewayAPI)
-		rpcServer.Register("VENUS_MARKET", api.IMarketEvent(gatewayAPI))
+		rpcServer.Register("VENUS_MARKET", &gatewayAPI.(*api.GatewayFullNodeStruct).IMarketEventStruct)
 
 		mux := mux.NewRouter()
 		mux.Handle("/rpc/v0", rpcServer)
