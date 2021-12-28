@@ -21,7 +21,6 @@ endif
 
 GOFLAGS+=-ldflags="$(ldflags)"
 
-
 gateway: show-env $(BUILD_DEPS)
 	rm -f venus-gateway
 	go build $(GOFLAGS) -o venus-gateway
