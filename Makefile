@@ -21,6 +21,35 @@ endif
 
 GOFLAGS+=-ldflags="$(ldflags)"
 
+
+## FFI
+
+FFI_PATH:=extern/filecoin-ffi/
+FFI_DEPS:=.install-filcrypto
+FFI_DEPS:=$(addprefix $(FFI_PATH),$(FFI_DEPS))
+
+$(FFI_DEPS): extern/.filecoin-install ;
+
+extern/.filecoin-install: $(FFI_PATH)
+	$(MAKE) -C $(FFI_PATH) $(FFI_DEPS:$(FFI_PATH)%=%)
+	@touch $@
+
+MODULES+=$(FFI_PATH)
+BUILD_DEPS+=extern/.filecoin-install
+CLEAN+=extern/.filecoin-install
+
+ffi-version-check:
+	@[[ "$$(awk '/const Version/{print $$5}' extern/filecoin-ffi/version.go)" -eq 3 ]] || (echo "FFI version mismatch, update submodules"; exit 1)
+BUILD_DEPS+=ffi-version-check
+
+.PHONY: ffi-version-check
+
+$(MODULES): extern/.update-modules ;
+# dummy file that marks the last time modules were updated
+extern/.update-modules:
+	git submodule update --init --recursive
+	touch $@
+
 gateway: show-env $(BUILD_DEPS)
 	rm -f venus-gateway
 	go build $(GOFLAGS) -o venus-gateway
