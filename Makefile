@@ -22,10 +22,6 @@ endif
 GOFLAGS+=-ldflags="$(ldflags)"
 
 
-deps:
-	git submodule update --init --recursive
-	./extern/filecoin-ffi/install-filcrypto
-
 gateway: show-env $(BUILD_DEPS)
 	rm -f venus-gateway
 	go build $(GOFLAGS) -o venus-gateway
@@ -41,6 +37,10 @@ show-env:
 	@echo '| CGO_CFLAGS=$(CGO_CFLAGS)'
 	@echo '| git commit=$(git)'
 	@echo '-------------------------------------------------'
+
+deps:
+	git submodule update --init --recursive
+	./extern/filecoin-ffi/install-filcrypto
 
 lint:
 	gofmt -s -w ./
