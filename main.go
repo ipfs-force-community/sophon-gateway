@@ -106,14 +106,13 @@ var runCmd = &cli.Command{
 			RequestTimeout:   time.Second * 30,
 		})
 
-		gatewayAPI := NewGatewayAPI(proofStream, walletStream, marketStream)
+		gatewayAPIImpl := NewGatewayAPI(proofStream, walletStream, marketStream)
 
 		log.Info("Setting up control endpoint at " + address)
 
-		fullAPI := &api.FullStruct{}
-		api.PermissionProxy(gatewayAPI, fullAPI)
+		gatewayAPI := api.PermissionedFullAPI(gatewayAPIImpl)
 
-		rpcServer := jsonrpc.NewServer(jsonrpc.WithProxyBind(jsonrpc.PBField))
+		rpcServer := jsonrpc.NewServer()
 		if cctx.IsSet("rate-limit-redis") {
 			limiter, err := ratelimit.NewRateLimitHandler(cctx.String("rate-limit-redis"), nil,
 				&jwtclient.ValueFromCtx{},
@@ -123,12 +122,13 @@ var runCmd = &cli.Command{
 			if err != nil {
 				return err
 			}
-			var rateLimitAPI api.FullStruct
-			limiter.WarperLimiter(*fullAPI, &rateLimitAPI)
-			fullAPI = &rateLimitAPI
+			var rateLimitAPI api.GatewayFullNodeStruct
+			limiter.ProxyLimitFullAPI(gatewayAPI, &rateLimitAPI)
+			gatewayAPI = &rateLimitAPI
 		}
 
-		rpcServer.Register("Gateway", fullAPI)
+		rpcServer.Register("Gateway", gatewayAPI)
+		rpcServer.Register("VENUS_MARKET", &gatewayAPI.(*api.GatewayFullNodeStruct).IMarketEventStruct)
 
 		mux := mux.NewRouter()
 		mux.Handle("/rpc/v0", rpcServer)

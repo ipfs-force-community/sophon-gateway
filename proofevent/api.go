@@ -13,7 +13,7 @@ import (
 
 type IProofEventAPI interface {
 	ResponseProofEvent(ctx context.Context, resp *types.ResponseEvent) error
-	ListenProofEvent(ctx context.Context, policy *ProofRegisterPolicy) (chan *types.RequestEvent, error)
+	ListenProofEvent(ctx context.Context, policy *ProofRegisterPolicy) (<-chan *types.RequestEvent, error)
 }
 
 type IProofEvent interface {
@@ -37,6 +37,6 @@ func (proofEventAPI *ProofEventAPI) ResponseProofEvent(ctx context.Context, resp
 	return proofEventAPI.proofEvent.ResponseEvent(ctx, resp)
 }
 
-func (proofEventAPI *ProofEventAPI) ListenProofEvent(ctx context.Context, policy *ProofRegisterPolicy) (chan *types.RequestEvent, error) {
+func (proofEventAPI *ProofEventAPI) ListenProofEvent(ctx context.Context, policy *ProofRegisterPolicy) (<-chan *types.RequestEvent, error) {
 	return proofEventAPI.proofEvent.ListenProofEvent(ctx, policy)
 }
