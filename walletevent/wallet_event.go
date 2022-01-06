@@ -14,15 +14,12 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
 	wcrypto "github.com/filecoin-project/venus/pkg/crypto"
-	"github.com/google/uuid"
-	logging "github.com/ipfs/go-log/v2"
-	"golang.org/x/xerrors"
-
-	_ "github.com/filecoin-project/venus/pkg/crypto/bls"
-	_ "github.com/filecoin-project/venus/pkg/crypto/secp"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/types/wallet"
+	logging "github.com/ipfs/go-log/v2"
+	"golang.org/x/xerrors"
 )
 
 var log = logging.Logger("event_stream")
