@@ -4,17 +4,18 @@ package api
 
 import (
 	"context"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/crypto"
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 	"github.com/filecoin-project/specs-storage/storage"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/google/uuid"
 	types2 "github.com/ipfs-force-community/venus-common-utils/types"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
-	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
 	"github.com/ipfs/go-cid"
 	"golang.org/x/xerrors"
@@ -91,7 +92,7 @@ type IWalletEventStruct struct {
 
 		WalletHas func(p0 context.Context, p1 string, p2 address.Address) (bool, error) `perm:"admin"`
 
-		WalletSign func(p0 context.Context, p1 string, p2 address.Address, p3 []byte, p4 wallet.MsgMeta) (*crypto.Signature, error) `perm:"admin"`
+		WalletSign func(p0 context.Context, p1 string, p2 address.Address, p3 []byte, p4 sharedTypes.MsgMeta) (*crypto.Signature, error) `perm:"admin"`
 	}
 }
 
@@ -242,11 +243,11 @@ func (s *IWalletEventStub) WalletHas(p0 context.Context, p1 string, p2 address.A
 	return false, xerrors.New("method not supported")
 }
 
-func (s *IWalletEventStruct) WalletSign(p0 context.Context, p1 string, p2 address.Address, p3 []byte, p4 wallet.MsgMeta) (*crypto.Signature, error) {
+func (s *IWalletEventStruct) WalletSign(p0 context.Context, p1 string, p2 address.Address, p3 []byte, p4 sharedTypes.MsgMeta) (*crypto.Signature, error) {
 	return s.Internal.WalletSign(p0, p1, p2, p3, p4)
 }
 
-func (s *IWalletEventStub) WalletSign(p0 context.Context, p1 string, p2 address.Address, p3 []byte, p4 wallet.MsgMeta) (*crypto.Signature, error) {
+func (s *IWalletEventStub) WalletSign(p0 context.Context, p1 string, p2 address.Address, p3 []byte, p4 sharedTypes.MsgMeta) (*crypto.Signature, error) {
 	return nil, xerrors.New("method not supported")
 }
 

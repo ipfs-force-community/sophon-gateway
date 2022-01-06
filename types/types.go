@@ -11,7 +11,7 @@ import (
 
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 
-	"github.com/ipfs-force-community/venus-gateway/types/wallet"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 )
 
 const AccountKey = "account"
@@ -81,5 +81,5 @@ type ConnectedCompleted struct {
 type WalletSignRequest struct {
 	Signer address.Address
 	ToSign []byte
-	Meta   wallet.MsgMeta
+	Meta   sharedTypes.MsgMeta
 }

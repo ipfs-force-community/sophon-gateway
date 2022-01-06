@@ -20,6 +20,7 @@ import (
 
 	_ "github.com/filecoin-project/venus/pkg/crypto/bls"
 	_ "github.com/filecoin-project/venus/pkg/crypto/secp"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/types/wallet"
 )
@@ -160,7 +161,7 @@ func (e *WalletEventStream) WalletHas(ctx context.Context, supportAccount string
 	return e.walletConnMgr.HasWalletChannel(supportAccount, addr)
 }
 
-func (e *WalletEventStream) WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error) {
+func (e *WalletEventStream) WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
 	payload, err := json.Marshal(&types.WalletSignRequest{
 		Signer: addr,
 		ToSign: toSign,
@@ -217,7 +218,7 @@ func (e *WalletEventStream) verifyAddress(ctx context.Context, addr address.Addr
 	payload, err := json.Marshal(&types.WalletSignRequest{
 		Signer: addr,
 		ToSign: signData,
-		Meta:   wallet.MsgMeta{Type: wallet.MTVerifyAddress, Extra: e.randBytes},
+		Meta:   sharedTypes.MsgMeta{Type: sharedTypes.MsgType(wallet.MTVerifyAddress), Extra: e.randBytes},
 	})
 	if err != nil {
 		return err

@@ -14,7 +14,7 @@ import (
 
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 
-	"github.com/ipfs-force-community/venus-gateway/types/wallet"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 )
 
 type ProofEventClient struct {
@@ -22,7 +22,7 @@ type ProofEventClient struct {
 }
 type WalletEventClient struct {
 	WalletHas  func(ctx context.Context, supportAccount string, addr address.Address) (bool, error)
-	WalletSign func(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error)
+	WalletSign func(ctx context.Context, account string, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error)
 }
 
 var url = "ws://127.0.0.1:45132/rpc/v0"
@@ -101,7 +101,7 @@ func WalletSign(ctx context.Context, cli *WalletEventClient) {
 	actorAddr, _ := address.NewIDAddress(7)
 	result, err := cli.WalletSign(ctx, "wtest",
 		actorAddr, []byte{1, 2},
-		wallet.MsgMeta{
+		sharedTypes.MsgMeta{
 			Type:  "MTUnknown",
 			Extra: nil,
 		})
