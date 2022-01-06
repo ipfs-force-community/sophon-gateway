@@ -86,7 +86,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRe
 			CreateTime: time.Now(),
 			Result:     nil,
 		} // not response
-		for {
+		for { // nolint:gosimple
 			select {
 			case <-ctx.Done():
 				e.connLk.Lock()

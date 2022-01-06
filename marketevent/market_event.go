@@ -100,7 +100,7 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *Marke
 			CreateTime: time.Now(),
 			Result:     nil,
 		} // not response
-		for {
+		for { // nolint:gosimple
 			select {
 			case <-ctx.Done():
 				e.connLk.Lock()
