@@ -18,7 +18,8 @@ import (
 
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
-	"github.com/ipfs-force-community/venus-gateway/types/wallet"
+
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
 )
 
@@ -38,10 +39,10 @@ type IProofEvent interface {
 }
 
 type IWalletEvent interface {
-	ListWalletInfo(ctx context.Context) ([]*walletevent.WalletDetail, error)                                                             //perm:admin
-	ListWalletInfoByWallet(ctx context.Context, wallet string) (*walletevent.WalletDetail, error)                                        //perm:admin
-	WalletHas(ctx context.Context, supportAccount string, addr address.Address) (bool, error)                                            //perm:admin
-	WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta wallet.MsgMeta) (*crypto.Signature, error) //perm:admin
+	ListWalletInfo(ctx context.Context) ([]*walletevent.WalletDetail, error)                                                                  //perm:admin
+	ListWalletInfoByWallet(ctx context.Context, wallet string) (*walletevent.WalletDetail, error)                                             //perm:admin
+	WalletHas(ctx context.Context, supportAccount string, addr address.Address) (bool, error)                                                 //perm:admin
+	WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) //perm:admin
 
 	ResponseWalletEvent(ctx context.Context, resp *types.ResponseEvent) error                                            //perm:read
 	ListenWalletEvent(ctx context.Context, policy *walletevent.WalletRegisterPolicy) (<-chan *types.RequestEvent, error) //perm:read
