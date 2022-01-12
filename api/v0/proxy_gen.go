@@ -4,10 +4,10 @@ package api
 
 import (
 	"context"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/crypto"
-	"github.com/filecoin-project/go-state-types/network"
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 	"github.com/filecoin-project/specs-storage/storage"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
@@ -59,7 +59,7 @@ type IMarketEventStub struct {
 
 type IProofEventStruct struct {
 	Internal struct {
-		ComputeProof func(p0 context.Context, p1 address.Address, p2 []proof5.SectorInfo, p3 abi.PoStRandomness, p4 abi.ChainEpoch, p5 network.Version) ([]proof5.PoStProof, error) `perm:"admin"`
+		ComputeProof func(p0 context.Context, p1 address.Address, p2 []proof5.SectorInfo, p3 abi.PoStRandomness) ([]proof5.PoStProof, error) `perm:"admin"`
 
 		ListConnectedMiners func(p0 context.Context) ([]address.Address, error) `perm:"admin"`
 
@@ -139,11 +139,11 @@ func (s *IMarketEventStub) SectorsUnsealPiece(p0 context.Context, p1 address.Add
 	return xerrors.New("method not supported")
 }
 
-func (s *IProofEventStruct) ComputeProof(p0 context.Context, p1 address.Address, p2 []proof5.SectorInfo, p3 abi.PoStRandomness, p4 abi.ChainEpoch, p5 network.Version) ([]proof5.PoStProof, error) {
-	return s.Internal.ComputeProof(p0, p1, p2, p3, p4, p5)
+func (s *IProofEventStruct) ComputeProof(p0 context.Context, p1 address.Address, p2 []proof5.SectorInfo, p3 abi.PoStRandomness) ([]proof5.PoStProof, error) {
+	return s.Internal.ComputeProof(p0, p1, p2, p3)
 }
 
-func (s *IProofEventStub) ComputeProof(p0 context.Context, p1 address.Address, p2 []proof5.SectorInfo, p3 abi.PoStRandomness, p4 abi.ChainEpoch, p5 network.Version) ([]proof5.PoStProof, error) {
+func (s *IProofEventStub) ComputeProof(p0 context.Context, p1 address.Address, p2 []proof5.SectorInfo, p3 abi.PoStRandomness) ([]proof5.PoStProof, error) {
 	return *new([]proof5.PoStProof), xerrors.New("method not supported")
 }
 

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/filecoin-project/go-state-types/network"
 	"time"
 
 	"github.com/google/uuid"
@@ -72,6 +73,8 @@ func NewChannelInfo(ip string, sendEvents chan *RequestEvent) *ChannelInfo {
 type ComputeProofRequest struct {
 	SectorInfos []proof5.SectorInfo
 	Rand        abi.PoStRandomness
+	Height      abi.ChainEpoch
+	NWVersion   network.Version
 }
 
 type ConnectedCompleted struct {

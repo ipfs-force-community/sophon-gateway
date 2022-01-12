@@ -5,6 +5,7 @@ import (
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/filecoin-project/go-state-types/network"
 
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 
@@ -20,7 +21,7 @@ type IProofEvent interface {
 	ListConnectedMiners(ctx context.Context) ([]address.Address, error)
 	ListMinerConnection(ctx context.Context, addr address.Address) (*MinerState, error)
 
-	ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error)
+	ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]proof5.PoStProof, error)
 }
 
 var _ IProofEventAPI = (*ProofEventAPI)(nil)
