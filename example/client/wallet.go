@@ -21,12 +21,12 @@ type WalletEventClient struct {
 }
 
 func main() {
-	for i := 0; i < 1; i++ {
+	/*for i := 0; i < 1; i++ {
 		go func() {
 			fmt.Println("NewWalletClient")
 			NewWalletClient()
 		}()
-	}
+	}*/
 	for i := 0; i < 1; i++ {
 		go func() {
 			fmt.Println("NewProofClient")
@@ -37,7 +37,7 @@ func main() {
 	<-ch
 }
 
-var token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiemwiLCJwZXJtIjoicmVhZCIsImV4dCI6IiJ9.OvZu1F5OKnRsUChLhr9sVygTH0gOGC5au8hKOOZ0aX4"
+var token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiR2F0ZVdheUxvY2FsVG9rZW4iLCJwZXJtIjoiYWRtaW4iLCJleHQiOiIifQ.jZOlCBnxZtwc9PsjY7OMnooK6C3PFExvZesWsFrVyCs"
 
 func NewWalletClient() jsonrpc.ClientCloser {
 	ctx := context.Background()

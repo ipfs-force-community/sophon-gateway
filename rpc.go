@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/filecoin-project/go-state-types/network"
 
 	"github.com/ipfs/go-cid"
 
@@ -55,8 +56,8 @@ func NewGatewayAPI(pe *proofevent.ProofEventStream, we *walletevent.WalletEventS
 	}
 }
 
-func (g *GatewayAPI) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error) {
-	return g.pe.ComputeProof(ctx, miner, sectorInfos, rand)
+func (g *GatewayAPI) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]proof5.PoStProof, error) {
+	return g.pe.ComputeProof(ctx, miner, sectorInfos, rand, height, nwVersion)
 }
 
 func (g *GatewayAPI) ListConnectedMiners(ctx context.Context) ([]address.Address, error) {

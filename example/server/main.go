@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/filecoin-project/go-state-types/network"
 	"net/http"
 
 	"github.com/ipfs/go-cid"
@@ -18,15 +19,15 @@ import (
 )
 
 type ProofEventClient struct {
-	ComputeProof func(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error)
+	ComputeProof func(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]proof5.PoStProof, error)
 }
 type WalletEventClient struct {
 	WalletHas  func(ctx context.Context, supportAccount string, addr address.Address) (bool, error)
 	WalletSign func(ctx context.Context, account string, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error)
 }
 
-var url = "ws://127.0.0.1:45132/rpc/v0"
-var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiemwiLCJwZXJtIjoicmVhZCIsImV4dCI6IiJ9.OvZu1F5OKnRsUChLhr9sVygTH0gOGC5au8hKOOZ0aX4"
+var url = "ws://127.0.0.1:45132/rpc/v1"
+var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiR2F0ZVdheUxvY2FsVG9rZW4iLCJwZXJtIjoiYWRtaW4iLCJleHQiOiIifQ.jZOlCBnxZtwc9PsjY7OMnooK6C3PFExvZesWsFrVyCs"
 
 const nameSpace = "Gateway"
 
@@ -60,7 +61,7 @@ func SendComputeProof(ctx context.Context, cli *ProofEventClient) {
 		SealProof:    1,
 		SectorNumber: 0,
 		SealedCID:    cid.Undef,
-	}}, []byte{1, 2, 3})
+	}}, []byte{1, 2, 3}, 1, 1)
 	if err != nil {
 		fmt.Printf("computProof failed:%s\n", err.Error())
 		return
