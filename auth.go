@@ -3,15 +3,14 @@ package main
 import (
 	"context"
 	"crypto/rand"
-	"io"
-	"io/ioutil"
-
 	"github.com/filecoin-project/go-jsonrpc/auth"
 	auth2 "github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"github.com/filecoin-project/venus-auth/core"
 	jwt3 "github.com/gbrlsnchs/jwt/v3"
 	xerrors "github.com/pkg/errors"
+	"io"
+	"io/ioutil"
 )
 
 // todo: this is a temporary solution
