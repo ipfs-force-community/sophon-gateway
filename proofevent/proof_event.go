@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/filecoin-project/go-state-types/network"
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"sync"
 	"time"
@@ -106,10 +107,12 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRe
 	return out, nil
 }
 
-func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error) {
+func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]proof5.PoStProof, error) {
 	reqBody := types.ComputeProofRequest{
 		SectorInfos: sectorInfos,
 		Rand:        rand,
+		Height:      height,
+		NWVersion:   nwVersion,
 	}
 
 	payload, err := json.Marshal(reqBody)

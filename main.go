@@ -22,6 +22,7 @@ import (
 
 	"github.com/ipfs-force-community/metrics"
 	"github.com/ipfs-force-community/venus-gateway/api"
+	v0api "github.com/ipfs-force-community/venus-gateway/api/v0"
 	"github.com/ipfs-force-community/venus-gateway/cmds"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
@@ -115,7 +116,6 @@ var runCmd = &cli.Command{
 
 		gatewayAPI := api.PermissionedFullAPI(gatewayAPIImpl)
 
-		rpcServer := jsonrpc.NewServer()
 		if cctx.IsSet("rate-limit-redis") {
 			limiter, err := ratelimit.NewRateLimitHandler(cctx.String("rate-limit-redis"), nil,
 				&jwtclient.ValueFromCtx{},
@@ -130,11 +130,20 @@ var runCmd = &cli.Command{
 			gatewayAPI = &rateLimitAPI
 		}
 
-		rpcServer.Register("Gateway", gatewayAPI)
-		rpcServer.Register("VENUS_MARKET", &gatewayAPI.(*api.GatewayFullNodeStruct).IMarketEventStruct)
-
 		mux := mux.NewRouter()
-		mux.Handle("/rpc/v0", rpcServer)
+		//v1api
+		rpcServerv1 := jsonrpc.NewServer()
+		rpcServerv1.Register("Gateway", gatewayAPI)
+		rpcServerv1.Register("VENUS_MARKET", &gatewayAPI.(*api.GatewayFullNodeStruct).IMarketEventStruct)
+		mux.Handle("/rpc/v1", rpcServerv1)
+
+		//v0api
+		v0FullNode := v0api.WrapperV1Full{gatewayAPI}
+		rpcServerv0 := jsonrpc.NewServer()
+		rpcServerv0.Register("Gateway", v0FullNode)
+		rpcServerv0.Register("VENUS_MARKET", &v0FullNode.GatewayFullNode.(*api.GatewayFullNodeStruct).IMarketEventStruct) //rely on market node unchange
+		mux.Handle("/rpc/v0", rpcServerv0)
+
 		mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
 		handler := (http.Handler)(jwtclient.NewAuthMux(
