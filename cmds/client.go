@@ -16,9 +16,9 @@ import (
 	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/filecoin-project/go-state-types/crypto"
 
-	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
-
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
@@ -32,7 +32,7 @@ type GatewayAPI struct {
 	ListMarketConnectionsState func(ctx context.Context) ([]marketevent.MarketConnectionState, error)
 	WalletSign                 func(ctx context.Context, account string, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error)
 	WalletHas                  func(ctx context.Context, supportAccount string, addr address.Address) (bool, error)
-	ComputeProof               func(ctx context.Context, miner address.Address, reqBody *types.ComputeProofRequest) ([]proof5.PoStProof, error)
+	ComputeProof               func(ctx context.Context, miner address.Address, reqBody *types.ComputeProofRequest) ([]builtin.PoStProof, error)
 }
 
 func NewGatewayClient(ctx *cli.Context) (*GatewayAPI, jsonrpc.ClientCloser, error) {

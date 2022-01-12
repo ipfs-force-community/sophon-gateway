@@ -2,18 +2,18 @@ package main
 
 import (
 	"context"
-	"github.com/filecoin-project/go-state-types/network"
 
 	"github.com/ipfs/go-cid"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/crypto"
+	"github.com/filecoin-project/go-state-types/network"
 	"github.com/filecoin-project/specs-storage/storage"
 
-	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
-
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+
 	types2 "github.com/ipfs-force-community/venus-common-utils/types"
 
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
@@ -56,7 +56,7 @@ func NewGatewayAPI(pe *proofevent.ProofEventStream, we *walletevent.WalletEventS
 	}
 }
 
-func (g *GatewayAPI) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]proof5.PoStProof, error) {
+func (g *GatewayAPI) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []builtin.ExtendedSectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]builtin.PoStProof, error) {
 	return g.pe.ComputeProof(ctx, miner, sectorInfos, rand, height, nwVersion)
 }
 
