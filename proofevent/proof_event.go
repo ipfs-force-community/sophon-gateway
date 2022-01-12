@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/filecoin-project/go-state-types/network"
-	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"sync"
 	"time"
 
@@ -16,7 +14,9 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/google/uuid"
 
-	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
+	"github.com/filecoin-project/go-state-types/network"
+	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 
 	"github.com/filecoin-project/venus-auth/auth"
 
@@ -107,7 +107,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRe
 	return out, nil
 }
 
-func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]proof5.PoStProof, error) {
+func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []builtin.ExtendedSectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]builtin.PoStProof, error) {
 	reqBody := types.ComputeProofRequest{
 		SectorInfos: sectorInfos,
 		Rand:        rand,
@@ -124,7 +124,7 @@ func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Addre
 	if err != nil {
 		return nil, err
 	}
-	var result []proof5.PoStProof
+	var result []builtin.PoStProof
 	err = e.SendRequest(ctx, channels, "ComputeProof", payload, &result)
 	if err == nil {
 		return result, nil

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"github.com/filecoin-project/go-state-types/network"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,9 +8,9 @@ import (
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/filecoin-project/go-state-types/network"
 
-	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
-
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 )
 
@@ -71,7 +70,7 @@ func NewChannelInfo(ip string, sendEvents chan *RequestEvent) *ChannelInfo {
 //request
 
 type ComputeProofRequest struct {
-	SectorInfos []proof5.SectorInfo
+	SectorInfos []builtin.ExtendedSectorInfo
 	Rand        abi.PoStRandomness
 	Height      abi.ChainEpoch
 	NWVersion   network.Version

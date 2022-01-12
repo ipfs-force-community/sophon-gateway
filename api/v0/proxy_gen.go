@@ -5,20 +5,24 @@ package api
 import (
 	"context"
 
+	"github.com/google/uuid"
+	"github.com/ipfs/go-cid"
+	"golang.org/x/xerrors"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/crypto"
-	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 	"github.com/filecoin-project/specs-storage/storage"
+
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
-	"github.com/google/uuid"
+
 	types2 "github.com/ipfs-force-community/venus-common-utils/types"
+
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
-	"github.com/ipfs/go-cid"
-	"golang.org/x/xerrors"
 )
 
 type GatewayFullNodeStruct struct {
@@ -59,7 +63,7 @@ type IMarketEventStub struct {
 
 type IProofEventStruct struct {
 	Internal struct {
-		ComputeProof func(p0 context.Context, p1 address.Address, p2 []proof5.SectorInfo, p3 abi.PoStRandomness) ([]proof5.PoStProof, error) `perm:"admin"`
+		ComputeProof func(p0 context.Context, p1 address.Address, p2 []builtin.ExtendedSectorInfo, p3 abi.PoStRandomness) ([]builtin.PoStProof, error) `perm:"admin"`
 
 		ListConnectedMiners func(p0 context.Context) ([]address.Address, error) `perm:"admin"`
 
@@ -139,12 +143,12 @@ func (s *IMarketEventStub) SectorsUnsealPiece(p0 context.Context, p1 address.Add
 	return xerrors.New("method not supported")
 }
 
-func (s *IProofEventStruct) ComputeProof(p0 context.Context, p1 address.Address, p2 []proof5.SectorInfo, p3 abi.PoStRandomness) ([]proof5.PoStProof, error) {
+func (s *IProofEventStruct) ComputeProof(p0 context.Context, p1 address.Address, p2 []builtin.ExtendedSectorInfo, p3 abi.PoStRandomness) ([]builtin.PoStProof, error) {
 	return s.Internal.ComputeProof(p0, p1, p2, p3)
 }
 
-func (s *IProofEventStub) ComputeProof(p0 context.Context, p1 address.Address, p2 []proof5.SectorInfo, p3 abi.PoStRandomness) ([]proof5.PoStProof, error) {
-	return *new([]proof5.PoStProof), xerrors.New("method not supported")
+func (s *IProofEventStub) ComputeProof(p0 context.Context, p1 address.Address, p2 []builtin.ExtendedSectorInfo, p3 abi.PoStRandomness) ([]builtin.PoStProof, error) {
+	return *new([]builtin.PoStProof), xerrors.New("method not supported")
 }
 
 func (s *IProofEventStruct) ListConnectedMiners(p0 context.Context) ([]address.Address, error) {

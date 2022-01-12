@@ -2,24 +2,24 @@ package api
 
 import (
 	"context"
+
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
-
-	"github.com/filecoin-project/specs-storage/storage"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/crypto"
-	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
+	"github.com/filecoin-project/specs-storage/storage"
 
 	types2 "github.com/ipfs-force-community/venus-common-utils/types"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
-
-	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
+
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 )
 
 type GatewayFullNode interface {
@@ -29,9 +29,9 @@ type GatewayFullNode interface {
 }
 
 type IProofEvent interface {
-	ListConnectedMiners(ctx context.Context) ([]address.Address, error)                                                                            //perm:admin
-	ListMinerConnection(ctx context.Context, addr address.Address) (*proofevent.MinerState, error)                                                 //perm:admin
-	ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error) //perm:admin
+	ListConnectedMiners(ctx context.Context) ([]address.Address, error)                                                                                      //perm:admin
+	ListMinerConnection(ctx context.Context, addr address.Address) (*proofevent.MinerState, error)                                                           //perm:admin
+	ComputeProof(ctx context.Context, miner address.Address, sectorInfos []builtin.ExtendedSectorInfo, rand abi.PoStRandomness) ([]builtin.PoStProof, error) //perm:admin
 
 	ResponseProofEvent(ctx context.Context, resp *types.ResponseEvent) error                                          //perm:read
 	ListenProofEvent(ctx context.Context, policy *proofevent.ProofRegisterPolicy) (<-chan *types.RequestEvent, error) //perm:read
