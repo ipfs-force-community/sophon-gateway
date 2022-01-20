@@ -6,4 +6,6 @@ venus-gateway used to simplify deployment and reduce the complexity of miner acc
 2. the connection between all miners and the pool is safe  after the pool configure with HTTPS
 3. miners can simply register multiple client(wallet/proof) to the mining pool to obtain high availability
 
+Use [Venus Issues](https://github.com/filecoin-project/venus/issues) for reporting issues about this repository.
+
 ![gateway](https://raw.githubusercontent.com/hunjixin/imgpool/master/gateway.png)
