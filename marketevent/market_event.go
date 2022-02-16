@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/filecoin-project/venus-auth/auth"
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/filecoin-project/venus-auth/auth"
+
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
 	"golang.org/x/xerrors"
@@ -20,6 +20,8 @@ import (
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	types2 "github.com/ipfs-force-community/venus-common-utils/types"
 
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	types3 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
@@ -59,7 +61,7 @@ func NewMarketEventStream(ctx context.Context, valaidator MinerValidator, cfg *t
 	return marketEventStream
 }
 
-func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *MarketRegisterPolicy) (chan *types.RequestEvent, error) {
+func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types3.MarketRegisterPolicy) (chan *types3.RequestEvent, error) {
 	ip, exist := jwtclient.CtxGetTokenLocation(ctx)
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
@@ -69,7 +71,7 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *Marke
 		return nil, xerrors.Errorf("address %s not exit", policy.Miner)
 	}
 
-	out := make(chan *types.RequestEvent, e.cfg.RequestQueueSize)
+	out := make(chan *types3.RequestEvent, e.cfg.RequestQueueSize)
 	channel := types.NewChannelInfo(ip, out)
 	mAddr := policy.Miner
 	e.connLk.Lock()
@@ -84,7 +86,7 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *Marke
 	_ = channelStore.addChanel(channel)
 	log.Infof("add new connections %s for miner %s", channel.ChannelId, mAddr)
 	go func() {
-		connectBytes, err := json.Marshal(types.ConnectedCompleted{
+		connectBytes, err := json.Marshal(types3.ConnectedCompleted{
 			ChannelId: channel.ChannelId,
 		})
 		if err != nil {
@@ -93,8 +95,8 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *Marke
 			return
 		}
 
-		out <- &types.RequestEvent{
-			Id:         uuid.New(),
+		out <- &types3.RequestEvent{
+			ID:         sharedTypes.NewUUID(),
 			Method:     "InitConnect",
 			Payload:    connectBytes,
 			CreateTime: time.Now(),
@@ -120,10 +122,10 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *Marke
 	return out, nil
 }
 
-func (e *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]MarketConnectionState, error) {
-	var result []MarketConnectionState
+func (e *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]types3.MarketConnectionState, error) {
+	var result []types3.MarketConnectionState
 	for addr, conn := range e.minerConnections {
-		result = append(result, MarketConnectionState{
+		result = append(result, types3.MarketConnectionState{
 			Addr: addr,
 			Conn: *conn.getChannelState(),
 		})
@@ -132,7 +134,7 @@ func (e *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]M
 }
 
 func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
-	reqBody := IsUnsealRequest{
+	reqBody := types3.IsUnsealRequest{
 		PieceCid: pieceCid,
 		Sector:   sector,
 		Offset:   offset,
@@ -158,7 +160,7 @@ func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Addres
 }
 
 func (e *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
-	reqBody := UnsealRequest{
+	reqBody := types3.UnsealRequest{
 		PieceCid: pieceCid,
 		Sector:   sector,
 		Offset:   offset,

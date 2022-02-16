@@ -26,7 +26,7 @@ gateway: show-env $(BUILD_DEPS)
 	go build $(GOFLAGS) -o venus-gateway
 	./venus-gateway --version
 
-linux: 	show-env $(BUILD_DEPS)
+linux: show-env $(BUILD_DEPS)
 	rm -f venus-gateway
 	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 CC=x86_64-linux-musl-gcc CGO_LDFLAGS="-static" go build $(GOFLAGS) -o venus-gateway
 

@@ -20,6 +20,7 @@ import (
 
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 
+	"github.com/filecoin-project/venus/venus-shared/api/permission"
 	"github.com/ipfs-force-community/metrics"
 	"github.com/ipfs-force-community/venus-gateway/api"
 	v0api "github.com/ipfs-force-community/venus-gateway/api/v0"
@@ -99,7 +100,11 @@ var runCmd = &cli.Command{
 
 		log.Info("Setting up control endpoint at " + address)
 
-		gatewayAPI := api.PermissionedFullAPI(gatewayAPIImpl)
+		gatewayAPI := func() api.GatewayFullNode {
+			var fullNode api.GatewayFullNodeStruct
+			permission.PermissionProxy(gatewayAPIImpl, &fullNode)
+			return &fullNode
+		}()
 
 		if cctx.IsSet("rate-limit-redis") {
 			limiter, err := ratelimit.NewRateLimitHandler(cctx.String("rate-limit-redis"), nil,
@@ -123,7 +128,7 @@ var runCmd = &cli.Command{
 		mux.Handle("/rpc/v1", rpcServerv1)
 
 		//v0api
-		v0FullNode := v0api.WrapperV1Full{gatewayAPI}
+		v0FullNode := v0api.WrapperV1Full{GatewayFullNode: gatewayAPI}
 		rpcServerv0 := jsonrpc.NewServer()
 		rpcServerv0.Register("Gateway", v0FullNode)
 		rpcServerv0.Register("VENUS_MARKET", &v0FullNode.GatewayFullNode.(*api.GatewayFullNodeStruct).IMarketEventStruct) //rely on market node unchange

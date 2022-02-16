@@ -5,7 +5,8 @@ import (
 	"sync"
 
 	"github.com/filecoin-project/go-address"
-	"github.com/google/uuid"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"golang.org/x/xerrors"
 )
@@ -28,21 +29,21 @@ func newWalletChannelInfo(channelInfo *types.ChannelInfo, addrs []address.Addres
 type WalletInfo struct {
 	WalletAccount   string
 	SupportAccounts map[string]struct{}
-	Connections     map[uuid.UUID]*walletChannelInfo
+	Connections     map[sharedTypes.UUID]*walletChannelInfo
 }
 
 type IWalletConnMgr interface {
-	AddNewConn(string, *WalletRegisterPolicy, []address.Address, *walletChannelInfo) error
-	GetConn(walletAccount string, channelID uuid.UUID) (*walletChannelInfo, error)
+	AddNewConn(string, *types2.WalletRegisterPolicy, []address.Address, *walletChannelInfo) error
+	GetConn(walletAccount string, channelID sharedTypes.UUID) (*walletChannelInfo, error)
 	RemoveConn(string, *walletChannelInfo) error
 	AddSupportAccount(string, string) error
 	GetChannels(string, address.Address) ([]*types.ChannelInfo, error)
-	NewAddress(walletAccount string, channelId uuid.UUID, addrs []address.Address) error
-	RemoveAddress(walletAccount string, channelId uuid.UUID, addrs []address.Address) error
+	NewAddress(walletAccount string, channelId sharedTypes.UUID, addrs []address.Address) error
+	RemoveAddress(walletAccount string, channelId sharedTypes.UUID, addrs []address.Address) error
 	HasWalletChannel(supportAccount string, from address.Address) (bool, error)
 
-	ListWalletInfo(ctx context.Context) ([]*WalletDetail, error)
-	ListWalletInfoByWallet(ctx context.Context, wallet string) (*WalletDetail, error)
+	ListWalletInfo(ctx context.Context) ([]*types2.WalletDetail, error)
+	ListWalletInfoByWallet(ctx context.Context, wallet string) (*types2.WalletDetail, error)
 }
 
 var _ IWalletConnMgr = (*walletConnMgr)(nil)
@@ -59,7 +60,7 @@ func newWalletConnMgr() *walletConnMgr {
 	}
 }
 
-func (w *walletConnMgr) AddNewConn(walletAccount string, policy *WalletRegisterPolicy, addrs []address.Address, channel *walletChannelInfo) error {
+func (w *walletConnMgr) AddNewConn(walletAccount string, policy *types2.WalletRegisterPolicy, addrs []address.Address, channel *walletChannelInfo) error {
 	w.infoLk.Lock()
 	defer w.infoLk.Unlock()
 
@@ -77,7 +78,7 @@ func (w *walletConnMgr) AddNewConn(walletAccount string, policy *WalletRegisterP
 		walletInfo = &WalletInfo{
 			WalletAccount:   walletAccount,
 			SupportAccounts: make(map[string]struct{}),
-			Connections:     map[uuid.UUID]*walletChannelInfo{channel.ChannelId: channel},
+			Connections:     map[sharedTypes.UUID]*walletChannelInfo{channel.ChannelId: channel},
 		}
 
 		for _, supportAccount := range policy.SupportAccounts {
@@ -96,7 +97,7 @@ func (w *walletConnMgr) AddNewConn(walletAccount string, policy *WalletRegisterP
 
 }
 
-func (w *walletConnMgr) GetConn(walletAccount string, channelID uuid.UUID) (*walletChannelInfo, error) {
+func (w *walletConnMgr) GetConn(walletAccount string, channelID sharedTypes.UUID) (*walletChannelInfo, error) {
 	w.infoLk.Lock()
 	defer w.infoLk.Unlock()
 
@@ -170,7 +171,7 @@ func (w *walletConnMgr) HasWalletChannel(supportAccount string, from address.Add
 	return false, nil
 }
 
-func (w *walletConnMgr) NewAddress(walletAccount string, channelId uuid.UUID, addrs []address.Address) error {
+func (w *walletConnMgr) NewAddress(walletAccount string, channelId sharedTypes.UUID, addrs []address.Address) error {
 	w.infoLk.Lock()
 	defer w.infoLk.Unlock()
 
@@ -186,7 +187,7 @@ func (w *walletConnMgr) NewAddress(walletAccount string, channelId uuid.UUID, ad
 	return nil
 }
 
-func (w *walletConnMgr) RemoveAddress(walletAccount string, channelId uuid.UUID, addrs []address.Address) error {
+func (w *walletConnMgr) RemoveAddress(walletAccount string, channelId sharedTypes.UUID, addrs []address.Address) error {
 	w.infoLk.Lock()
 	defer w.infoLk.Unlock()
 
@@ -202,28 +203,28 @@ func (w *walletConnMgr) RemoveAddress(walletAccount string, channelId uuid.UUID,
 	return nil
 }
 
-func (w *walletConnMgr) ListWalletInfo(ctx context.Context) ([]*WalletDetail, error) {
+func (w *walletConnMgr) ListWalletInfo(ctx context.Context) ([]*types2.WalletDetail, error) {
 	w.infoLk.Lock()
 	defer w.infoLk.Unlock()
 
-	var walletDetails []*WalletDetail
+	var walletDetails []*types2.WalletDetail
 	for walletAccount, walletInfo := range w.walletInfos {
-		walletDetail := &WalletDetail{}
+		walletDetail := &types2.WalletDetail{}
 		walletDetail.Account = walletAccount
 		for account := range walletInfo.SupportAccounts {
 			walletDetail.SupportAccounts = append(walletDetail.SupportAccounts, account)
 		}
-		walletDetail.ConnectStates = []ConnectState{}
+		walletDetail.ConnectStates = []types2.ConnectState{}
 		for channelId, wallet := range walletInfo.Connections {
 			var addrs []address.Address
 			for addr := range wallet.addrs {
 				addrs = append(addrs, addr)
 			}
-			cstate := ConnectState{
+			cstate := types2.ConnectState{
 				Addrs:        addrs,
-				ChannelId:    channelId,
+				ChannelID:    channelId,
 				RequestCount: len(wallet.OutBound),
-				Ip:           wallet.Ip,
+				IP:           wallet.Ip,
 				CreateTime:   wallet.CreateTime,
 			}
 			walletDetail.ConnectStates = append(walletDetail.ConnectStates, cstate)
@@ -233,26 +234,26 @@ func (w *walletConnMgr) ListWalletInfo(ctx context.Context) ([]*WalletDetail, er
 	return walletDetails, nil
 }
 
-func (w *walletConnMgr) ListWalletInfoByWallet(ctx context.Context, wallet string) (*WalletDetail, error) {
+func (w *walletConnMgr) ListWalletInfoByWallet(ctx context.Context, wallet string) (*types2.WalletDetail, error) {
 	w.infoLk.Lock()
 	defer w.infoLk.Unlock()
 
 	if walletInfo, ok := w.walletInfos[wallet]; ok {
-		walletDetail := &WalletDetail{}
+		walletDetail := &types2.WalletDetail{}
 		walletDetail.Account = walletInfo.WalletAccount
 		for account := range walletInfo.SupportAccounts {
 			walletDetail.SupportAccounts = append(walletDetail.SupportAccounts, account)
 		}
-		walletDetail.ConnectStates = []ConnectState{}
+		walletDetail.ConnectStates = []types2.ConnectState{}
 		for channelId, wallet := range walletInfo.Connections {
 			var addrs []address.Address
 			for addr := range wallet.addrs {
 				addrs = append(addrs, addr)
 			}
-			cstate := ConnectState{
+			cstate := types2.ConnectState{
 				Addrs:        addrs,
-				ChannelId:    channelId,
-				Ip:           wallet.Ip,
+				ChannelID:    channelId,
+				IP:           wallet.Ip,
 				RequestCount: len(wallet.OutBound),
 				CreateTime:   wallet.CreateTime,
 			}

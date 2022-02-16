@@ -8,19 +8,17 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ipfs-force-community/venus-gateway/proofevent"
-
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-jsonrpc"
 
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 
-	"github.com/ipfs-force-community/venus-gateway/types"
+	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 )
 
 type ProofEventClient struct {
 	ResponseProofEvent func(ctx context.Context, resp *types.ResponseEvent) error
-	ListenProofEvent   func(ctx context.Context, policy *proofevent.ProofRegisterPolicy) (chan *types.RequestEvent, error)
+	ListenProofEvent   func(ctx context.Context, policy *types.ProofRegisterPolicy) (chan *types.RequestEvent, error)
 }
 
 func NewProofClient() {
@@ -39,7 +37,7 @@ func NewProofClient() {
 
 		// rand.Seed(time.Now().Unix())
 		actorAddr, _ := address.NewIDAddress(7)
-		eventCh, err := pvc.ListenProofEvent(ctx, &proofevent.ProofRegisterPolicy{MinerAddress: actorAddr})
+		eventCh, err := pvc.ListenProofEvent(ctx, &types.ProofRegisterPolicy{MinerAddress: actorAddr})
 		if err != nil {
 			log.Fatal(err)
 			continue
@@ -50,9 +48,9 @@ func NewProofClient() {
 				req := types.ComputeProofRequest{}
 				err := json.Unmarshal(event.Payload, &req)
 				if err != nil {
-					fmt.Println(event.Id.String())
+					fmt.Println(event.ID.String())
 					_ = pvc.ResponseProofEvent(ctx, &types.ResponseEvent{
-						Id:      event.Id,
+						ID:      event.ID,
 						Payload: nil,
 						Error:   err.Error(),
 					})
@@ -67,7 +65,7 @@ func NewProofClient() {
 				}
 				proofBytes, _ := json.Marshal(proof)
 				_ = pvc.ResponseProofEvent(ctx, &types.ResponseEvent{
-					Id:      event.Id,
+					ID:      event.ID,
 					Payload: proofBytes,
 					Error:   "",
 				})

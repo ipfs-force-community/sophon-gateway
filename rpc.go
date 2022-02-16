@@ -16,6 +16,7 @@ import (
 
 	types2 "github.com/ipfs-force-community/venus-common-utils/types"
 
+	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
@@ -64,7 +65,7 @@ func (g *GatewayAPI) ListConnectedMiners(ctx context.Context) ([]address.Address
 	return g.pe.ListConnectedMiners(ctx)
 }
 
-func (g *GatewayAPI) ListMinerConnection(ctx context.Context, addr address.Address) (*proofevent.MinerState, error) {
+func (g *GatewayAPI) ListMinerConnection(ctx context.Context, addr address.Address) (*types.MinerState, error) {
 	return g.pe.ListMinerConnection(ctx, addr)
 }
 
@@ -76,11 +77,11 @@ func (g *GatewayAPI) WalletSign(ctx context.Context, account string, addr addres
 	return g.we.WalletSign(ctx, account, addr, toSign, meta)
 }
 
-func (g *GatewayAPI) ListWalletInfo(ctx context.Context) ([]*walletevent.WalletDetail, error) {
+func (g *GatewayAPI) ListWalletInfo(ctx context.Context) ([]*types.WalletDetail, error) {
 	return g.we.ListWalletInfo(ctx)
 }
 
-func (g *GatewayAPI) ListWalletInfoByWallet(ctx context.Context, wallet string) (*walletevent.WalletDetail, error) {
+func (g *GatewayAPI) ListWalletInfoByWallet(ctx context.Context, wallet string) (*types.WalletDetail, error) {
 	return g.we.ListWalletInfoByWallet(ctx, wallet)
 }
 
@@ -92,6 +93,6 @@ func (g *GatewayAPI) SectorsUnsealPiece(ctx context.Context, miner address.Addre
 	return g.me.SectorsUnsealPiece(ctx, miner, pieceCid, sector, offset, size, dest)
 }
 
-func (g *GatewayAPI) ListMarketConnectionsState(ctx context.Context) ([]marketevent.MarketConnectionState, error) {
+func (g *GatewayAPI) ListMarketConnectionsState(ctx context.Context) ([]types.MarketConnectionState, error) {
 	return g.me.ListMarketConnectionsState(ctx)
 }

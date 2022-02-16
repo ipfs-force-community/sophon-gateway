@@ -3,15 +3,9 @@ package types
 import (
 	"time"
 
-	"github.com/google/uuid"
-	"golang.org/x/xerrors"
-
-	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/go-state-types/abi"
-	"github.com/filecoin-project/go-state-types/network"
-
-	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
+	"golang.org/x/xerrors"
 )
 
 const AccountKey = "account"
@@ -37,51 +31,18 @@ func checkService(serviceType string) error {
 	}
 }
 
-type RequestEvent struct {
-	Id         uuid.UUID
-	Method     string
-	Payload    []byte
-	CreateTime time.Time           `json:"-"`
-	Result     chan *ResponseEvent `json:"-"`
-}
-
-type ResponseEvent struct {
-	Id      uuid.UUID
-	Payload []byte
-	Error   string
-}
-
 type ChannelInfo struct {
-	ChannelId  uuid.UUID
+	ChannelId  sharedTypes.UUID
 	Ip         string
-	OutBound   chan *RequestEvent
+	OutBound   chan *types.RequestEvent
 	CreateTime time.Time
 }
 
-func NewChannelInfo(ip string, sendEvents chan *RequestEvent) *ChannelInfo {
+func NewChannelInfo(ip string, sendEvents chan *types.RequestEvent) *ChannelInfo {
 	return &ChannelInfo{
-		ChannelId:  uuid.New(),
+		ChannelId:  sharedTypes.NewUUID(),
 		OutBound:   sendEvents,
 		Ip:         ip,
 		CreateTime: time.Now(),
 	}
-}
-
-//request
-
-type ComputeProofRequest struct {
-	SectorInfos []builtin.ExtendedSectorInfo
-	Rand        abi.PoStRandomness
-	Height      abi.ChainEpoch
-	NWVersion   network.Version
-}
-
-type ConnectedCompleted struct {
-	ChannelId uuid.UUID
-}
-
-type WalletSignRequest struct {
-	Signer address.Address
-	ToSign []byte
-	Meta   sharedTypes.MsgMeta
 }

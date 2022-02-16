@@ -1,27 +1,22 @@
 package marketevent
 
 import (
-	"github.com/filecoin-project/go-state-types/abi"
-	"github.com/filecoin-project/specs-storage/storage"
-	types2 "github.com/ipfs-force-community/venus-common-utils/types"
-	"github.com/ipfs/go-cid"
 	"sync"
-	"time"
 
-	"github.com/filecoin-project/go-address"
-	"github.com/google/uuid"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	types3 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"golang.org/x/xerrors"
 )
 
 type channelStore struct {
-	channels map[uuid.UUID]*types.ChannelInfo
+	channels map[sharedTypes.UUID]*types.ChannelInfo
 	lk       sync.RWMutex
 }
 
 func newChannelStore() *channelStore {
 	return &channelStore{
-		channels: make(map[uuid.UUID]*types.ChannelInfo),
+		channels: make(map[sharedTypes.UUID]*types.ChannelInfo),
 		lk:       sync.RWMutex{},
 	}
 }
@@ -65,16 +60,16 @@ func (cs *channelStore) removeChanel(ch *types.ChannelInfo) error {
 	return nil
 }
 
-func (cs *channelStore) getChannelState() *ConnState {
+func (cs *channelStore) getChannelState() *types3.ConnectionStates {
 	cs.lk.Lock()
 	defer cs.lk.Unlock()
-	cstate := &ConnState{}
+	cstate := &types3.ConnectionStates{}
 	for chid, chanStore := range cs.channels {
 		cstate.ConnectionCount++
-		cstate.Connections = append(cstate.Connections, &ConnectState{
-			Channel:      chid,
+		cstate.Connections = append(cstate.Connections, &types3.ConnectState{
+			ChannelID:    chid,
 			RequestCount: len(chanStore.OutBound),
-			Ip:           chanStore.Ip,
+			IP:           chanStore.Ip,
 			CreateTime:   chanStore.CreateTime,
 		})
 	}
@@ -85,46 +80,4 @@ func (cs *channelStore) empty() bool {
 	cs.lk.Lock()
 	defer cs.lk.Unlock()
 	return len(cs.channels) == 0
-}
-
-type ConnectState struct {
-	Channel      uuid.UUID
-	Ip           string
-	RequestCount int
-	CreateTime   time.Time
-}
-
-type MarketRegisterPolicy struct {
-	Miner address.Address
-}
-
-type IsUnsealRequest struct {
-	PieceCid cid.Cid
-	Sector   storage.SectorRef
-	Offset   types2.PaddedByteIndex
-	Size     abi.PaddedPieceSize
-}
-
-type IsUnsealResponse struct {
-}
-
-type UnsealRequest struct {
-	PieceCid cid.Cid
-	Sector   storage.SectorRef
-	Offset   types2.PaddedByteIndex
-	Size     abi.PaddedPieceSize
-	Dest     string
-}
-
-type UnsealResponse struct {
-}
-
-type ConnState struct {
-	Connections     []*ConnectState
-	ConnectionCount int
-}
-
-type MarketConnectionState struct {
-	Addr address.Address
-	Conn ConnState
 }

@@ -2,17 +2,18 @@ package marketevent
 
 import (
 	"context"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/specs-storage/storage"
+	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	types2 "github.com/ipfs-force-community/venus-common-utils/types"
-	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs/go-cid"
 )
 
 type IMarketEventAPI interface {
 	ResponseMarketEvent(ctx context.Context, resp *types.ResponseEvent) error
-	ListenMarketEvent(ctx context.Context, policy *MarketRegisterPolicy) (<-chan *types.RequestEvent, error)
+	ListenMarketEvent(ctx context.Context, policy *types.MarketRegisterPolicy) (<-chan *types.RequestEvent, error)
 }
 
 // TODO: need ListConnectedMiners & ListConnectedMiners ?
@@ -39,6 +40,6 @@ func (marketEventAPI *MarketEventAPI) ResponseMarketEvent(ctx context.Context, r
 	return marketEventAPI.marketEvent.ResponseEvent(ctx, resp)
 }
 
-func (marketEventAPI *MarketEventAPI) ListenMarketEvent(ctx context.Context, policy *MarketRegisterPolicy) (<-chan *types.RequestEvent, error) {
+func (marketEventAPI *MarketEventAPI) ListenMarketEvent(ctx context.Context, policy *types.MarketRegisterPolicy) (<-chan *types.RequestEvent, error) {
 	return marketEventAPI.marketEvent.ListenMarketEvent(ctx, policy)
 }
