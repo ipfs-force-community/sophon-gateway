@@ -14,8 +14,6 @@ import (
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 
-	types2 "github.com/ipfs-force-community/venus-common-utils/types"
-
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
@@ -85,11 +83,11 @@ func (g *GatewayAPI) ListWalletInfoByWallet(ctx context.Context, wallet string) 
 	return g.we.ListWalletInfoByWallet(ctx, wallet)
 }
 
-func (g *GatewayAPI) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
+func (g *GatewayAPI) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
 	return g.me.IsUnsealed(ctx, miner, pieceCid, sector, offset, size)
 }
 
-func (g *GatewayAPI) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
+func (g *GatewayAPI) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
 	return g.me.SectorsUnsealPiece(ctx, miner, pieceCid, sector, offset, size, dest)
 }
 

@@ -6,8 +6,8 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/specs-storage/storage"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
-	types2 "github.com/ipfs-force-community/venus-common-utils/types"
 	"github.com/ipfs/go-cid"
 )
 
@@ -19,10 +19,10 @@ type IMarketEventAPI interface {
 // TODO: need ListConnectedMiners & ListConnectedMiners ?
 type IMarketEvent interface {
 	//should use  storiface.UnpaddedByteIndex as type for offset
-	IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error)
+	IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error)
 	// SectorsUnsealPiece will Unseal a Sealed sector file for the given sector.
 	//should use  storiface.UnpaddedByteIndex as type for offset
-	SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error
+	SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error
 }
 
 var _ IMarketEventAPI = (*MarketEventAPI)(nil)

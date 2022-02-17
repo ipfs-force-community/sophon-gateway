@@ -18,10 +18,9 @@ import (
 	"github.com/filecoin-project/specs-storage/storage"
 
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
-	types2 "github.com/ipfs-force-community/venus-common-utils/types"
 
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
-	types3 "github.com/filecoin-project/venus/venus-shared/types/gateway"
+	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
@@ -61,7 +60,7 @@ func NewMarketEventStream(ctx context.Context, valaidator MinerValidator, cfg *t
 	return marketEventStream
 }
 
-func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types3.MarketRegisterPolicy) (chan *types3.RequestEvent, error) {
+func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types2.MarketRegisterPolicy) (chan *types2.RequestEvent, error) {
 	ip, exist := jwtclient.CtxGetTokenLocation(ctx)
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
@@ -71,7 +70,7 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 		return nil, xerrors.Errorf("address %s not exit", policy.Miner)
 	}
 
-	out := make(chan *types3.RequestEvent, e.cfg.RequestQueueSize)
+	out := make(chan *types2.RequestEvent, e.cfg.RequestQueueSize)
 	channel := types.NewChannelInfo(ip, out)
 	mAddr := policy.Miner
 	e.connLk.Lock()
@@ -86,7 +85,7 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 	_ = channelStore.addChanel(channel)
 	log.Infof("add new connections %s for miner %s", channel.ChannelId, mAddr)
 	go func() {
-		connectBytes, err := json.Marshal(types3.ConnectedCompleted{
+		connectBytes, err := json.Marshal(types2.ConnectedCompleted{
 			ChannelId: channel.ChannelId,
 		})
 		if err != nil {
@@ -95,7 +94,7 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 			return
 		}
 
-		out <- &types3.RequestEvent{
+		out <- &types2.RequestEvent{
 			ID:         sharedTypes.NewUUID(),
 			Method:     "InitConnect",
 			Payload:    connectBytes,
@@ -122,10 +121,10 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 	return out, nil
 }
 
-func (e *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]types3.MarketConnectionState, error) {
-	var result []types3.MarketConnectionState
+func (e *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]types2.MarketConnectionState, error) {
+	var result []types2.MarketConnectionState
 	for addr, conn := range e.minerConnections {
-		result = append(result, types3.MarketConnectionState{
+		result = append(result, types2.MarketConnectionState{
 			Addr: addr,
 			Conn: *conn.getChannelState(),
 		})
@@ -133,8 +132,8 @@ func (e *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]t
 	return result, nil
 }
 
-func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
-	reqBody := types3.IsUnsealRequest{
+func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
+	reqBody := types2.IsUnsealRequest{
 		PieceCid: pieceCid,
 		Sector:   sector,
 		Offset:   offset,
@@ -159,8 +158,8 @@ func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Addres
 	}
 }
 
-func (e *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset types2.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
-	reqBody := types3.UnsealRequest{
+func (e *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
+	reqBody := types2.UnsealRequest{
 		PieceCid: pieceCid,
 		Sector:   sector,
 		Offset:   offset,

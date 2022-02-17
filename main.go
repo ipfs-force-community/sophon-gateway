@@ -100,11 +100,9 @@ var runCmd = &cli.Command{
 
 		log.Info("Setting up control endpoint at " + address)
 
-		gatewayAPI := func() api.GatewayFullNode {
-			var fullNode api.GatewayFullNodeStruct
-			permission.PermissionProxy(gatewayAPIImpl, &fullNode)
-			return &fullNode
-		}()
+		var fullNode api.GatewayFullNodeStruct
+		permission.PermissionProxy(gatewayAPIImpl, &fullNode)
+		gatewayAPI := (api.GatewayFullNode)(&fullNode)
 
 		if cctx.IsSet("rate-limit-redis") {
 			limiter, err := ratelimit.NewRateLimitHandler(cctx.String("rate-limit-redis"), nil,

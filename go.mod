@@ -8,13 +8,11 @@ require (
 	github.com/filecoin-project/go-state-types v0.1.3
 	github.com/filecoin-project/specs-actors/v5 v5.0.4
 	github.com/filecoin-project/specs-storage v0.2.0
-	github.com/filecoin-project/venus v1.2.0-rc5.0.20220216032335-2bc87f436f87
+	github.com/filecoin-project/venus v1.2.0-rc5.0.20220217131630-a1df3e59a16c
 	github.com/filecoin-project/venus-auth v1.3.1-0.20210809053831-012d55d5f578
 	github.com/gbrlsnchs/jwt/v3 v3.0.1
-	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v1.0.1-0.20211228055608-9462dc86e157
-	github.com/ipfs-force-community/venus-common-utils v0.0.0-20210924063144-1d3a5b30de87
 	github.com/ipfs/go-cid v0.1.0
 	github.com/ipfs/go-log/v2 v2.4.0
 	github.com/modern-go/reflect2 v1.0.2

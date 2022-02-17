@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -48,7 +47,6 @@ func NewProofClient() {
 				req := types.ComputeProofRequest{}
 				err := json.Unmarshal(event.Payload, &req)
 				if err != nil {
-					fmt.Println(event.ID.String())
 					_ = pvc.ResponseProofEvent(ctx, &types.ResponseEvent{
 						ID:      event.ID,
 						Payload: nil,
