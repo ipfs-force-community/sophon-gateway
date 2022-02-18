@@ -18,7 +18,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2
 	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/pkg/errors v0.9.1
-	github.com/ugorji/go v1.2.4 // indirect
 	github.com/urfave/cli/v2 v2.3.0
 	go.opencensus.io v0.23.0
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
