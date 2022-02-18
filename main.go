@@ -122,14 +122,12 @@ var runCmd = &cli.Command{
 		//v1api
 		rpcServerv1 := jsonrpc.NewServer()
 		rpcServerv1.Register("Gateway", gatewayAPI)
-		rpcServerv1.Register("VENUS_MARKET", &gatewayAPI.(*api.GatewayFullNodeStruct).IMarketEventStruct)
 		mux.Handle("/rpc/v1", rpcServerv1)
 
 		//v0api
 		v0FullNode := v0api.WrapperV1Full{GatewayFullNode: gatewayAPI}
 		rpcServerv0 := jsonrpc.NewServer()
 		rpcServerv0.Register("Gateway", v0FullNode)
-		rpcServerv0.Register("VENUS_MARKET", &v0FullNode.GatewayFullNode.(*api.GatewayFullNodeStruct).IMarketEventStruct) //rely on market node unchange
 		mux.Handle("/rpc/v0", rpcServerv0)
 
 		mux.PathPrefix("/").Handler(http.DefaultServeMux)
