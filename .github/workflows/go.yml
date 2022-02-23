@@ -1,12 +1,6 @@
 name: Go
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
 
 jobs:
 
@@ -37,7 +31,6 @@ jobs:
         GOPROXY: "https://proxy.golang.org,direct"
         GO111MODULE: "on"
       run: |
-        make deps
         go build -v ./...
 
     - name: Test

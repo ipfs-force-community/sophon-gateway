@@ -27,9 +27,6 @@ jobs:
       - name: install deps
         run: sudo apt-get install make ftp mesa-opencl-icd ocl-icd-opencl-dev gcc git bzr jq pkg-config curl clang build-essential hwloc libhwloc-dev wget -y && sudo apt upgrade -y
 
-      - name: Make dep
-        run: make deps
-
       - name: golangci-lint
         env:
           GOPROXY: "https://proxy.golang.org,direct"
