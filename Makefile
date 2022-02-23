@@ -48,7 +48,7 @@ test:
 	go test -race ./...
 
 lint: $(BUILD_DEPS)
-	go run github.com/golangci/golangci-lint/cmd/golangci-lint run
+	golint ./...
 
 deps: $(BUILD_DEPS)
 
