@@ -6,7 +6,7 @@ on:
       - master
   pull_request:
     branches:
-      - master
+      - "**"
 
 jobs:
   golangci:
@@ -15,17 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install GCC
-        uses: egor-tensin/setup-gcc@v1
-        with:
-          version: latest
-          platform: x64
-
-      - name: Setup Rust
-        run: (sudo apt-get update && sudo apt-get install -y clang libssl-dev && which cargo && which rustc) || (curl https://sh.rustup.rs -sSf | sh -s -- -y)
-
       - name: install deps
-        run: sudo apt-get install make ftp mesa-opencl-icd ocl-icd-opencl-dev gcc git bzr jq pkg-config curl clang build-essential hwloc libhwloc-dev wget -y && sudo apt upgrade -y
+        run: sudo apt-get install make ftp git bzr curl hwloc libhwloc-dev mesa-opencl-icd ocl-icd-opencl-dev wget -y && sudo apt upgrade -y
 
       - name: Make dep
         run: make deps

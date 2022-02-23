@@ -4,3 +4,4 @@ venus-gateway
 server
 client
 ./token
+build-dep
