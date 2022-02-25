@@ -20,14 +20,19 @@ import (
 
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 
+	"github.com/filecoin-project/venus/venus-shared/api/permission"
 	"github.com/ipfs-force-community/metrics"
 	"github.com/ipfs-force-community/venus-gateway/api"
+	v0api "github.com/ipfs-force-community/venus-gateway/api/v0"
 	"github.com/ipfs-force-community/venus-gateway/cmds"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/version"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
+
+	_ "github.com/filecoin-project/venus/pkg/crypto/bls"
+	_ "github.com/filecoin-project/venus/pkg/crypto/secp"
 )
 
 var log = logging.Logger("main")
@@ -95,9 +100,10 @@ var runCmd = &cli.Command{
 
 		log.Info("Setting up control endpoint at " + address)
 
-		gatewayAPI := api.PermissionedFullAPI(gatewayAPIImpl)
+		var fullNode api.GatewayFullNodeStruct
+		permission.PermissionProxy(gatewayAPIImpl, &fullNode)
+		gatewayAPI := (api.GatewayFullNode)(&fullNode)
 
-		rpcServer := jsonrpc.NewServer()
 		if cctx.IsSet("rate-limit-redis") {
 			limiter, err := ratelimit.NewRateLimitHandler(cctx.String("rate-limit-redis"), nil,
 				&jwtclient.ValueFromCtx{},
@@ -112,11 +118,18 @@ var runCmd = &cli.Command{
 			gatewayAPI = &rateLimitAPI
 		}
 
-		rpcServer.Register("Gateway", gatewayAPI)
-		rpcServer.Register("VENUS_MARKET", &gatewayAPI.(*api.GatewayFullNodeStruct).IMarketEventStruct)
-
 		mux := mux.NewRouter()
-		mux.Handle("/rpc/v0", rpcServer)
+		//v1api
+		rpcServerv1 := jsonrpc.NewServer()
+		rpcServerv1.Register("Gateway", gatewayAPI)
+		mux.Handle("/rpc/v1", rpcServerv1)
+
+		//v0api
+		v0FullNode := v0api.WrapperV1Full{GatewayFullNode: gatewayAPI}
+		rpcServerv0 := jsonrpc.NewServer()
+		rpcServerv0.Register("Gateway", v0FullNode)
+		mux.Handle("/rpc/v0", rpcServerv0)
+
 		mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
 		handler := (http.Handler)(jwtclient.NewAuthMux(

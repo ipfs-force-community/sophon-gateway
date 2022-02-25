@@ -2,22 +2,21 @@ package proofevent
 
 import (
 	"sync"
-	"time"
 
-	"github.com/filecoin-project/go-address"
-	"github.com/google/uuid"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"golang.org/x/xerrors"
 )
 
 type channelStore struct {
-	channels map[uuid.UUID]*types.ChannelInfo
+	channels map[sharedTypes.UUID]*types.ChannelInfo
 	lk       sync.RWMutex
 }
 
 func newChannelStore() *channelStore {
 	return &channelStore{
-		channels: make(map[uuid.UUID]*types.ChannelInfo),
+		channels: make(map[sharedTypes.UUID]*types.ChannelInfo),
 		lk:       sync.RWMutex{},
 	}
 }
@@ -61,16 +60,16 @@ func (cs *channelStore) removeChanel(ch *types.ChannelInfo) error {
 	return nil
 }
 
-func (cs *channelStore) getChannelState() *MinerState {
+func (cs *channelStore) getChannelState() *types2.MinerState {
 	cs.lk.Lock()
 	defer cs.lk.Unlock()
-	cstate := &MinerState{}
+	cstate := &types2.MinerState{}
 	for chid, chanStore := range cs.channels {
 		cstate.ConnectionCount++
-		cstate.Connections = append(cstate.Connections, &ConnectState{
-			Channel:      chid,
+		cstate.Connections = append(cstate.Connections, &types2.ConnectState{
+			ChannelID:    chid,
 			RequestCount: len(chanStore.OutBound),
-			Ip:           chanStore.Ip,
+			IP:           chanStore.Ip,
 			CreateTime:   chanStore.CreateTime,
 		})
 	}
@@ -81,20 +80,4 @@ func (cs *channelStore) empty() bool {
 	cs.lk.Lock()
 	defer cs.lk.Unlock()
 	return len(cs.channels) == 0
-}
-
-type ConnectState struct {
-	Channel      uuid.UUID
-	Ip           string
-	RequestCount int
-	CreateTime   time.Time
-}
-
-type MinerState struct {
-	Connections     []*ConnectState
-	ConnectionCount int
-}
-
-type ProofRegisterPolicy struct {
-	MinerAddress address.Address
 }

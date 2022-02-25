@@ -4,22 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"sync"
 	"time"
 
-	logging "github.com/ipfs/go-log/v2"
-	"golang.org/x/xerrors"
-
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
-	"github.com/google/uuid"
-
-	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
-
+	"github.com/filecoin-project/go-state-types/network"
 	"github.com/filecoin-project/venus-auth/auth"
-
+	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
+	logging "github.com/ipfs/go-log/v2"
+	"golang.org/x/xerrors"
 )
 
 var log = logging.Logger("proof_stream")
@@ -45,7 +43,7 @@ func NewProofEventStream(ctx context.Context, authClient types.IAuthClient, cfg 
 	return proofEventStream
 }
 
-func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRegisterPolicy) (chan *types.RequestEvent, error) {
+func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.ProofRegisterPolicy) (chan *types2.RequestEvent, error) {
 	ip, exist := jwtclient.CtxGetTokenLocation(ctx)
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
@@ -55,7 +53,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRe
 		return nil, xerrors.Errorf("address %s not exit", policy.MinerAddress)
 	}
 
-	out := make(chan *types.RequestEvent, e.cfg.RequestQueueSize)
+	out := make(chan *types2.RequestEvent, e.cfg.RequestQueueSize)
 	channel := types.NewChannelInfo(ip, out)
 	mAddr := policy.MinerAddress
 	e.connLk.Lock()
@@ -70,7 +68,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRe
 	_ = channelStore.addChanel(channel)
 	log.Infof("add new connections %s for miner %s", channel.ChannelId, mAddr)
 	go func() {
-		connectBytes, err := json.Marshal(types.ConnectedCompleted{
+		connectBytes, err := json.Marshal(types2.ConnectedCompleted{
 			ChannelId: channel.ChannelId,
 		})
 		if err != nil {
@@ -79,8 +77,8 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRe
 			return
 		}
 
-		out <- &types.RequestEvent{
-			Id:         uuid.New(),
+		out <- &types2.RequestEvent{
+			ID:         sharedTypes.NewUUID(),
 			Method:     "InitConnect",
 			Payload:    connectBytes,
 			CreateTime: time.Now(),
@@ -106,10 +104,12 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *ProofRe
 	return out, nil
 }
 
-func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []proof5.SectorInfo, rand abi.PoStRandomness) ([]proof5.PoStProof, error) {
-	reqBody := types.ComputeProofRequest{
+func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []builtin.ExtendedSectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]builtin.PoStProof, error) {
+	reqBody := types2.ComputeProofRequest{
 		SectorInfos: sectorInfos,
 		Rand:        rand,
+		Height:      height,
+		NWVersion:   nwVersion,
 	}
 
 	payload, err := json.Marshal(reqBody)
@@ -121,7 +121,7 @@ func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Addre
 	if err != nil {
 		return nil, err
 	}
-	var result []proof5.PoStProof
+	var result []builtin.PoStProof
 	err = e.SendRequest(ctx, channels, "ComputeProof", payload, &result)
 	if err == nil {
 		return result, nil
@@ -157,7 +157,7 @@ func (e *ProofEventStream) ListConnectedMiners(ctx context.Context) ([]address.A
 	return miners, nil
 }
 
-func (e *ProofEventStream) ListMinerConnection(ctx context.Context, addr address.Address) (*MinerState, error) {
+func (e *ProofEventStream) ListMinerConnection(ctx context.Context, addr address.Address) (*types2.MinerState, error) {
 	e.connLk.Lock()
 	defer e.connLk.Unlock()
 

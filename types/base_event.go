@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/modern-go/reflect2"
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/modern-go/reflect2"
 	"golang.org/x/xerrors"
 )
 
@@ -20,14 +21,14 @@ type ChannelMgr interface {
 }
 type BaseEventStream struct {
 	reqLk     sync.RWMutex
-	idRequest map[uuid.UUID]*RequestEvent
+	idRequest map[sharedTypes.UUID]*types.RequestEvent
 	cfg       *Config
 }
 
 func NewBaseEventStream(ctx context.Context, cfg *Config) *BaseEventStream {
 	baseEventStream := &BaseEventStream{
 		reqLk:     sync.RWMutex{},
-		idRequest: make(map[uuid.UUID]*RequestEvent),
+		idRequest: make(map[sharedTypes.UUID]*types.RequestEvent),
 		cfg:       cfg,
 	}
 	go baseEventStream.cleanRequests(ctx)
@@ -39,7 +40,7 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 		return xerrors.Errorf("send request must have channel")
 	}
 
-	processResp := func(resp *ResponseEvent) error {
+	processResp := func(resp *types.ResponseEvent) error {
 		if len(resp.Error) > 0 {
 			return errors.New(resp.Error)
 		}
@@ -60,7 +61,7 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 
 	log.Warnf("the first channel is fail, try to other channesl")
 	otherChannels := channels[1:]
-	respCh := make(chan *ResponseEvent)
+	respCh := make(chan *types.ResponseEvent)
 	for _, channel := range otherChannels {
 		go func(channel *ChannelInfo) {
 			respEvent, err := e.sendOnce(ctx, channel, method, payload)
@@ -80,11 +81,11 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 	}
 }
 
-func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, method string, payload []byte) (*ResponseEvent, error) {
-	id := uuid.New()
-	resultCh := make(chan *ResponseEvent, 1)
-	request := &RequestEvent{
-		Id:         id,
+func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, method string, payload []byte) (*types.ResponseEvent, error) {
+	id := sharedTypes.NewUUID()
+	resultCh := make(chan *types.ResponseEvent, 1)
+	request := &types.RequestEvent{
+		ID:         id,
 		Method:     method,
 		Payload:    payload,
 		CreateTime: time.Now(),
@@ -133,13 +134,13 @@ func (e *BaseEventStream) cleanRequests(ctx context.Context) {
 	}()
 }
 
-func (e *BaseEventStream) ResponseEvent(ctx context.Context, resp *ResponseEvent) error {
+func (e *BaseEventStream) ResponseEvent(ctx context.Context, resp *types.ResponseEvent) error {
 	e.reqLk.Lock()
-	event, ok := e.idRequest[resp.Id]
+	event, ok := e.idRequest[resp.ID]
 	if ok {
-		delete(e.idRequest, resp.Id)
+		delete(e.idRequest, resp.ID)
 	} else {
-		log.Errorf("request id %s not exit %v", resp.Id.String(), resp)
+		log.Errorf("request id %s not exit %v", resp.ID.String(), resp)
 	}
 	e.reqLk.Unlock()
 	if ok {

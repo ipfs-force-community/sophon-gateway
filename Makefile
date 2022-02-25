@@ -1,53 +1,61 @@
-SHELL=/usr/bin/env bash
-
 export CGO_CFLAGS_ALLOW=-D__BLST_PORTABLE__
 export CGO_CFLAGS=-D__BLST_PORTABLE__
 
-GOVERSION:=$(shell go version | cut -d' ' -f 3 | cut -d. -f 2)
-ifeq ($(shell expr $(GOVERSION) \< 13), 1)
-$(warning Your Golang version is go 1.$(GOVERSION))
-$(error Update Golang to version $(shell grep '^go' go.mod))
-endif
+all: build
+.PHONY: all
 
-CLEAN:=
-BINS:=./venus-gateway
+## variables
 
-git=$(subst -,.,$(shell git describe --always --match=NeVeRmAtCh --dirty 2>/dev/null || git rev-parse --short HEAD 2>/dev/null))
+# git modules that need to be loaded
+MODULES:=
 
-ldflags=-X=github.com/ipfs-force-community/venus-gateway/version.CurrentCommit='+git$(git)'
+ldflags=-X=github.com/ipfs-force-community/venus-gateway/version/build.CurrentCommit=+git.$(subst -,.,$(shell git describe --always --match=NeVeRmAtCh --dirty 2>/dev/null || git rev-parse --short HEAD 2>/dev/null))
 ifneq ($(strip $(LDFLAGS)),)
-	ldflags+=-extldflags=$(LDFLAGS)
-endif
+	    ldflags+=-extldflags=$(LDFLAGS)
+	endif
 
 GOFLAGS+=-ldflags="$(ldflags)"
 
-gateway: show-env $(BUILD_DEPS)
-	rm -f venus-gateway
-	go build $(GOFLAGS) -o venus-gateway
-	./venus-gateway --version
+## FFI
 
-linux: 	show-env $(BUILD_DEPS)
-	rm -f venus-gateway
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 CC=x86_64-linux-musl-gcc CGO_LDFLAGS="-static" go build $(GOFLAGS) -o venus-gateway
+FFI_PATH:=extern/filecoin-ffi/
+FFI_DEPS:=.install-filcrypto
+FFI_DEPS:=$(addprefix $(FFI_PATH),$(FFI_DEPS))
 
-show-env:
-	@echo '_________________build_environment_______________'
-	@echo '| CC=$(CC)'
-	@echo '| CGO_CFLAGS=$(CGO_CFLAGS)'
-	@echo '| git commit=$(git)'
-	@echo '-------------------------------------------------'
+$(FFI_DEPS): build-dep/.filecoin-install ;
 
-deps:
+build-dep/.filecoin-install: $(FFI_PATH)
+	$(MAKE) -C $(FFI_PATH) $(FFI_DEPS:$(FFI_PATH)%=%)
+	@touch $@
+
+MODULES+=$(FFI_PATH)
+BUILD_DEPS+=build-dep/.filecoin-install
+CLEAN+=build-dep/.filecoin-install
+
+## modules
+build-dep:
+	mkdir $@
+
+$(MODULES): build-dep/.update-modules;
+# dummy file that marks the last time modules were updated
+build-dep/.update-modules: build-dep;
 	git submodule update --init --recursive
-	./extern/filecoin-ffi/install-filcrypto
+	touch $@
 
-lint:
-	gofmt -s -w ./
-	golangci-lint run
+## build
 
-clean:
-	rm -rf $(CLEAN) $(BINS)
-.PHONY: clean
+test:
+	go test -race ./...
 
-print-%:
-	@echo $*=$($*)
+lint: $(BUILD_DEPS)
+	staticcheck ./...
+
+deps: $(BUILD_DEPS)
+
+dist-clean:
+	git clean -xdff
+	git submodule deinit --all -f
+
+build: $(BUILD_DEPS)
+	rm -f venus-gateway
+	go build -o ./venus-gateway $(GOFLAGS) .

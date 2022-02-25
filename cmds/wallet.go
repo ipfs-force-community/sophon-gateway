@@ -3,7 +3,8 @@ package cmds
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ipfs-force-community/venus-gateway/walletevent"
+
+	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/urfave/cli/v2"
 )
 
@@ -79,7 +80,7 @@ var getWalletByAccountCmds = &cli.Command{
 		}
 
 		account := cctx.Args().Get(0)
-		var supportWallets []*walletevent.WalletDetail
+		var supportWallets []*types.WalletDetail
 		for _, wallet := range wallets {
 			for _, supportAccount := range wallet.SupportAccounts {
 				if supportAccount == account {
