@@ -94,17 +94,11 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 			Result:     nil,
 		} //not response
 
-		for { // nolint:gosimple
-			select {
-			case <-ctx.Done():
-				err := e.walletConnMgr.RemoveConn(walletAccount, walletChannelInfo)
-				if err != nil {
-					log.Errorf("validate address error %v", err)
-				}
-				close(out)
-				return
-			}
+		<-ctx.Done()
+		if e.walletConnMgr.RemoveConn(walletAccount, walletChannelInfo); err != nil {
+			log.Errorf("validate address error %v", err)
 		}
+		close(out)
 	}()
 	return out, nil
 }

@@ -21,7 +21,7 @@ func newChannelStore() *channelStore {
 	}
 }
 
-// nolint
+//lint:ignore U1000 maybe used later
 func (cs *channelStore) getChannelByMiners() (*types.ChannelInfo, error) {
 	cs.lk.RLock()
 	defer cs.lk.RUnlock()
@@ -31,6 +31,7 @@ func (cs *channelStore) getChannelByMiners() (*types.ChannelInfo, error) {
 	return nil, xerrors.Errorf("no any connection")
 }
 
+//lint:ignore U1000 maybe used later
 func (cs *channelStore) getChannelListByMiners() ([]*types.ChannelInfo, error) {
 	cs.lk.RLock()
 	defer cs.lk.RUnlock()

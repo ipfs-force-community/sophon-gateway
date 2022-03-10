@@ -100,23 +100,20 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 			Payload:    connectBytes,
 			CreateTime: time.Now(),
 			Result:     nil,
-		} // not response
-		for { // nolint:gosimple
-			select {
-			case <-ctx.Done():
-				e.connLk.Lock()
-				channelStore := e.minerConnections[mAddr]
-				e.connLk.Unlock()
-				_ = channelStore.removeChanel(channel)
-				if channelStore.empty() {
-					e.connLk.Lock()
-					delete(e.minerConnections, mAddr)
-					e.connLk.Unlock()
-				}
-				log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
-				return
-			}
+		} // no response
+
+		<-ctx.Done()
+		e.connLk.Lock()
+		channelStore := e.minerConnections[mAddr]
+		e.connLk.Unlock()
+		_ = channelStore.removeChanel(channel)
+		if channelStore.empty() {
+			e.connLk.Lock()
+			delete(e.minerConnections, mAddr)
+			e.connLk.Unlock()
 		}
+		log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
+
 	}()
 	return out, nil
 }
