@@ -54,8 +54,8 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           token:
-          files: ./coverage.txt
+          files:  ./coverage.txt
           flags: unittests
-          name: venus-gateway
+          name:  venus-gateway
           fail_ci_if_error: true
           verbose: true
