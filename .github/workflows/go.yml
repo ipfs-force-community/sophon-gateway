@@ -56,6 +56,6 @@ jobs:
           token:
           files: ./coverage.txt
           flags: unittests
-          name: venus-gateway
+          name:  venus-gateway
           fail_ci_if_error: true
           verbose: true
