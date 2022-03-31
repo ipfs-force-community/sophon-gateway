@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/ipfs-force-community/venus-gateway/validator"
 	"net/http"
 	"os"
 	"strings"
@@ -65,7 +66,7 @@ var runCmd = &cli.Command{
 	Name:  "run",
 	Usage: "start venus-gateway daemon",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "auth-url", Usage: "venus auth url"},
+		&cli.StringFlag{Name: "auth-url", Usage: "venus auth url", Required: true},
 		&cli.StringFlag{Name: "jaeger-proxy", EnvVars: []string{"VENUS_GATEWAY_JAEGER_PROXY"}},
 		&cli.Float64Flag{Name: "trace-sampler", EnvVars: []string{"VENUS_GATEWAY_TRACE_SAMPLER"}, Value: 1.0},
 		&cli.StringFlag{Name: "trace-node-name", Value: "venus-gateway"},
@@ -87,14 +88,14 @@ var runCmd = &cli.Command{
 
 		log.Infof("venus-gateway current version %s, listen %s", version.UserVersion, address)
 
-		cli := jwtclient.NewJWTClient(cctx.String("auth-url"))
+		cli, _ := jwtclient.NewAuthClient(cctx.String("auth-url"))
 
-		proofStream := proofevent.NewProofEventStream(ctx, cli, cfg)
+		minerValidator := validator.NewMinerValidator(cli)
+
 		walletStream := walletevent.NewWalletEventStream(ctx, cli, cfg)
-		marketStream := marketevent.NewMarketEventStream(ctx, marketevent.NewMinerValidator(cli), &types.Config{
-			RequestQueueSize: 30,
-			RequestTimeout:   time.Second * 30,
-		})
+
+		proofStream := proofevent.NewProofEventStream(ctx, minerValidator, cfg)
+		marketStream := marketevent.NewMarketEventStream(ctx, minerValidator, &types.Config{RequestQueueSize: 30, RequestTimeout: time.Second * 30})
 
 		gatewayAPIImpl := NewGatewayAPI(proofStream, walletStream, marketStream)
 

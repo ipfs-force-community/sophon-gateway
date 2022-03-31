@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ipfs-force-community/venus-gateway/validator"
 	"sync"
 	"time"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/network"
-	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
@@ -28,16 +28,16 @@ type ProofEventStream struct {
 	connLk           sync.RWMutex
 	minerConnections map[address.Address]*channelStore
 	cfg              *types.Config
-	authClient       types.IAuthClient
+	validator        *validator.AuthMinerValidator
 	*types.BaseEventStream
 }
 
-func NewProofEventStream(ctx context.Context, authClient types.IAuthClient, cfg *types.Config) *ProofEventStream {
+func NewProofEventStream(ctx context.Context, validator *validator.AuthMinerValidator, cfg *types.Config) *ProofEventStream {
 	proofEventStream := &ProofEventStream{
 		connLk:           sync.RWMutex{},
 		minerConnections: make(map[address.Address]*channelStore),
 		cfg:              cfg,
-		authClient:       authClient,
+		validator:        validator,
 		BaseEventStream:  types.NewBaseEventStream(ctx, cfg),
 	}
 	return proofEventStream
@@ -48,9 +48,9 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
 	}
-	has, err := e.authClient.HasMiner(&auth.HasMinerRequest{Miner: policy.MinerAddress.String()})
-	if err != nil || !has {
-		return nil, xerrors.Errorf("address %s not exit", policy.MinerAddress)
+	err := e.validator.Validate(ctx, policy.MinerAddress)
+	if err != nil {
+		return nil, xerrors.Errorf("verify miner:%s failed:%w", policy.MinerAddress.String(), err)
 	}
 
 	out := make(chan *types2.RequestEvent, e.cfg.RequestQueueSize)

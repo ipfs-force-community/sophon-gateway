@@ -4,10 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ipfs-force-community/venus-gateway/validator"
 	"sync"
 	"time"
-
-	"github.com/filecoin-project/venus-auth/auth"
 
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
@@ -32,29 +31,16 @@ type MarketEventStream struct {
 	connLk           sync.RWMutex
 	minerConnections map[address.Address]*channelStore
 	cfg              *types.Config
-	valaidator       MinerValidator
+	validator        *validator.AuthMinerValidator
 	*types.BaseEventStream
 }
 
-type MinerValidator func(miner address.Address) (bool, error)
-
-func NewMinerValidator(authClient types.IAuthClient) func(miner address.Address) (bool, error) {
-	return func(miner address.Address) (bool, error) {
-		has, err := authClient.HasMiner(&auth.HasMinerRequest{Miner: miner.String()})
-		if err != nil || !has {
-			return false, xerrors.Errorf("address %s not exit", miner.String())
-		}
-
-		return true, nil
-	}
-}
-
-func NewMarketEventStream(ctx context.Context, valaidator MinerValidator, cfg *types.Config) *MarketEventStream {
+func NewMarketEventStream(ctx context.Context, validator *validator.AuthMinerValidator, cfg *types.Config) *MarketEventStream {
 	marketEventStream := &MarketEventStream{
 		connLk:           sync.RWMutex{},
 		minerConnections: make(map[address.Address]*channelStore),
 		cfg:              cfg,
-		valaidator:       valaidator,
+		validator:        validator,
 		BaseEventStream:  types.NewBaseEventStream(ctx, cfg),
 	}
 	return marketEventStream
@@ -65,9 +51,9 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
 	}
-	has, err := e.valaidator(policy.Miner)
-	if err != nil || !has {
-		return nil, xerrors.Errorf("address %s not exit", policy.Miner)
+	err := e.validator.Validate(ctx, policy.Miner)
+	if err != nil {
+		return nil, xerrors.Errorf("verify miner:%s failed:%w", policy.Miner.String(), err)
 	}
 
 	out := make(chan *types2.RequestEvent, e.cfg.RequestQueueSize)
