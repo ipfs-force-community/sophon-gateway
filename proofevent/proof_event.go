@@ -85,7 +85,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.
 			CreateTime: time.Now(),
 			Result:     nil,
 		} // no response
-
+		defer close(out)
 		<-ctx.Done()
 		e.connLk.Lock()
 		channelStore := e.minerConnections[mAddr]

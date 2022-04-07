@@ -88,7 +88,7 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 			CreateTime: time.Now(),
 			Result:     nil,
 		} // no response
-
+		defer close(out)
 		<-ctx.Done()
 		e.connLk.Lock()
 		channelStore := e.minerConnections[mAddr]
@@ -100,7 +100,6 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 			e.connLk.Unlock()
 		}
 		log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
-
 	}()
 	return out, nil
 }
