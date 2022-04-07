@@ -15,6 +15,12 @@ type AuthMinerValidator struct {
 	authClient types.IAuthClient
 }
 
+type IAuthMinerValidator interface {
+	Validate(ctx context.Context, miner address.Address) error
+}
+
+var _ IAuthMinerValidator = (*AuthMinerValidator)(nil)
+
 func (amv *AuthMinerValidator) Validate(ctx context.Context, miner address.Address) error {
 	account, exist := jwtclient.CtxGetName(ctx)
 	if !exist {
@@ -34,6 +40,6 @@ func (amv *AuthMinerValidator) Validate(ctx context.Context, miner address.Addre
 	return nil
 }
 
-func NewMinerValidator(authClient types.IAuthClient) *AuthMinerValidator {
+func NewMinerValidator(authClient types.IAuthClient) IAuthMinerValidator {
 	return &AuthMinerValidator{authClient: authClient}
 }

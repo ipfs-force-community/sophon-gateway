@@ -31,11 +31,11 @@ type MarketEventStream struct {
 	connLk           sync.RWMutex
 	minerConnections map[address.Address]*channelStore
 	cfg              *types.Config
-	validator        *validator.AuthMinerValidator
+	validator        validator.IAuthMinerValidator
 	*types.BaseEventStream
 }
 
-func NewMarketEventStream(ctx context.Context, validator *validator.AuthMinerValidator, cfg *types.Config) *MarketEventStream {
+func NewMarketEventStream(ctx context.Context, validator validator.IAuthMinerValidator, cfg *types.Config) *MarketEventStream {
 	marketEventStream := &MarketEventStream{
 		connLk:           sync.RWMutex{},
 		minerConnections: make(map[address.Address]*channelStore),
