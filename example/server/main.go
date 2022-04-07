@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/filecoin-project/go-state-types/network"
 	"net/http"
+
+	"github.com/filecoin-project/go-state-types/network"
 
 	"github.com/ipfs/go-cid"
 

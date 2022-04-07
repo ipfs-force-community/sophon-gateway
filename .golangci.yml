@@ -1,0 +1,31 @@
+linters:
+  disable-all: true
+  enable:
+    - gofmt
+    - govet
+    - misspell
+    - goconst
+    - revive
+    - errcheck
+    - unconvert
+    - staticcheck
+    - varcheck
+    - structcheck
+    - deadcode
+    - unused
+    - stylecheck
+    - gosimple
+    - goimports
+
+issues:
+  exclude:
+    - "should have comment or be unexported"
+    - "should have a package comment"
+    - "\\w+ should be \\w+"
+    - " by other packages, and that stutters; consider calling this"
+  exclude-rules:
+  exclude-use-default: false
+
+linters-settings:
+  goconst:
+    min-occurrences: 6

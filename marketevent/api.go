@@ -11,12 +11,13 @@ import (
 	"github.com/ipfs/go-cid"
 )
 
+//IMarketEventAPI used for client connection
 type IMarketEventAPI interface {
 	ResponseMarketEvent(ctx context.Context, resp *types.ResponseEvent) error
 	ListenMarketEvent(ctx context.Context, policy *types.MarketRegisterPolicy) (<-chan *types.RequestEvent, error)
 }
 
-// TODO: need ListConnectedMiners & ListConnectedMiners ?
+// IMarketEvent: need ListConnectedMiners & ListConnectedMiners ?
 type IMarketEvent interface {
 	//should use  storiface.UnpaddedByteIndex as type for offset
 	IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error)
@@ -27,6 +28,7 @@ type IMarketEvent interface {
 
 var _ IMarketEventAPI = (*MarketEventAPI)(nil)
 
+//MarketEventAPI implement market event api
 type MarketEventAPI struct {
 	marketEvent *MarketEventStream
 }

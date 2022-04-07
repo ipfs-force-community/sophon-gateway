@@ -13,6 +13,7 @@ import (
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 )
 
+//WalletEventClient test wallet client
 type WalletEventClient struct {
 	ResponseWalletEvent func(ctx context.Context, resp *types.ResponseEvent) error
 	ListenWalletEvent   func(ctx context.Context, policy *types.WalletRegisterPolicy) (chan *types.RequestEvent, error)

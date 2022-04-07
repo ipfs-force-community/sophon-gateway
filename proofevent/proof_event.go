@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ipfs-force-community/venus-gateway/validator"
 	"sync"
 	"time"
+
+	"github.com/ipfs-force-community/venus-gateway/validator"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
@@ -121,9 +122,8 @@ func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Addre
 	err = e.SendRequest(ctx, channels, "ComputeProof", payload, &result)
 	if err == nil {
 		return result, nil
-	} else {
-		return nil, err
 	}
+	return nil, err
 }
 
 func (e *ProofEventStream) getChannels(mAddr address.Address) ([]*types.ChannelInfo, error) {
@@ -159,7 +159,6 @@ func (e *ProofEventStream) ListMinerConnection(ctx context.Context, addr address
 
 	if store, ok := e.minerConnections[addr]; ok {
 		return store.getChannelState(), nil
-	} else {
-		return nil, xerrors.Errorf("miner %s not exit", addr)
 	}
+	return nil, xerrors.Errorf("miner %s not exit", addr)
 }
