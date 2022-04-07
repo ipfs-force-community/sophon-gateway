@@ -28,11 +28,11 @@ type ProofEventStream struct {
 	connLk           sync.RWMutex
 	minerConnections map[address.Address]*channelStore
 	cfg              *types.Config
-	validator        *validator.AuthMinerValidator
+	validator        validator.IAuthMinerValidator
 	*types.BaseEventStream
 }
 
-func NewProofEventStream(ctx context.Context, validator *validator.AuthMinerValidator, cfg *types.Config) *ProofEventStream {
+func NewProofEventStream(ctx context.Context, validator validator.IAuthMinerValidator, cfg *types.Config) *ProofEventStream {
 	proofEventStream := &ProofEventStream{
 		connLk:           sync.RWMutex{},
 		minerConnections: make(map[address.Address]*channelStore),
