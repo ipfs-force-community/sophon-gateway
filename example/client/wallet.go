@@ -38,6 +38,7 @@ func main() {
 
 var token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiR2F0ZVdheUxvY2FsVG9rZW4iLCJwZXJtIjoiYWRtaW4iLCJleHQiOiIifQ.jZOlCBnxZtwc9PsjY7OMnooK6C3PFExvZesWsFrVyCs"
 
+// nolint
 func NewWalletClient() jsonrpc.ClientCloser {
 	ctx := context.Background()
 	pvc := &WalletEventClient{}
