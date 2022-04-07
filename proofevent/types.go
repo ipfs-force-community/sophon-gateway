@@ -21,7 +21,7 @@ func newChannelStore() *channelStore {
 	}
 }
 
-// nolint
+//lint:ignore U1000 maybe used later
 func (cs *channelStore) getChannelByMiners() (*types.ChannelInfo, error) {
 	cs.lk.RLock()
 	defer cs.lk.RUnlock()
