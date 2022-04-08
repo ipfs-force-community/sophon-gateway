@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ipfs-force-community/venus-gateway/validator"
 	"sync"
 	"time"
+
+	"github.com/ipfs-force-community/venus-gateway/validator"
 
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
@@ -87,7 +88,7 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 			CreateTime: time.Now(),
 			Result:     nil,
 		} // no response
-
+		defer close(out)
 		<-ctx.Done()
 		e.connLk.Lock()
 		channelStore := e.minerConnections[mAddr]
@@ -99,7 +100,6 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 			e.connLk.Unlock()
 		}
 		log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
-
 	}()
 	return out, nil
 }
@@ -136,9 +136,8 @@ func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Addres
 	err = e.SendRequest(ctx, channels, "IsUnsealed", payload, &result)
 	if err == nil {
 		return result, nil
-	} else {
-		return false, err
 	}
+	return false, err
 }
 
 func (e *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {

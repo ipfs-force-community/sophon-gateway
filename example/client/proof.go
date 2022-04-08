@@ -15,11 +15,13 @@ import (
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 )
 
+// ProofEventClient test proof event client
 type ProofEventClient struct {
 	ResponseProofEvent func(ctx context.Context, resp *types.ResponseEvent) error
 	ListenProofEvent   func(ctx context.Context, policy *types.ProofRegisterPolicy) (chan *types.RequestEvent, error)
 }
 
+// NewProofClient create test client
 func NewProofClient() {
 	for {
 		time.Sleep(time.Second)

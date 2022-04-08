@@ -2,13 +2,14 @@ package validator
 
 import (
 	"context"
+	"testing"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/validator/mocks"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var testArgs = map[string]*struct {
