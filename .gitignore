@@ -5,3 +5,4 @@ server
 client
 ./token
 build-dep
+.vscode
