@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
@@ -51,25 +53,27 @@ func NewWalletEventStream(ctx context.Context, authClient types.IAuthClient, cfg
 }
 
 func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types2.WalletRegisterPolicy) (chan *types2.RequestEvent, error) {
-	walletAccount, _ := jwtclient.CtxGetName(ctx)
-	ip, _ := jwtclient.CtxGetTokenLocation(ctx)
+	walletAccount, exit := jwtclient.CtxGetName(ctx)
+	if !exit {
+		return nil, errors.New("unable to get account name in method ListenWalletEvent request")
+	}
+	ip, _ := jwtclient.CtxGetTokenLocation(ctx) //todo sure exit?
 	out := make(chan *types2.RequestEvent, e.cfg.RequestQueueSize)
 
 	go func() {
 		channel := types.NewChannelInfo(ip, out)
+		defer close(out)
 		//todo validate the account exit or not
 		addrs, err := e.getValidatedAddress(ctx, channel, policy.SignBytes, walletAccount)
 		if err != nil {
-			close(out)
 			log.Error(err)
 			return
 		}
 
 		walletChannelInfo := newWalletChannelInfo(channel, addrs, policy.SignBytes)
 
-		err = e.walletConnMgr.AddNewConn(walletAccount, policy, addrs, walletChannelInfo)
+		err = e.walletConnMgr.addNewConn(walletAccount, policy, walletChannelInfo)
 		if err != nil {
-			close(out)
 			log.Errorf("validate address error %v", err)
 			return
 		}
@@ -81,7 +85,6 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 			ChannelId: walletChannelInfo.ChannelId,
 		})
 		if err != nil {
-			close(out)
 			log.Errorf("marshal failed %v", err)
 			return
 		}
@@ -93,9 +96,8 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 			Payload:    connectBytes,
 			Result:     nil,
 		} //not response
-		defer close(out)
 		<-ctx.Done()
-		if err = e.walletConnMgr.RemoveConn(walletAccount, walletChannelInfo); err != nil {
+		if err = e.walletConnMgr.removeConn(walletAccount, walletChannelInfo); err != nil {
 			log.Errorf("validate address error %v", err)
 		}
 	}()
@@ -103,8 +105,12 @@ func (e *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 }
 
 func (e *WalletEventStream) SupportNewAccount(ctx context.Context, channelId sharedTypes.UUID, account string) error {
-	walletAccount, _ := jwtclient.CtxGetName(ctx)
-	err := e.walletConnMgr.AddSupportAccount(walletAccount, account)
+	walletAccount, exit := jwtclient.CtxGetName(ctx)
+	if !exit {
+		return errors.New("unable to get account name in method SupportNewAccount request")
+	}
+
+	err := e.walletConnMgr.addSupportAccount(walletAccount, account)
 	if err == nil {
 		log.Infof("wallet %s add account %s", walletAccount, account)
 	} else {
@@ -115,8 +121,12 @@ func (e *WalletEventStream) SupportNewAccount(ctx context.Context, channelId sha
 }
 
 func (e *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedTypes.UUID, addrs []address.Address) error {
-	walletAccount, _ := jwtclient.CtxGetName(ctx)
-	info, err := e.walletConnMgr.GetConn(walletAccount, channelId)
+	walletAccount, exit := jwtclient.CtxGetName(ctx)
+	if !exit {
+		return errors.New("unable to get account name in method AddNewAddress request")
+	}
+
+	info, err := e.walletConnMgr.getConn(walletAccount, channelId)
 	if err != nil {
 		return err
 	}
@@ -125,7 +135,7 @@ func (e *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedT
 			return err
 		}
 	}
-	if err = e.walletConnMgr.NewAddress(walletAccount, channelId, addrs); err == nil {
+	if err = e.walletConnMgr.addNewAddress(walletAccount, channelId, addrs); err == nil {
 		log.Infof("wallet %s add address %v", walletAccount, addrs)
 	} else {
 		log.Errorf("wallet %s add address %v failed %v", walletAccount, addrs, err)
@@ -135,8 +145,11 @@ func (e *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedT
 }
 
 func (e *WalletEventStream) RemoveAddress(ctx context.Context, channelId sharedTypes.UUID, addrs []address.Address) error {
-	walletAccount, _ := jwtclient.CtxGetName(ctx)
-	err := e.walletConnMgr.RemoveAddress(walletAccount, channelId, addrs)
+	walletAccount, exit := jwtclient.CtxGetName(ctx)
+	if !exit {
+		return errors.New("unable to get account name in method RemoveAddress request")
+	}
+	err := e.walletConnMgr.removeAddress(walletAccount, channelId, addrs)
 	if err == nil {
 		log.Infof("wallet %s remove address %v", walletAccount, addrs)
 	} else {
@@ -146,7 +159,7 @@ func (e *WalletEventStream) RemoveAddress(ctx context.Context, channelId sharedT
 }
 
 func (e *WalletEventStream) WalletHas(ctx context.Context, supportAccount string, addr address.Address) (bool, error) {
-	return e.walletConnMgr.HasWalletChannel(supportAccount, addr)
+	return e.walletConnMgr.hasWalletChannel(supportAccount, addr)
 }
 
 func (e *WalletEventStream) WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
@@ -159,7 +172,7 @@ func (e *WalletEventStream) WalletSign(ctx context.Context, account string, addr
 		return nil, err
 	}
 
-	channels, err := e.walletConnMgr.GetChannels(account, addr)
+	channels, err := e.walletConnMgr.getChannels(account, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -173,11 +186,11 @@ func (e *WalletEventStream) WalletSign(ctx context.Context, account string, addr
 }
 
 func (e *WalletEventStream) ListWalletInfo(ctx context.Context) ([]*types2.WalletDetail, error) {
-	return e.walletConnMgr.ListWalletInfo(ctx)
+	return e.walletConnMgr.listWalletInfo(ctx)
 }
 
 func (e *WalletEventStream) ListWalletInfoByWallet(ctx context.Context, wallet string) (*types2.WalletDetail, error) {
-	return e.walletConnMgr.ListWalletInfoByWallet(ctx, wallet)
+	return e.walletConnMgr.listWalletInfoByWallet(ctx, wallet)
 }
 
 func (e *WalletEventStream) getValidatedAddress(ctx context.Context, channel *types.ChannelInfo, signBytes []byte, walletAccount string) ([]address.Address, error) {
@@ -222,4 +235,12 @@ func (e *WalletEventStream) verifyAddress(ctx context.Context, addr address.Addr
 	log.Infof("wallet %s verify address %s success", walletAccount, addr)
 
 	return nil
+}
+
+func GetSignData(datas ...[]byte) []byte {
+	hasher := sha256.New()
+	for _, data := range datas {
+		_, _ = hasher.Write(data)
+	}
+	return hash256.Sum(nil)
 }

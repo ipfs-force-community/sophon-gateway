@@ -77,10 +77,7 @@ var runCmd = &cli.Command{
 		ctx := cctx.Context
 
 		address := cctx.String("listen")
-		cfg := &types.Config{
-			RequestQueueSize: 30,
-			RequestTimeout:   time.Minute * 5,
-		}
+		cfg := types.DefaultConfig()
 
 		seckey, err := MakeToken()
 		if err != nil {
@@ -96,7 +93,11 @@ var runCmd = &cli.Command{
 		walletStream := walletevent.NewWalletEventStream(ctx, cli, cfg)
 
 		proofStream := proofevent.NewProofEventStream(ctx, minerValidator, cfg)
-		marketStream := marketevent.NewMarketEventStream(ctx, minerValidator, &types.Config{RequestQueueSize: 30, RequestTimeout: time.Second * 30})
+		marketStream := marketevent.NewMarketEventStream(ctx, minerValidator, &types.Config{
+			RequestQueueSize: 30,
+			RequestTimeout:   time.Hour * 7, //wait seven hour to do unseal
+			ClearInterval:    time.Minute * 5,
+		})
 
 		gatewayAPIImpl := NewGatewayAPI(proofStream, walletStream, marketStream)
 
