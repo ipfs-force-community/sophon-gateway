@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -16,9 +17,8 @@ import (
 
 var log = logging.Logger("gateway_stream")
 
-type ChannelMgr interface {
-	GetChannel() ([]*ChannelInfo, error)
-}
+var ErrCloseChannel = xerrors.Errorf("recover send once")
+
 type BaseEventStream struct {
 	reqLk     sync.RWMutex
 	idRequest map[sharedTypes.UUID]*types.RequestEvent
@@ -55,11 +55,13 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 	if err == nil {
 		return processResp(resp)
 	}
-	if len(channels) == 1 {
+
+	if ctx.Err() != nil || len(channels) == 1 { //if ctx have done before, not to try others
 		return err
 	}
 
-	log.Warnf("the first channel is fail, try to other channesl")
+	//code below unable to work as expect , because there no way to detect network issue in gateway,
+	log.Warnf("the first channel is fail, try to other channel")
 	otherChannels := channels[1:]
 	respCh := make(chan *types.ResponseEvent)
 	for _, channel := range otherChannels {
@@ -81,7 +83,13 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 	}
 }
 
-func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, method string, payload []byte) (*types.ResponseEvent, error) {
+func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, method string, payload []byte) (response *types.ResponseEvent, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = ErrCloseChannel
+		}
+	}()
+
 	id := sharedTypes.NewUUID()
 	resultCh := make(chan *types.ResponseEvent, 1)
 	request := &types.RequestEvent{
@@ -96,7 +104,7 @@ func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, me
 	e.reqLk.Unlock()
 
 	select {
-	case channel.OutBound <- request:
+	case channel.OutBound <- request: //NOTICE this may be panic, but will catch by recover and try other, should never have  other panic
 		log.Debug("send request %s to %s", method, channel.Ip)
 	case <-ctx.Done():
 		return nil, xerrors.Errorf("send request cancel by context %w", ctx.Err())
@@ -113,7 +121,7 @@ func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, me
 }
 
 func (e *BaseEventStream) cleanRequests(ctx context.Context) {
-	tm := time.NewTicker(time.Minute * 5)
+	tm := time.NewTicker(e.cfg.ClearInterval)
 	go func() {
 		for {
 			select {
@@ -140,7 +148,7 @@ func (e *BaseEventStream) ResponseEvent(ctx context.Context, resp *types.Respons
 	if ok {
 		delete(e.idRequest, resp.ID)
 	} else {
-		log.Errorf("request id %s not exit %v", resp.ID.String(), resp)
+		return fmt.Errorf("request id %s not exit", resp.ID.String())
 	}
 	e.reqLk.Unlock()
 	if ok {

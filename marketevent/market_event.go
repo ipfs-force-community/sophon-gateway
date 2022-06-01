@@ -75,8 +75,8 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 		connectBytes, err := json.Marshal(types2.ConnectedCompleted{
 			ChannelId: channel.ChannelId,
 		})
+		defer close(out)
 		if err != nil {
-			close(out)
 			log.Errorf("marshal failed %v", err)
 			return
 		}
@@ -88,16 +88,14 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 			CreateTime: time.Now(),
 			Result:     nil,
 		} // no response
-		defer close(out)
 		<-ctx.Done()
 		e.connLk.Lock()
+		defer e.connLk.Unlock() //connection read and remove should in one lock
 		channelStore := e.minerConnections[mAddr]
-		e.connLk.Unlock()
 		_ = channelStore.removeChanel(channel)
 		if channelStore.empty() {
-			e.connLk.Lock()
 			delete(e.minerConnections, mAddr)
-			e.connLk.Unlock()
+
 		}
 		log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
 	}()

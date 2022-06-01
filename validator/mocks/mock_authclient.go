@@ -31,10 +31,12 @@ func (m AuthClient) HasMiner(req *auth.HasMinerRequest) (bool, error) {
 	panic("implement me")
 }
 
-func (m *AuthClient) AddMockUser(user *auth.OutputUser) {
+func (m *AuthClient) AddMockUser(users ...*auth.OutputUser) {
 	//m.users[user.Name] = user
-	for _, miner := range user.Miners {
-		m.miners[miner.Miner] = user
+	for _, user := range users {
+		for _, miner := range user.Miners {
+			m.miners[miner.Miner] = user
+		}
 	}
 }
 
