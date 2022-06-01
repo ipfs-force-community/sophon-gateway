@@ -31,12 +31,12 @@ var _ IMarketEvent = (*MarketEventStream)(nil)
 type MarketEventStream struct {
 	connLk           sync.RWMutex
 	minerConnections map[address.Address]*channelStore
-	cfg              *types.Config
+	cfg              *types.RequestConfig
 	validator        validator.IAuthMinerValidator
 	*types.BaseEventStream
 }
 
-func NewMarketEventStream(ctx context.Context, validator validator.IAuthMinerValidator, cfg *types.Config) *MarketEventStream {
+func NewMarketEventStream(ctx context.Context, validator validator.IAuthMinerValidator, cfg *types.RequestConfig) *MarketEventStream {
 	marketEventStream := &MarketEventStream{
 		connLk:           sync.RWMutex{},
 		minerConnections: make(map[address.Address]*channelStore),
@@ -47,28 +47,28 @@ func NewMarketEventStream(ctx context.Context, validator validator.IAuthMinerVal
 	return marketEventStream
 }
 
-func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types2.MarketRegisterPolicy) (chan *types2.RequestEvent, error) {
+func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types2.MarketRegisterPolicy) (<-chan *types2.RequestEvent, error) {
 	ip, exist := jwtclient.CtxGetTokenLocation(ctx)
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
 	}
-	err := e.validator.Validate(ctx, policy.Miner)
+	err := m.validator.Validate(ctx, policy.Miner)
 	if err != nil {
 		return nil, xerrors.Errorf("verify miner:%s failed:%w", policy.Miner.String(), err)
 	}
 
-	out := make(chan *types2.RequestEvent, e.cfg.RequestQueueSize)
+	out := make(chan *types2.RequestEvent, m.cfg.RequestQueueSize)
 	channel := types.NewChannelInfo(ip, out)
 	mAddr := policy.Miner
-	e.connLk.Lock()
+	m.connLk.Lock()
 	var channelStore *channelStore
 	var ok bool
-	if channelStore, ok = e.minerConnections[mAddr]; !ok {
+	if channelStore, ok = m.minerConnections[mAddr]; !ok {
 		channelStore = newChannelStore()
-		e.minerConnections[policy.Miner] = channelStore
+		m.minerConnections[policy.Miner] = channelStore
 	}
 
-	e.connLk.Unlock()
+	m.connLk.Unlock()
 	_ = channelStore.addChanel(channel)
 	log.Infof("add new connections %s for miner %s", channel.ChannelId, mAddr)
 	go func() {
@@ -89,12 +89,12 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 			Result:     nil,
 		} // no response
 		<-ctx.Done()
-		e.connLk.Lock()
-		defer e.connLk.Unlock() //connection read and remove should in one lock
-		channelStore := e.minerConnections[mAddr]
+		m.connLk.Lock()
+		defer m.connLk.Unlock() //connection read and remove should in one lock
+		channelStore := m.minerConnections[mAddr]
 		_ = channelStore.removeChanel(channel)
 		if channelStore.empty() {
-			delete(e.minerConnections, mAddr)
+			delete(m.minerConnections, mAddr)
 
 		}
 		log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
@@ -102,9 +102,13 @@ func (e *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 	return out, nil
 }
 
-func (e *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]types2.MarketConnectionState, error) {
+func (m *MarketEventStream) ResponseMarketEvent(ctx context.Context, resp *types2.ResponseEvent) error {
+	return m.ResponseEvent(ctx, resp)
+}
+
+func (m *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]types2.MarketConnectionState, error) {
 	var result []types2.MarketConnectionState
-	for addr, conn := range e.minerConnections {
+	for addr, conn := range m.minerConnections {
 		result = append(result, types2.MarketConnectionState{
 			Addr: addr,
 			Conn: *conn.getChannelState(),
@@ -113,7 +117,7 @@ func (e *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]t
 	return result, nil
 }
 
-func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
+func (m *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
 	reqBody := types2.IsUnsealRequest{
 		PieceCid: pieceCid,
 		Sector:   sector,
@@ -126,19 +130,19 @@ func (e *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Addres
 		return false, err
 	}
 
-	channels, err := e.getChannels(miner)
+	channels, err := m.getChannels(miner)
 	if err != nil {
 		return false, err
 	}
 	var result bool
-	err = e.SendRequest(ctx, channels, "IsUnsealed", payload, &result)
+	err = m.SendRequest(ctx, channels, "IsUnsealed", payload, &result)
 	if err == nil {
 		return result, nil
 	}
 	return false, err
 }
 
-func (e *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
+func (m *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
 	reqBody := types2.UnsealRequest{
 		PieceCid: pieceCid,
 		Sector:   sector,
@@ -152,23 +156,23 @@ func (e *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner addres
 		return err
 	}
 
-	channels, err := e.getChannels(miner)
+	channels, err := m.getChannels(miner)
 	if err != nil {
 		return err
 	}
 
-	return e.SendRequest(ctx, channels, "SectorsUnsealPiece", payload, nil)
+	return m.SendRequest(ctx, channels, "SectorsUnsealPiece", payload, nil)
 }
 
-func (e *MarketEventStream) getChannels(mAddr address.Address) ([]*types.ChannelInfo, error) {
-	e.connLk.Lock()
+func (m *MarketEventStream) getChannels(mAddr address.Address) ([]*types.ChannelInfo, error) {
+	m.connLk.Lock()
 	var channelStore *channelStore
 	var ok bool
-	if channelStore, ok = e.minerConnections[mAddr]; !ok {
-		e.connLk.Unlock()
+	if channelStore, ok = m.minerConnections[mAddr]; !ok {
+		m.connLk.Unlock()
 		return nil, xerrors.Errorf("no connections for this miner %s", mAddr)
 	}
-	e.connLk.Unlock()
+	m.connLk.Unlock()
 
 	channels, err := channelStore.getChannelListByMiners()
 	if err != nil {

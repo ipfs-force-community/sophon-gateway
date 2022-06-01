@@ -179,7 +179,7 @@ func TestSendRequest(t *testing.T) {
 	t.Run("clear timeout request", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		eventSteam := NewBaseEventStream(ctx, &Config{
+		eventSteam := NewBaseEventStream(ctx, &RequestConfig{
 			RequestQueueSize: 30,
 			RequestTimeout:   time.Second,
 			ClearInterval:    time.Second,

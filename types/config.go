@@ -4,16 +4,31 @@ import (
 	"time"
 )
 
-type Config struct {
+type RequestConfig struct {
 	RequestQueueSize int
 	RequestTimeout   time.Duration
 	ClearInterval    time.Duration
 }
 
-func DefaultConfig() *Config {
-	return &Config{
+func DefaultConfig() *RequestConfig {
+	return &RequestConfig{
 		RequestQueueSize: 30,
 		RequestTimeout:   time.Minute * 5,
 		ClearInterval:    time.Minute * 5,
 	}
+}
+
+type Config struct {
+	Listen         string
+	AuthUrl        string
+	JaegerProxy    string
+	TraceSampler   float64
+	TraceNodeName  string
+	RateLimitRedis string
+}
+
+type APIRegisterHubConfig struct {
+	RegisterAPI     []string `json:"apiRegisterHub"`
+	Token           string   `json:"token"`
+	SupportAccounts []string `json:"supportAccounts"`
 }

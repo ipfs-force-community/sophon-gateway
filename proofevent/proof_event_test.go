@@ -6,6 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ipfs/go-cid"
+
+	"github.com/ipfs-force-community/venus-gateway/testhelper"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/network"
@@ -24,7 +28,7 @@ func TestListenProofEvent(t *testing.T) {
 	addr1 := addrGetter()
 	addr2 := addrGetter()
 
-	t.Run("correct", func(t *testing.T) {
+	t.Run("init connect", func(t *testing.T) {
 		proof := setupProofEvent(t, []address.Address{addr1})
 		ctx, cancel := context.WithCancel(context.Background())
 		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
@@ -82,85 +86,100 @@ func TestComputeProofEvent(t *testing.T) {
 	addrGetter := address.NewForTestGetter()
 	addr := addrGetter()
 	t.Run("correct", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		proof := setupProofEvent(t, []address.Address{addr})
-		{
-			ctx := jwtclient.CtxWithTokenLocation(context.Background(), "127.1.1.1")
-			requestCh, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
-				MinerAddress: addr,
-			})
-			require.NoError(t, err)
-			go func() {
-				for req := range requestCh {
-					if req.Method == "ComputeProof" {
-						var requestBody types.ComputeProofRequest
-						err = json.Unmarshal(req.Payload, &requestBody)
-						require.NoError(t, err)
-						require.Equal(t, abi.PoStRandomness([]byte{1, 2, 3}), requestBody.Rand)
-						require.Equal(t, abi.ChainEpoch(100), requestBody.Height)
-						require.Equal(t, network.Version4, requestBody.NWVersion)
-
-						postProof := builtin.PoStProof{
-							PoStProof:  abi.RegisteredPoStProof_StackedDrgWindow8MiBV1,
-							ProofBytes: []byte{1, 2, 3, 4},
-						}
-						result, err := json.Marshal([]builtin.PoStProof{postProof})
-						require.NoError(t, err)
-						err = proof.ResponseEvent(ctx, &types.ResponseEvent{
-							ID:      req.ID,
-							Payload: result,
-							Error:   "",
-						})
-						require.NoError(t, err)
-						return
-					}
-				}
-			}()
+		expectInfo := []builtin.ExtendedSectorInfo{
+			{
+				SealProof:    abi.RegisteredSealProof_StackedDrg2KiBV1_1,
+				SectorNumber: 100,
+				SectorKey:    nil,
+				SealedCID:    cid.Undef,
+			},
 		}
+		expectRand := []byte{1, 23}
+		expectEpoch := abi.ChainEpoch(100)
+		expectVersion := network.Version(10)
+		expectProof := []builtin.PoStProof{
+			{
+				PoStProof:  abi.RegisteredPoStProof_StackedDrgWindow32GiBV1,
+				ProofBytes: []byte{3, 4},
+			},
+		}
+		handler := testhelper.NewProofHander(t, expectInfo, expectRand, expectEpoch, expectVersion, expectProof, false)
+		proofClient := NewProofEvent(proof, addr, handler, log.With())
+
+		go proofClient.ListenProofRequest(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"))
+		proofClient.WaitReady(ctx)
+
+		result, err := proof.ComputeProof(ctx, addr, expectInfo, expectRand, expectEpoch, expectVersion)
+		require.NoError(t, err)
+		require.Equal(t, expectProof, result)
+	})
+
+	t.Run("send unmarshal", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		proof := setupProofEvent(t, []address.Address{addr})
+		expectInfo := []builtin.ExtendedSectorInfo{
+			{
+				SealProof:    abi.RegisteredSealProof_StackedDrg2KiBV1_1,
+				SectorNumber: 100,
+				SectorKey:    nil,
+				SealedCID:    cid.Undef,
+			},
+		}
+		expectRand := []byte{1, 23}
+		expectEpoch := abi.ChainEpoch(100)
+		expectVersion := network.Version(10)
+		expectProof := []builtin.PoStProof{
+			{
+				PoStProof:  abi.RegisteredPoStProof_StackedDrgWindow32GiBV1,
+				ProofBytes: []byte{3, 4},
+			},
+		}
+		handler := testhelper.NewProofHander(t, expectInfo, expectRand, expectEpoch, expectVersion, expectProof, false)
+		proofClient := NewProofEvent(proof, addr, handler, log.With())
+
+		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
+		go proofClient.ListenProofRequest(ctx)
+		proofClient.WaitReady(ctx)
 
 		{
 			ctx := context.Background()
-			result, err := proof.ComputeProof(ctx, addr,
-				[]builtin.ExtendedSectorInfo{},
-				[]byte{1, 2, 3},
-				abi.ChainEpoch(100), network.Version4)
+			channels, err := proof.getChannels(addr)
 			require.NoError(t, err)
-			require.Len(t, result, 1)
-			require.Equal(t, abi.RegisteredPoStProof_StackedDrgWindow8MiBV1, result[0].PoStProof)
-			require.Equal(t, []byte{1, 2, 3, 4}, result[0].ProofBytes)
+			var result []builtin.PoStProof
+			err = proof.SendRequest(ctx, channels, "ComputeProof", []byte{1, 3, 5, 1, 3}, &result)
+			require.Contains(t, err.Error(), "invalid character")
 		}
 	})
 
 	t.Run("response error", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		proof := setupProofEvent(t, []address.Address{addr})
-		{
-			ctx := jwtclient.CtxWithTokenLocation(context.Background(), "127.1.1.1")
-			requestCh, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
-				MinerAddress: addr,
-			})
-			require.NoError(t, err)
-			go func() {
-				for req := range requestCh {
-					if req.Method == "ComputeProof" {
-						err := proof.ResponseEvent(ctx, &types.ResponseEvent{
-							ID:      req.ID,
-							Payload: nil,
-							Error:   "mock error",
-						})
-						require.NoError(t, err)
-						return
-					}
-				}
-			}()
+		expectInfo := []builtin.ExtendedSectorInfo{
+			{
+				SealProof:    abi.RegisteredSealProof_StackedDrg2KiBV1_1,
+				SectorNumber: 100,
+				SectorKey:    nil,
+				SealedCID:    cid.Undef,
+			},
 		}
+		expectRand := []byte{1, 23}
+		expectEpoch := abi.ChainEpoch(100)
+		expectVersion := network.Version(10)
+		handler := testhelper.NewProofHander(t, expectInfo, expectRand, expectEpoch, expectVersion, nil, true)
+		proofClient := NewProofEvent(proof, addr, handler, log.With())
 
-		{
-			ctx := context.Background()
-			_, err := proof.ComputeProof(ctx, addr,
-				[]builtin.ExtendedSectorInfo{},
-				[]byte{1, 2, 3},
-				abi.ChainEpoch(100), network.Version4)
-			require.EqualError(t, err, "mock error")
-		}
+		go proofClient.ListenProofRequest(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"))
+		proofClient.WaitReady(ctx)
+
+		result, err := proof.ComputeProof(ctx, addr, expectInfo, expectRand, expectEpoch, expectVersion)
+		require.EqualError(t, err, "mock error")
+		require.Nil(t, result)
+
 	})
 
 	t.Run("uncorrect result  error", func(t *testing.T) {
@@ -222,19 +241,17 @@ func TestListConnectedMiners(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	{
+		proofClient := NewProofEvent(proof, addr1, nil, log.With())
 		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
-		_, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
-			MinerAddress: addr1,
-		})
-		require.NoError(t, err)
+		go proofClient.ListenProofRequest(ctx)
+		proofClient.WaitReady(ctx)
 	}
 
 	{
-		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.2")
-		_, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
-			MinerAddress: addr2,
-		})
-		require.NoError(t, err)
+		proofClient := NewProofEvent(proof, addr2, nil, log.With())
+		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
+		go proofClient.ListenProofRequest(ctx)
+		proofClient.WaitReady(ctx)
 	}
 	connetions, err := proof.ListConnectedMiners(ctx)
 	require.NoError(t, err)
@@ -247,20 +264,19 @@ func TestListMinerConnection(t *testing.T) {
 	proof := setupProofEvent(t, []address.Address{addr1})
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	{
+		proofClient := NewProofEvent(proof, addr1, nil, log.With())
 		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
-		_, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
-			MinerAddress: addr1,
-		})
-		require.NoError(t, err)
+		go proofClient.ListenProofRequest(ctx)
+		proofClient.WaitReady(ctx)
 	}
 
 	{
+		proofClient := NewProofEvent(proof, addr1, nil, log.With())
 		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.2")
-		_, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
-			MinerAddress: addr1,
-		})
-		require.NoError(t, err)
+		go proofClient.ListenProofRequest(ctx)
+		proofClient.WaitReady(ctx)
 	}
 
 	connetions, err := proof.ListMinerConnection(ctx, addr1)
