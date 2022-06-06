@@ -23,21 +23,3 @@ type IProofEvent interface {
 
 	ComputeProof(ctx context.Context, miner address.Address, sectorInfos []builtin.ExtendedSectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]builtin.PoStProof, error)
 }
-
-var _ IProofEventAPI = (*ProofEventAPI)(nil)
-
-type ProofEventAPI struct {
-	proofEvent *ProofEventStream
-}
-
-func NewProofEventAPI(proofEvent *ProofEventStream) *ProofEventAPI {
-	return &ProofEventAPI{proofEvent: proofEvent}
-}
-
-func (proofEventAPI *ProofEventAPI) ResponseProofEvent(ctx context.Context, resp *types.ResponseEvent) error {
-	return proofEventAPI.proofEvent.ResponseEvent(ctx, resp)
-}
-
-func (proofEventAPI *ProofEventAPI) ListenProofEvent(ctx context.Context, policy *types.ProofRegisterPolicy) (<-chan *types.RequestEvent, error) {
-	return proofEventAPI.proofEvent.ListenProofEvent(ctx, policy)
-}

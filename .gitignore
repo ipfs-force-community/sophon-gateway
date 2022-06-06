@@ -3,6 +3,7 @@
 venus-gateway
 server
 client
-./token
+token
+clienttoken
 build-dep
 coverage.txt

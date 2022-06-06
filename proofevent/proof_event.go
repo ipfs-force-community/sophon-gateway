@@ -28,12 +28,12 @@ var _ IProofEvent = (*ProofEventStream)(nil)
 type ProofEventStream struct {
 	connLk           sync.RWMutex
 	minerConnections map[address.Address]*channelStore
-	cfg              *types.Config
+	cfg              *types.RequestConfig
 	validator        validator.IAuthMinerValidator
 	*types.BaseEventStream
 }
 
-func NewProofEventStream(ctx context.Context, validator validator.IAuthMinerValidator, cfg *types.Config) *ProofEventStream {
+func NewProofEventStream(ctx context.Context, validator validator.IAuthMinerValidator, cfg *types.RequestConfig) *ProofEventStream {
 	proofEventStream := &ProofEventStream{
 		connLk:           sync.RWMutex{},
 		minerConnections: make(map[address.Address]*channelStore),
@@ -44,7 +44,7 @@ func NewProofEventStream(ctx context.Context, validator validator.IAuthMinerVali
 	return proofEventStream
 }
 
-func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.ProofRegisterPolicy) (chan *types2.RequestEvent, error) {
+func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.ProofRegisterPolicy) (<-chan *types2.RequestEvent, error) {
 	ip, exist := jwtclient.CtxGetTokenLocation(ctx)
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
@@ -99,6 +99,10 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.
 		log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
 	}()
 	return out, nil
+}
+
+func (e *ProofEventStream) ResponseProofEvent(ctx context.Context, resp *types2.ResponseEvent) error {
+	return e.ResponseEvent(ctx, resp)
 }
 
 func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []builtin.ExtendedSectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]builtin.PoStProof, error) {

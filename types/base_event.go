@@ -22,10 +22,10 @@ var ErrCloseChannel = xerrors.Errorf("recover send once")
 type BaseEventStream struct {
 	reqLk     sync.RWMutex
 	idRequest map[sharedTypes.UUID]*types.RequestEvent
-	cfg       *Config
+	cfg       *RequestConfig
 }
 
-func NewBaseEventStream(ctx context.Context, cfg *Config) *BaseEventStream {
+func NewBaseEventStream(ctx context.Context, cfg *RequestConfig) *BaseEventStream {
 	baseEventStream := &BaseEventStream{
 		reqLk:     sync.RWMutex{},
 		idRequest: make(map[sharedTypes.UUID]*types.RequestEvent),
