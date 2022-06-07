@@ -114,7 +114,7 @@ func TestSendRequest(t *testing.T) {
 		sendCtx, sendCancel := context.WithCancel(context.Background())
 		sendCancel()
 		err = eventSteam.SendRequest(sendCtx, getConns(), "mock_method", parms, result)
-		require.EqualError(t, err, "send request cancel by context context canceled: context canceled")
+		require.EqualError(t, err, "send request cancel by context context canceled")
 	})
 
 	t.Run("once send error and retry others", func(t *testing.T) {
@@ -173,7 +173,7 @@ func TestSendRequest(t *testing.T) {
 		sendCtx, sendCancel := context.WithCancel(context.Background())
 		sendCancel()
 		err = eventSteam.SendRequest(sendCtx, getConns(), "mock_method", parms, result)
-		require.EqualError(t, err, "send request cancel by context context canceled: context canceled")
+		require.EqualError(t, err, "send request cancel by context context canceled")
 	})
 
 	t.Run("clear timeout request", func(t *testing.T) {
