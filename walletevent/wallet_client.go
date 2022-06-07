@@ -3,6 +3,7 @@ package walletevent
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 
 	"github.com/filecoin-project/go-address"
 	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
-	"golang.org/x/xerrors"
 
 	types2 "github.com/filecoin-project/venus/venus-shared/types"
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
@@ -107,7 +107,7 @@ func (e *WalletEventClient) listenWalletRequestOnce(ctx context.Context) error {
 	walletEventCh, err := e.client.ListenWalletEvent(ctx, policy)
 	if err != nil {
 		// Retry is handled by caller
-		return xerrors.Errorf("listenWalletRequestOnce listenWalletRequestOnce call failed: %w", err)
+		return fmt.Errorf("listenWalletRequestOnce listenWalletRequestOnce call failed: %w", err)
 	}
 
 	for event := range walletEventCh {

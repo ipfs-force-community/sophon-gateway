@@ -9,7 +9,6 @@ import (
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"github.com/filecoin-project/venus-auth/core"
 	"github.com/ipfs-force-community/venus-gateway/types"
-	"golang.org/x/xerrors"
 )
 
 type AuthMinerValidator struct {
@@ -29,13 +28,13 @@ func (amv *AuthMinerValidator) Validate(ctx context.Context, miner address.Addre
 	}
 	user, err := amv.authClient.GetUserByMiner(&auth.GetUserByMinerRequest{Miner: miner.String()})
 	if err != nil {
-		return xerrors.Errorf("get user by miner(%s), failed:%w", miner.String(), err)
+		return fmt.Errorf("get user by miner(%s), failed:%w", miner.String(), err)
 	}
 	if user.State != core.UserStateEnabled {
-		return xerrors.Errorf("user:%s is disabled, please enable it on 'venus-auth'", account)
+		return fmt.Errorf("user:%s is disabled, please enable it on 'venus-auth'", account)
 	}
 	if user.Name != account {
-		return xerrors.Errorf("your account is:%s, but miner:%s is currently bind to user:%s, change this on 'venus-auth'",
+		return fmt.Errorf("your account is:%s, but miner:%s is currently bind to user:%s, change this on 'venus-auth'",
 			account, miner.String(), user.Name)
 	}
 	return nil

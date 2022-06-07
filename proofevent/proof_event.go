@@ -18,7 +18,6 @@ import (
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	logging "github.com/ipfs/go-log/v2"
-	"golang.org/x/xerrors"
 )
 
 var log = logging.Logger("proof_stream")
@@ -51,7 +50,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.
 	}
 	err := e.validator.Validate(ctx, policy.MinerAddress)
 	if err != nil {
-		return nil, xerrors.Errorf("verify miner:%s failed:%w", policy.MinerAddress.String(), err)
+		return nil, fmt.Errorf("verify miner:%s failed:%w", policy.MinerAddress.String(), err)
 	}
 
 	out := make(chan *types2.RequestEvent, e.cfg.RequestQueueSize)
@@ -136,13 +135,13 @@ func (e *ProofEventStream) getChannels(mAddr address.Address) ([]*types.ChannelI
 	var ok bool
 	if channelStore, ok = e.minerConnections[mAddr]; !ok {
 		e.connLk.Unlock()
-		return nil, xerrors.Errorf("no connections for this miner %s", mAddr)
+		return nil, fmt.Errorf("no connections for this miner %s", mAddr)
 	}
 	e.connLk.Unlock()
 
 	channels, err := channelStore.getChannelListByMiners()
 	if err != nil {
-		return nil, xerrors.Errorf("cannot find any connection for miner %s", mAddr)
+		return nil, fmt.Errorf("cannot find any connection for miner %s", mAddr)
 	}
 	return channels, nil
 }
@@ -164,5 +163,5 @@ func (e *ProofEventStream) ListMinerConnection(ctx context.Context, addr address
 	if store, ok := e.minerConnections[addr]; ok {
 		return store.getChannelState(), nil
 	}
-	return nil, xerrors.Errorf("miner %s not exit", addr)
+	return nil, fmt.Errorf("miner %s not exit", addr)
 }

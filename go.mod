@@ -23,7 +23,6 @@ require (
 	go.opencensus.io v0.23.0
 	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220418201149-a630d4f3e7a2
-	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f
 )
 
 replace github.com/filecoin-project/filecoin-ffi => ./extern/filecoin-ffi

@@ -2,13 +2,13 @@ package walletevent
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/filecoin-project/go-address"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
-	"golang.org/x/xerrors"
 )
 
 type walletChannelInfo struct {
@@ -107,7 +107,7 @@ func (w *walletConnMgr) getConn(walletAccount string, channelID sharedTypes.UUID
 		}
 	}
 
-	return nil, xerrors.Errorf("no connect found for wallet %s and channelID %s", walletAccount, channelID)
+	return nil, fmt.Errorf("no connect found for wallet %s and channelID %s", walletAccount, channelID)
 }
 
 func (w *walletConnMgr) removeConn(walletAccount string, info *walletChannelInfo) error {
@@ -150,7 +150,7 @@ func (w *walletConnMgr) getChannels(supportAccount string, from address.Address)
 		}
 	}
 	if len(channels) == 0 {
-		return nil, xerrors.Errorf("no connect found for account %s and from %s", supportAccount, from)
+		return nil, fmt.Errorf("no connect found for account %s and from %s", supportAccount, from)
 	}
 	return channels, nil
 }
@@ -181,7 +181,7 @@ func (w *walletConnMgr) addNewAddress(walletAccount string, channelId sharedType
 				channel.addrs[addr] = struct{}{}
 			}
 		} else {
-			return xerrors.Errorf("channel %s not found ", channelId.String())
+			return fmt.Errorf("channel %s not found ", channelId.String())
 		}
 	}
 	return nil
@@ -197,7 +197,7 @@ func (w *walletConnMgr) removeAddress(walletAccount string, channelId sharedType
 				delete(channel.addrs, addr)
 			}
 		} else {
-			return xerrors.Errorf("channel %s not found ", channelId.String())
+			return fmt.Errorf("channel %s not found ", channelId.String())
 		}
 	}
 	return nil
@@ -261,5 +261,5 @@ func (w *walletConnMgr) listWalletInfoByWallet(ctx context.Context, wallet strin
 		}
 		return walletDetail, nil
 	}
-	return nil, xerrors.Errorf("wallet %s not exit", wallet)
+	return nil, fmt.Errorf("wallet %s not exit", wallet)
 }

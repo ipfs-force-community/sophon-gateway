@@ -1,12 +1,12 @@
 package proofevent
 
 import (
+	"fmt"
 	"sync"
 
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
-	"golang.org/x/xerrors"
 )
 
 type channelStore struct {
@@ -28,14 +28,14 @@ func (cs *channelStore) getChannelByMiners() (*types.ChannelInfo, error) {
 	for _, channel := range cs.channels {
 		return channel, nil
 	}
-	return nil, xerrors.Errorf("no any connection")
+	return nil, fmt.Errorf("no any connection")
 }
 
 func (cs *channelStore) getChannelListByMiners() ([]*types.ChannelInfo, error) {
 	cs.lk.RLock()
 	defer cs.lk.RUnlock()
 	if len(cs.channels) == 0 {
-		return nil, xerrors.Errorf("no any connection")
+		return nil, fmt.Errorf("no any connection")
 	}
 	var channels []*types.ChannelInfo
 	for _, channel := range cs.channels {
