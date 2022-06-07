@@ -154,9 +154,7 @@ func RunMain(ctx context.Context, cfg *types.Config) error {
 		return err
 	}
 
-	handler := (http.Handler)(jwtclient.NewAuthMux(
-		localJwt, jwtclient.WarpIJwtAuthClient(cli),
-		mux, logging.Logger("Auth")))
+	handler := (http.Handler)(jwtclient.NewAuthMux(localJwt, jwtclient.WarpIJwtAuthClient(cli), mux))
 
 	var tCnf = &metrics.TraceConfig{}
 	var proxy, sampler, serverName = strings.TrimSpace(cfg.JaegerProxy),
