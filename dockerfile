@@ -34,6 +34,3 @@ COPY ./docker/script  /script
 EXPOSE 45132
 
 ENTRYPOINT ["/app/venus-gateway"]
-
-
-
