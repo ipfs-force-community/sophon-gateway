@@ -121,6 +121,12 @@ func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, me
 }
 
 func (e *BaseEventStream) cleanRequests(ctx context.Context) {
+	if e.cfg.ClearInterval <= 0 {
+		def := DefaultConfig()
+		log.Warnf("ClearInterval is invalid:%d, use default:%d\n", e.cfg.ClearInterval, def.ClearInterval)
+		e.cfg.ClearInterval = def.ClearInterval
+	}
+
 	tm := time.NewTicker(e.cfg.ClearInterval)
 	go func() {
 		for {

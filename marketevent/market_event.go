@@ -37,6 +37,21 @@ type MarketEventStream struct {
 }
 
 func NewMarketEventStream(ctx context.Context, validator validator.IAuthMinerValidator, cfg *types.RequestConfig) *MarketEventStream {
+	if cfg.ClearInterval <= 0 {
+		log.Warn("RequestConfig.ClearInterval(%d) is invalid, set to default.", cfg.ClearInterval)
+		cfg.ClearInterval = types.DefaultConfig().ClearInterval
+	}
+
+	if cfg.RequestTimeout <= 0 {
+		log.Warn("RequestConfig.RequestTimeout(%d) is invalid, set to default.", cfg.RequestTimeout)
+		cfg.RequestTimeout = types.DefaultConfig().RequestTimeout
+	}
+
+	if cfg.RequestQueueSize <= 0 {
+		log.Warn("RequestConfig.RequestQueueSize(%d) is invalid, set to default.", cfg.RequestQueueSize)
+		cfg.RequestTimeout = types.DefaultConfig().RequestTimeout
+	}
+
 	marketEventStream := &MarketEventStream{
 		connLk:           sync.RWMutex{},
 		minerConnections: make(map[address.Address]*channelStore),
