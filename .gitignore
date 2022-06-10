@@ -1,5 +1,6 @@
 ./venus*
 .idea
+.vscode
 venus-gateway
 server
 client
