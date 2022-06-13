@@ -33,7 +33,6 @@ import (
 
 	"github.com/ipfs-force-community/metrics"
 	"github.com/ipfs-force-community/venus-gateway/api"
-	v0api "github.com/ipfs-force-community/venus-gateway/api/v0"
 	"github.com/ipfs-force-community/venus-gateway/cmds"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
@@ -140,8 +139,7 @@ func RunMain(ctx context.Context, cfg *types.Config) error {
 	rpcServerv1.Register("Gateway", gatewayAPI)
 	mux.Handle("/rpc/v1", rpcServerv1)
 
-	//v0api
-	v0FullNode := v0api.WrapperV1Full{GatewayFullNode: gatewayAPI}
+	v0FullNode := api.WrapperV1Full{GatewayFullNode: gatewayAPI}
 	rpcServerv0 := jsonrpc.NewServer()
 	rpcServerv0.Register("Gateway", v0FullNode)
 	mux.Handle("/rpc/v0", rpcServerv0)

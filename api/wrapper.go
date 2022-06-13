@@ -6,13 +6,12 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 
-	"github.com/ipfs-force-community/venus-gateway/api"
-
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
+	sharedGatewayApiV1 "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 )
 
 type WrapperV1Full struct {
-	api.GatewayFullNode
+	sharedGatewayApiV1.IGateway
 }
 
 func (w WrapperV1Full) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []builtin.ExtendedSectorInfo, rand abi.PoStRandomness) ([]builtin.PoStProof, error) {
