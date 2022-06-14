@@ -15,5 +15,5 @@ type WrapperV1Full struct {
 }
 
 func (w WrapperV1Full) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []builtin.ExtendedSectorInfo, rand abi.PoStRandomness) ([]builtin.PoStProof, error) {
-	return w.GatewayFullNode.ComputeProof(ctx, miner, sectorInfos, rand, 0, 0)
+	return w.IGateway.ComputeProof(ctx, miner, sectorInfos, rand, 0, 0)
 }
