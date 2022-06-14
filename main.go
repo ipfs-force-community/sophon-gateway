@@ -27,7 +27,6 @@ import (
 
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 
-	sharedGatewayApiV0 "github.com/filecoin-project/venus/venus-shared/api/gateway/v0"
 	sharedGatewayApiV1 "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/permission"
 
@@ -139,7 +138,7 @@ func RunMain(ctx context.Context, cfg *types.Config) error {
 	rpcServerv1.Register("Gateway", gatewayAPI)
 	mux.Handle("/rpc/v1", rpcServerv1)
 
-	v0FullNode := api.WrapperV1Full{GatewayFullNode: gatewayAPI}
+	v0FullNode := api.WrapperV1Full{IGateway: gatewayAPI}
 	rpcServerv0 := jsonrpc.NewServer()
 	rpcServerv0.Register("Gateway", v0FullNode)
 	mux.Handle("/rpc/v0", rpcServerv0)
