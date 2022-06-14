@@ -14,7 +14,7 @@ import (
 	"github.com/filecoin-project/go-jsonrpc"
 
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
-	sharedGatewayApiV1 "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/permission"
 	"github.com/gorilla/mux"
 	"github.com/ipfs-force-community/metrics"
@@ -58,9 +58,9 @@ func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.C
 
 	log.Info("Setting up control endpoint at " + cfg.Listen)
 
-	var fullNode sharedGatewayApiV1.IGatewayStruct
+	var fullNode v1API.IGatewayStruct
 	permission.PermissionProxy(gatewayAPIImpl, &fullNode)
-	gatewayAPI := (sharedGatewayApiV1.IGateway)(&fullNode)
+	gatewayAPI := (v1API.IGateway)(&fullNode)
 
 	if len(cfg.RateLimitRedis) > 0 {
 		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimitRedis, nil,
@@ -71,7 +71,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.C
 		if err != nil {
 			return "", nil, err
 		}
-		var rateLimitAPI sharedGatewayApiV1.IGatewayStruct
+		var rateLimitAPI v1API.IGatewayStruct
 		limiter.ProxyLimitFullAPI(gatewayAPI, &rateLimitAPI)
 		gatewayAPI = &rateLimitAPI
 	}
