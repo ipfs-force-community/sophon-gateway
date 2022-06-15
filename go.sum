@@ -329,8 +329,8 @@ github.com/filecoin-project/go-state-types v0.1.3/go.mod h1:ezYnPf0bNkTsDibL/psS
 github.com/filecoin-project/go-state-types v0.1.4/go.mod h1:xCA/WfKlC2zcn3fUmDv4IrzznwS98X5XW/irUP3Lhxg=
 github.com/filecoin-project/go-state-types v0.1.5/go.mod h1:UwGVoMsULoCK+bWjEdd/xLCvLAQFBC7EDT477SKml+Q=
 github.com/filecoin-project/go-state-types v0.1.6/go.mod h1:UwGVoMsULoCK+bWjEdd/xLCvLAQFBC7EDT477SKml+Q=
-github.com/filecoin-project/go-state-types v0.1.7 h1:r/ZzyUA+CqY8IXyHsLtliqRgPFaON+aC2MmWKm1nl98=
-github.com/filecoin-project/go-state-types v0.1.7/go.mod h1:UwGVoMsULoCK+bWjEdd/xLCvLAQFBC7EDT477SKml+Q=
+github.com/filecoin-project/go-state-types v0.1.8 h1:mrPnqeOHkBXOUkYZdIee7F1VcjKw7dtpVam8VrTvpuI=
+github.com/filecoin-project/go-state-types v0.1.8/go.mod h1:UwGVoMsULoCK+bWjEdd/xLCvLAQFBC7EDT477SKml+Q=
 github.com/filecoin-project/go-statemachine v0.0.0-20200925024713-05bd7c71fbfe/go.mod h1:FGwQgZAt2Gh5mjlwJUlVB62JeYdo+if0xWxSEfBD9ig=
 github.com/filecoin-project/go-statemachine v1.0.2-0.20220322104818-27f8fbb86dfd/go.mod h1:jZdXXiHa61n4NmgWFG4w8tnqgvZVHYbJ3yW7+y8bF54=
 github.com/filecoin-project/go-statemachine v1.0.2/go.mod h1:jZdXXiHa61n4NmgWFG4w8tnqgvZVHYbJ3yW7+y8bF54=
@@ -372,10 +372,11 @@ github.com/filecoin-project/specs-storage v0.4.1 h1:yvLEaLZj8f+uByhNC4mFOtCUyL2w
 github.com/filecoin-project/specs-storage v0.4.1/go.mod h1:Z2eK6uMwAOSLjek6+sy0jNV2DSsMEENziMUz0GHRFBw=
 github.com/filecoin-project/storetheindex v0.3.5/go.mod h1:0r3d0kSpK63O6AvLr1CjAINLi+nWD49clzcnKV+GLpI=
 github.com/filecoin-project/test-vectors/schema v0.0.5/go.mod h1:iQ9QXLpYWL3m7warwvK1JC/pTri8mnfEmKygNDqqY6E=
-github.com/filecoin-project/venus v1.6.0-pre-rc1.0.20220614061509-4dfc30629d10 h1:QglPqFrz+A2dpKgOrUq51oKlsKvsv7eaClFu34s6LEg=
-github.com/filecoin-project/venus v1.6.0-pre-rc1.0.20220614061509-4dfc30629d10/go.mod h1:V2LQsmAvCWnzVpDtDTXvqSg2+GCz1hoBW3+1vSNvJpA=
-github.com/filecoin-project/venus-auth v1.6.0-pre-rc1 h1:Ql7PezoiWm/JFtA8hDI8XAe1ALDeAN3GD8kxw99iM0Q=
+github.com/filecoin-project/venus v1.6.0-rc1 h1:zEfXU9ndhglePCmfCVE96ibOPKT7BSAgxmbpAlZ7rc0=
+github.com/filecoin-project/venus v1.6.0-rc1/go.mod h1:c3Y75K2YbMQFuE7Jfh7QfmHe6KnGlw+85eL8bBiE00c=
 github.com/filecoin-project/venus-auth v1.6.0-pre-rc1/go.mod h1:x/Cv3zz9z5O+/uqIKgYtk5UsL7nYu+CtiPjyVQ8Lywg=
+github.com/filecoin-project/venus-auth v1.6.0-rc1 h1:FPdXmAoMOt7KN12eDuV6Qp2QUc3IYCBrQ1o53c7eKOY=
+github.com/filecoin-project/venus-auth v1.6.0-rc1/go.mod h1:x/Cv3zz9z5O+/uqIKgYtk5UsL7nYu+CtiPjyVQ8Lywg=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=
 github.com/flynn/noise v0.0.0-20180327030543-2492fe189ae6/go.mod h1:1i71OnUq3iUe1ma7Lr6yG6/rjvM3emb6yoL7xLFzcVQ=
 github.com/flynn/noise v1.0.0/go.mod h1:xbMo+0i6+IGbYdJhF31t2eR1BIU0CYc12+BNAKwUTag=
