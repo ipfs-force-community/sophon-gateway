@@ -3,11 +3,11 @@ package marketevent
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/ipfs-force-community/venus-gateway/types"
-	"golang.org/x/xerrors"
 
 	"go.uber.org/zap"
 
@@ -90,7 +90,7 @@ func (e *MarketEvent) listenMarketRequestOnce(ctx context.Context) error {
 	marketEventCh, err := e.client.ListenMarketEvent(ctx, policy)
 	if err != nil {
 		// Retry is handled by caller
-		return xerrors.Errorf("listen market event call failed: %w", err)
+		return fmt.Errorf("listen market event call failed: %w", err)
 	}
 
 	for marketEvent := range marketEventCh {
@@ -99,7 +99,7 @@ func (e *MarketEvent) listenMarketRequestOnce(ctx context.Context) error {
 			req := gateway.ConnectedCompleted{}
 			err := json.Unmarshal(marketEvent.Payload, &req)
 			if err != nil {
-				return xerrors.Errorf("odd error in connect %v", err)
+				return fmt.Errorf("odd error in connect %v", err)
 			}
 			e.readyCh <- struct{}{}
 			e.log.Infof("success to connect with market %s", req.ChannelId)

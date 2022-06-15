@@ -12,12 +12,11 @@ import (
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/modern-go/reflect2"
-	"golang.org/x/xerrors"
 )
 
 var log = logging.Logger("gateway_stream")
 
-var ErrCloseChannel = xerrors.Errorf("recover send once")
+var ErrCloseChannel = fmt.Errorf("recover send once")
 
 type BaseEventStream struct {
 	reqLk     sync.RWMutex
@@ -37,7 +36,7 @@ func NewBaseEventStream(ctx context.Context, cfg *RequestConfig) *BaseEventStrea
 
 func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelInfo, method string, payload []byte, result interface{}) error {
 	if len(channels) == 0 {
-		return xerrors.Errorf("send request must have channel")
+		return fmt.Errorf("send request must have channel")
 	}
 
 	processResp := func(resp *types.ResponseEvent) error {
@@ -79,7 +78,7 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 	case resp := <-respCh:
 		return processResp(resp)
 	case <-ctx.Done():
-		return xerrors.Errorf("request cancel by context")
+		return fmt.Errorf("request cancel by context")
 	}
 }
 
@@ -107,14 +106,14 @@ func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, me
 	case channel.OutBound <- request: //NOTICE this may be panic, but will catch by recover and try other, should never have  other panic
 		log.Debug("send request %s to %s", method, channel.Ip)
 	case <-ctx.Done():
-		return nil, xerrors.Errorf("send request cancel by context %w", ctx.Err())
+		return nil, fmt.Errorf("send request cancel by context %w", ctx.Err())
 	}
 
 	//wait for result
 	//timeout here
 	select {
 	case <-ctx.Done():
-		return nil, xerrors.Errorf("cancel by context %w", ctx.Err())
+		return nil, fmt.Errorf("cancel by context %w", ctx.Err())
 	case respEvent := <-resultCh:
 		return respEvent, nil
 	}

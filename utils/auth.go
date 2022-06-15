@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"crypto/rand"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"path"
@@ -12,7 +13,6 @@ import (
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"github.com/filecoin-project/venus-auth/core"
 	jwt3 "github.com/gbrlsnchs/jwt/v3"
-	xerrors "github.com/pkg/errors"
 )
 
 const tokenFile = "token"
@@ -49,7 +49,7 @@ func NewLocalJwtClient(repo string) (*LocalJwtClient, error) {
 func (l *LocalJwtClient) Verify(ctx context.Context, token string) ([]auth.Permission, error) {
 	var payload auth2.JWTPayload
 	if _, err := jwt3.Verify([]byte(token), jwt3.NewHS256(l.Seckey), &payload); err != nil {
-		return nil, xerrors.Errorf("JWT Verification failed: %v", err)
+		return nil, fmt.Errorf("JWT Verification failed: %v", err)
 	}
 	jwtPerms := core.AdaptOldStrategy(payload.Perm)
 	perms := make([]auth.Permission, len(jwtPerms))

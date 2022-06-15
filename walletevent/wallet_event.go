@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"time"
@@ -19,7 +20,6 @@ import (
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	logging "github.com/ipfs/go-log/v2"
-	"golang.org/x/xerrors"
 )
 
 var log = logging.Logger("event_stream")
@@ -46,7 +46,7 @@ func NewWalletEventStream(ctx context.Context, authClient types.IAuthClient, cfg
 	var err error
 	walletEventStream.randBytes, err = ioutil.ReadAll(io.LimitReader(rand.Reader, 32))
 	if err != nil {
-		panic(xerrors.Errorf("rand secret failed %v", err))
+		panic(fmt.Errorf("rand secret failed %v", err))
 	}
 	log.Infow("", "rand secret", walletEventStream.randBytes)
 	return walletEventStream
@@ -231,10 +231,10 @@ func (w *WalletEventStream) verifyAddress(ctx context.Context, addr address.Addr
 	var sig crypto.Signature
 	err = w.SendRequest(ctx, []*types.ChannelInfo{channel}, "WalletSign", payload, &sig)
 	if err != nil {
-		return xerrors.Errorf("wallet %s verify address %s failed, signed error %v", walletAccount, addr.String(), err)
+		return fmt.Errorf("wallet %s verify address %s failed, signed error %v", walletAccount, addr.String(), err)
 	}
 	if err := wcrypto.Verify(&sig, addr, signData); err != nil {
-		return xerrors.Errorf("wallet %s verify address %s failed: %v", walletAccount, addr.String(), err)
+		return fmt.Errorf("wallet %s verify address %s failed: %v", walletAccount, addr.String(), err)
 	}
 	log.Infof("wallet %s verify address %s success", walletAccount, addr)
 

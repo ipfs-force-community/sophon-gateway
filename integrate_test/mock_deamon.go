@@ -94,9 +94,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.C
 	if err != nil {
 		return "", nil, err
 	}
-	handler := (http.Handler)(jwtclient.NewAuthMux(
-		localJwt, jwtclient.WarpIJwtAuthClient(cli),
-		mux, logging.Logger("Auth")))
+	handler := (http.Handler)(jwtclient.NewAuthMux(localJwt, jwtclient.WarpIJwtAuthClient(cli), mux))
 
 	var tCnf = &metrics.TraceConfig{}
 	var proxy, sampler, serverName = strings.TrimSpace(cfg.JaegerProxy),
