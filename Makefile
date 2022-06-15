@@ -59,3 +59,11 @@ dist-clean:
 build: $(BUILD_DEPS)
 	rm -f venus-gateway
 	go build -o ./venus-gateway $(GOFLAGS) .
+
+
+.PHONY: docker
+
+
+
+docker:
+	docker build --build-arg https_proxy=$(BUILD_DOCKER_PROXY) -t venus-gateway .
