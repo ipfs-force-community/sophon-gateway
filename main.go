@@ -27,10 +27,11 @@ import (
 
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 
+	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/permission"
+
 	"github.com/ipfs-force-community/metrics"
 	"github.com/ipfs-force-community/venus-gateway/api"
-	v0api "github.com/ipfs-force-community/venus-gateway/api/v0"
 	"github.com/ipfs-force-community/venus-gateway/cmds"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
@@ -113,9 +114,9 @@ func RunMain(ctx context.Context, cfg *types.Config) error {
 
 	log.Info("Setting up control endpoint at " + cfg.Listen)
 
-	var fullNode api.GatewayFullNodeStruct
+	var fullNode v1API.IGatewayStruct
 	permission.PermissionProxy(gatewayAPIImpl, &fullNode)
-	gatewayAPI := (api.GatewayFullNode)(&fullNode)
+	gatewayAPI := (v1API.IGateway)(&fullNode)
 
 	if len(cfg.RateLimitRedis) > 0 {
 		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimitRedis, nil,
@@ -126,7 +127,7 @@ func RunMain(ctx context.Context, cfg *types.Config) error {
 		if err != nil {
 			return err
 		}
-		var rateLimitAPI api.GatewayFullNodeStruct
+		var rateLimitAPI v1API.IGatewayStruct
 		limiter.ProxyLimitFullAPI(gatewayAPI, &rateLimitAPI)
 		gatewayAPI = &rateLimitAPI
 	}
@@ -137,8 +138,7 @@ func RunMain(ctx context.Context, cfg *types.Config) error {
 	rpcServerv1.Register("Gateway", gatewayAPI)
 	mux.Handle("/rpc/v1", rpcServerv1)
 
-	//v0api
-	v0FullNode := v0api.WrapperV1Full{GatewayFullNode: gatewayAPI}
+	v0FullNode := api.WrapperV1Full{IGateway: gatewayAPI}
 	rpcServerv0 := jsonrpc.NewServer()
 	rpcServerv0.Register("Gateway", v0FullNode)
 	mux.Handle("/rpc/v0", rpcServerv0)
