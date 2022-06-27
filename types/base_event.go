@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 var log = logging.Logger("gateway_stream")
 
 var ErrCloseChannel = fmt.Errorf("recover send once")
+var ErrRequestTimeout = fmt.Errorf("timer clean this request due to exceed wait time")
 
 type BaseEventStream struct {
 	reqLk     sync.RWMutex
@@ -55,7 +57,7 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 		return processResp(resp)
 	}
 
-	if ctx.Err() != nil || len(channels) == 1 { //if ctx have done before, not to try others
+	if ctx.Err() != nil || len(channels) == 1 || isTimeoutError(err) { //if ctx have done before, not to try others
 		return err
 	}
 
@@ -133,7 +135,7 @@ func (e *BaseEventStream) cleanRequests(ctx context.Context) {
 					case request.Result <- &types.ResponseEvent{
 						ID:      id,
 						Payload: nil,
-						Error:   fmt.Sprintf("timer clean this request due to exceed wait time  create time %s method %s", request.CreateTime, request.Method),
+						Error:   fmt.Errorf("%w %s method %s", ErrRequestTimeout, request.CreateTime, request.Method).Error(),
 					}:
 					default:
 					}
@@ -160,4 +162,11 @@ func (e *BaseEventStream) ResponseEvent(ctx context.Context, resp *types.Respons
 		event.Result <- resp
 	}
 	return nil
+}
+
+func isTimeoutError(err error) bool {
+	if !reflect2.IsNil(err) {
+		return strings.Contains(err.Error(), ErrRequestTimeout.Error())
+	}
+	return false
 }

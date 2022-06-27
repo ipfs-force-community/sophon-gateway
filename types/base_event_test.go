@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -207,6 +208,11 @@ func TestSendRequest(t *testing.T) {
 		}
 		eventSteam.reqLk.Unlock()
 	})
+}
+
+func TestIstimeOutError(t *testing.T) {
+	err := fmt.Errorf("%w %s method %s", ErrRequestTimeout, time.Now(), "MOCK")
+	require.True(t, isTimeoutError(err))
 }
 
 type mockClient struct {
