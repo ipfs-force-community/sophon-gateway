@@ -32,11 +32,23 @@ import (
 
 var log = logging.Logger("mock main")
 
-func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.Config) (string, []byte, error) {
+type testConfig struct {
+	requestTimeout time.Duration
+	clearInterval  time.Duration
+}
+
+func defaultTestConfig() testConfig {
+	return testConfig{
+		requestTimeout: time.Minute * 5,
+		clearInterval:  time.Minute * 5,
+	}
+}
+
+func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.Config, tcfg testConfig) (string, []byte, error) {
 	requestCfg := &types.RequestConfig{
 		RequestQueueSize: 30,
-		RequestTimeout:   time.Minute * 5,
-		ClearInterval:    time.Minute * 5,
+		RequestTimeout:   tcfg.requestTimeout,
+		ClearInterval:    tcfg.clearInterval,
 	}
 
 	log.Infof("venus-gateway current version %s, listen %s", version.UserVersion, cfg.Listen)

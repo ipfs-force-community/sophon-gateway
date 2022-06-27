@@ -184,14 +184,28 @@ func TestSendRequest(t *testing.T) {
 			RequestTimeout:   time.Second,
 			ClearInterval:    time.Second,
 		})
+		var requests []*types.RequestEvent
+		eventSteam.reqLk.Lock()
 		for i := 0; i < 10; i++ {
-			eventSteam.idRequest[sharedTypes.NewUUID()] = &types.RequestEvent{
+			req := &types.RequestEvent{
 				CreateTime: time.Now(),
+				Result:     make(chan *types.ResponseEvent, 1),
 			}
+			eventSteam.idRequest[sharedTypes.NewUUID()] = req
+			requests = append(requests, req)
 		}
-		eventSteam.cleanRequests(ctx)
-		<-time.After(time.Second * 5)
+		eventSteam.reqLk.Unlock()
+		go eventSteam.cleanRequests(ctx)
+		time.Sleep(time.Second * 5)
+		eventSteam.reqLk.Lock()
 		require.Len(t, eventSteam.idRequest, 0)
+		require.Len(t, eventSteam.idRequest, 0)
+		for _, req := range requests {
+			require.Len(t, req.Result, 1)
+			result := <-req.Result
+			require.Contains(t, result.Error, "timer clean this request due to exceed wait time  create time")
+		}
+		eventSteam.reqLk.Unlock()
 	})
 }
 

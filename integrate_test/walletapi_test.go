@@ -283,7 +283,7 @@ func setupDaemon(t *testing.T, ctx context.Context) (string, string) {
 		TraceNodeName:  "",
 		RateLimitRedis: "",
 	}
-	addr, token, err := MockMain(ctx, nil, cfg)
+	addr, token, err := MockMain(ctx, nil, cfg, defaultTestConfig())
 	require.NoError(t, err)
 	url, err := url.Parse(addr)
 	require.NoError(t, err)

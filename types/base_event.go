@@ -121,24 +121,30 @@ func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, me
 
 func (e *BaseEventStream) cleanRequests(ctx context.Context) {
 	tm := time.NewTicker(e.cfg.ClearInterval)
-	go func() {
-		for {
-			select {
-			case <-tm.C:
-				e.reqLk.Lock()
-				for id, request := range e.idRequest {
-					if time.Since(request.CreateTime) > e.cfg.RequestTimeout {
-						delete(e.idRequest, id)
+	for {
+		select {
+		case <-tm.C:
+			e.reqLk.Lock()
+			for id, request := range e.idRequest {
+				if time.Since(request.CreateTime) > e.cfg.RequestTimeout {
+					delete(e.idRequest, id)
+					//avoid block this channel, maybe client request come as request timeout by chance
+					select {
+					case request.Result <- &types.ResponseEvent{
+						ID:      id,
+						Payload: nil,
+						Error:   fmt.Sprintf("timer clean this request due to exceed wait time  create time %s method %s", request.CreateTime, request.Method),
+					}:
+					default:
 					}
 				}
-				e.reqLk.Unlock()
-			case <-ctx.Done():
-				log.Warnf("return clean request")
-				return
 			}
+			e.reqLk.Unlock()
+		case <-ctx.Done():
+			log.Warnf("return clean request")
+			return
 		}
-
-	}()
+	}
 }
 
 func (e *BaseEventStream) ResponseEvent(ctx context.Context, resp *types.ResponseEvent) error {
