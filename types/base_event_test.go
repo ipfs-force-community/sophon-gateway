@@ -45,6 +45,37 @@ func TestSendRequest(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	//test for bug https://github.com/filecoin-project/venus/issues/4992
+	t.Run("fix deadlock", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		eventSteam := NewBaseEventStream(ctx, DefaultConfig())
+
+		parms, err := json.Marshal(mockParams{A: "mock arg"})
+		require.NoError(t, err)
+		result := &mockResult{}
+
+		var clients []*mockClient
+		client := setupClient(t, eventSteam, "127.1.1.1")
+		go client.start(ctx)
+		clients = append(clients, client)
+		var getConns = func() []*ChannelInfo {
+			var channels []*ChannelInfo
+			for _, client := range clients {
+				channels = append(channels, client.channel)
+			}
+			return channels
+		}
+		err = eventSteam.ResponseEvent(ctx, &types.ResponseEvent{
+			ID:      sharedTypes.NewUUID(),
+			Payload: nil,
+			Error:   "",
+		})
+		require.Error(t, err)
+		err = eventSteam.SendRequest(ctx, getConns(), "mock_method", parms, result)
+		require.NoError(t, err)
+	})
+
 	t.Run("send multiple", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -204,7 +235,7 @@ func TestSendRequest(t *testing.T) {
 		for _, req := range requests {
 			require.Len(t, req.Result, 1)
 			result := <-req.Result
-			require.Contains(t, result.Error, "timer clean this request due to exceed wait time  create time")
+			require.Contains(t, result.Error, ErrRequestTimeout.Error())
 		}
 		eventSteam.reqLk.Unlock()
 	})

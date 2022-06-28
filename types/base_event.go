@@ -155,11 +155,15 @@ func (e *BaseEventStream) ResponseEvent(ctx context.Context, resp *types.Respons
 	if ok {
 		delete(e.idRequest, resp.ID)
 	} else {
+		e.reqLk.Unlock()
 		return fmt.Errorf("request id %s not exit", resp.ID.String())
 	}
 	e.reqLk.Unlock()
 	if ok {
-		event.Result <- resp
+		select {
+		case event.Result <- resp:
+		default:
+		}
 	}
 	return nil
 }
