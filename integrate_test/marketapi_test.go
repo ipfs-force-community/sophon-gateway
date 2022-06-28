@@ -37,10 +37,10 @@ func TestMarketAPI(t *testing.T) {
 	t.Run("check is unseal", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		maddr, err := address.NewIDAddress(10)
+		mAddr, err := address.NewIDAddress(10)
 		require.NoError(t, err)
 
-		wsUrl, token := setupMarketDaemon(t, []address.Address{maddr}, ctx)
+		wsUrl, token := setupMarketDaemon(t, []address.Address{mAddr}, ctx)
 		sAPi, sCloser, err := serverMarketAPI(ctx, wsUrl, token)
 		require.NoError(t, err)
 		defer sCloser()
@@ -50,7 +50,7 @@ func TestMarketAPI(t *testing.T) {
 		defer cCloser()
 
 		handler := testhelper.NewMarketHandler(t)
-		proofEvent := marketevent.NewMarketEventClient(walletEventClient, maddr, handler, logging.Logger("test").With())
+		proofEvent := marketevent.NewMarketEventClient(walletEventClient, mAddr, handler, logging.Logger("test").With())
 		go proofEvent.ListenMarketRequest(ctx)
 		proofEvent.WaitReady(ctx)
 
@@ -64,22 +64,22 @@ func TestMarketAPI(t *testing.T) {
 		size := abi.PaddedPieceSize(100)
 		offset := sharedTypes.PaddedByteIndex(100)
 		handler.SetCheckIsUnsealExpect(sectorRef, offset, size, false)
-		isUnseal, err := sAPi.IsUnsealed(ctx, maddr, cid.Undef, sectorRef, offset, size)
+		isUnseal, err := sAPi.IsUnsealed(ctx, mAddr, cid.Undef, sectorRef, offset, size)
 		require.NoError(t, err)
 		require.True(t, isUnseal)
 
 		handler.SetCheckIsUnsealExpect(sectorRef, offset, size, true)
-		_, err = sAPi.IsUnsealed(ctx, maddr, cid.Undef, sectorRef, offset, size)
+		_, err = sAPi.IsUnsealed(ctx, mAddr, cid.Undef, sectorRef, offset, size)
 		require.EqualError(t, err, "mock error")
 	})
 
 	t.Run("unseal api", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		maddr, err := address.NewIDAddress(10)
+		mAddr, err := address.NewIDAddress(10)
 		require.NoError(t, err)
 
-		wsUrl, token := setupMarketDaemon(t, []address.Address{maddr}, ctx)
+		wsUrl, token := setupMarketDaemon(t, []address.Address{mAddr}, ctx)
 		sAPi, sCloser, err := serverMarketAPI(ctx, wsUrl, token)
 		require.NoError(t, err)
 		defer sCloser()
@@ -89,7 +89,7 @@ func TestMarketAPI(t *testing.T) {
 		defer cCloser()
 
 		handler := testhelper.NewMarketHandler(t)
-		proofEvent := marketevent.NewMarketEventClient(walletEventClient, maddr, handler, logging.Logger("test").With())
+		proofEvent := marketevent.NewMarketEventClient(walletEventClient, mAddr, handler, logging.Logger("test").With())
 		go proofEvent.ListenMarketRequest(ctx)
 		proofEvent.WaitReady(ctx)
 
@@ -106,23 +106,23 @@ func TestMarketAPI(t *testing.T) {
 		pieceCid, err := cid.Decode("bafy2bzaced2kktxdkqw5pey5of3wtahz5imm7ta4ymegah466dsc5fonj73u2")
 		require.NoError(t, err)
 		handler.SetSectorsUnsealPieceExpect(pieceCid, sectorRef, offset, size, dest, false)
-		err = sAPi.SectorsUnsealPiece(ctx, maddr, pieceCid, sectorRef, offset, size, dest)
+		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sectorRef, offset, size, dest)
 		require.NoError(t, err)
 
 		handler.SetSectorsUnsealPieceExpect(pieceCid, sectorRef, offset, size, dest, true)
-		err = sAPi.SectorsUnsealPiece(ctx, maddr, pieceCid, sectorRef, offset, size, dest)
+		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sectorRef, offset, size, dest)
 		require.EqualError(t, err, "mock error")
 	})
 
 	t.Run("unseal api", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		maddr, err := address.NewIDAddress(10)
+		mAddr, err := address.NewIDAddress(10)
 		require.NoError(t, err)
-		maddr2, err := address.NewIDAddress(12)
+		mAddr2, err := address.NewIDAddress(12)
 		require.NoError(t, err)
 
-		wsUrl, token := setupMarketDaemon(t, []address.Address{maddr, maddr2}, ctx)
+		wsUrl, token := setupMarketDaemon(t, []address.Address{mAddr, mAddr2}, ctx)
 		sAPi, sCloser, err := serverMarketAPI(ctx, wsUrl, token)
 		require.NoError(t, err)
 		defer sCloser()
@@ -132,25 +132,25 @@ func TestMarketAPI(t *testing.T) {
 		defer cCloser()
 
 		handler := testhelper.NewMarketHandler(t)
-		marketEventClient := marketevent.NewMarketEventClient(walletEventClient, maddr, handler, logging.Logger("test").With())
+		marketEventClient := marketevent.NewMarketEventClient(walletEventClient, mAddr, handler, logging.Logger("test").With())
 		go marketEventClient.ListenMarketRequest(ctx)
 		marketEventClient.WaitReady(ctx)
 
 		connectsState, err := sAPi.ListMarketConnectionsState(ctx)
 		require.NoError(t, err)
 		require.Len(t, connectsState, 1)
-		require.Equal(t, maddr, connectsState[0].Addr)
+		require.Equal(t, mAddr, connectsState[0].Addr)
 
 		//add another
-		marketEventClient2 := marketevent.NewMarketEventClient(walletEventClient, maddr2, handler, logging.Logger("test").With())
+		marketEventClient2 := marketevent.NewMarketEventClient(walletEventClient, mAddr2, handler, logging.Logger("test").With())
 		go marketEventClient2.ListenMarketRequest(ctx)
 		marketEventClient2.WaitReady(ctx)
 
 		connectsState, err = sAPi.ListMarketConnectionsState(ctx)
 		require.NoError(t, err)
 		require.Len(t, connectsState, 2)
-		require.Contains(t, []address.Address{maddr, maddr2}, connectsState[0].Addr)
-		require.Contains(t, []address.Address{maddr, maddr2}, connectsState[1].Addr)
+		require.Contains(t, []address.Address{mAddr, mAddr2}, connectsState[0].Addr)
+		require.Contains(t, []address.Address{mAddr, mAddr2}, connectsState[1].Addr)
 	})
 }
 
@@ -169,7 +169,7 @@ func setupMarketDaemon(t *testing.T, validateMiner []address.Address, ctx contex
 		TraceNodeName:  "",
 		RateLimitRedis: "",
 	}
-	addr, token, err := MockMain(ctx, validateMiner, cfg)
+	addr, token, err := MockMain(ctx, validateMiner, cfg, defaultTestConfig())
 	require.NoError(t, err)
 	url, err := url.Parse(addr)
 	require.NoError(t, err)

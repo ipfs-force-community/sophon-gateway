@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 var log = logging.Logger("gateway_stream")
 
 var ErrCloseChannel = fmt.Errorf("recover send once")
+var ErrRequestTimeout = fmt.Errorf("timer clean this request due to exceed wait time")
 
 type BaseEventStream struct {
 	reqLk     sync.RWMutex
@@ -55,7 +57,7 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 		return processResp(resp)
 	}
 
-	if ctx.Err() != nil || len(channels) == 1 { //if ctx have done before, not to try others
+	if ctx.Err() != nil || len(channels) == 1 || isTimeoutError(err) { //if ctx have done before, not to try others
 		return err
 	}
 
@@ -121,24 +123,30 @@ func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, me
 
 func (e *BaseEventStream) cleanRequests(ctx context.Context) {
 	tm := time.NewTicker(e.cfg.ClearInterval)
-	go func() {
-		for {
-			select {
-			case <-tm.C:
-				e.reqLk.Lock()
-				for id, request := range e.idRequest {
-					if time.Since(request.CreateTime) > e.cfg.RequestTimeout {
-						delete(e.idRequest, id)
+	for {
+		select {
+		case <-tm.C:
+			e.reqLk.Lock()
+			for id, request := range e.idRequest {
+				if time.Since(request.CreateTime) > e.cfg.RequestTimeout {
+					delete(e.idRequest, id)
+					//avoid block this channel, maybe client request come as request timeout by chance
+					select {
+					case request.Result <- &types.ResponseEvent{
+						ID:      id,
+						Payload: nil,
+						Error:   fmt.Errorf("%w %s method %s", ErrRequestTimeout, request.CreateTime, request.Method).Error(),
+					}:
+					default:
 					}
 				}
-				e.reqLk.Unlock()
-			case <-ctx.Done():
-				log.Warnf("return clean request")
-				return
 			}
+			e.reqLk.Unlock()
+		case <-ctx.Done():
+			log.Warnf("return clean request")
+			return
 		}
-
-	}()
+	}
 }
 
 func (e *BaseEventStream) ResponseEvent(ctx context.Context, resp *types.ResponseEvent) error {
@@ -147,11 +155,22 @@ func (e *BaseEventStream) ResponseEvent(ctx context.Context, resp *types.Respons
 	if ok {
 		delete(e.idRequest, resp.ID)
 	} else {
+		e.reqLk.Unlock()
 		return fmt.Errorf("request id %s not exit", resp.ID.String())
 	}
 	e.reqLk.Unlock()
 	if ok {
-		event.Result <- resp
+		select {
+		case event.Result <- resp:
+		default:
+		}
 	}
 	return nil
+}
+
+func isTimeoutError(err error) bool {
+	if !reflect2.IsNil(err) {
+		return strings.Contains(err.Error(), ErrRequestTimeout.Error())
+	}
+	return false
 }
