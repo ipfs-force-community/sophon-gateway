@@ -29,7 +29,6 @@ COPY --from=buildenv  /usr/lib/x86_64-linux-gnu/libhwloc.so.15 \
     /usr/lib/x86_64-linux-gnu/libltdl.so.7 \
     /lib/
 
-COPY ./docker/script  /script
 
 EXPOSE 45132
 
