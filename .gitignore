@@ -6,5 +6,6 @@ server
 client
 token
 clienttoken
-build-dep
 coverage.txt
+build-dep
+.vscode

@@ -14,12 +14,12 @@ import (
 	"github.com/filecoin-project/go-jsonrpc"
 
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
+	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/permission"
 	"github.com/gorilla/mux"
 	"github.com/ipfs-force-community/metrics"
 	"github.com/ipfs-force-community/metrics/ratelimit"
 	"github.com/ipfs-force-community/venus-gateway/api"
-	v0api "github.com/ipfs-force-community/venus-gateway/api/v0"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -32,11 +32,23 @@ import (
 
 var log = logging.Logger("mock main")
 
-func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.Config) (string, []byte, error) {
+type testConfig struct {
+	requestTimeout time.Duration
+	clearInterval  time.Duration
+}
+
+func defaultTestConfig() testConfig {
+	return testConfig{
+		requestTimeout: time.Minute * 5,
+		clearInterval:  time.Minute * 5,
+	}
+}
+
+func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.Config, tcfg testConfig) (string, []byte, error) {
 	requestCfg := &types.RequestConfig{
 		RequestQueueSize: 30,
-		RequestTimeout:   time.Minute * 5,
-		ClearInterval:    time.Minute * 5,
+		RequestTimeout:   tcfg.requestTimeout,
+		ClearInterval:    tcfg.clearInterval,
 	}
 
 	log.Infof("venus-gateway current version %s, listen %s", version.UserVersion, cfg.Listen)
@@ -58,9 +70,9 @@ func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.C
 
 	log.Info("Setting up control endpoint at " + cfg.Listen)
 
-	var fullNode api.GatewayFullNodeStruct
+	var fullNode v1API.IGatewayStruct
 	permission.PermissionProxy(gatewayAPIImpl, &fullNode)
-	gatewayAPI := (api.GatewayFullNode)(&fullNode)
+	gatewayAPI := (v1API.IGateway)(&fullNode)
 
 	if len(cfg.RateLimitRedis) > 0 {
 		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimitRedis, nil,
@@ -71,7 +83,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.C
 		if err != nil {
 			return "", nil, err
 		}
-		var rateLimitAPI api.GatewayFullNodeStruct
+		var rateLimitAPI v1API.IGatewayStruct
 		limiter.ProxyLimitFullAPI(gatewayAPI, &rateLimitAPI)
 		gatewayAPI = &rateLimitAPI
 	}
@@ -83,7 +95,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.C
 	mux.Handle("/rpc/v1", rpcServerv1)
 
 	//v0api
-	v0FullNode := v0api.WrapperV1Full{GatewayFullNode: gatewayAPI}
+	v0FullNode := api.WrapperV1Full{IGateway: gatewayAPI}
 	rpcServerv0 := jsonrpc.NewServer()
 	rpcServerv0.Register("Gateway", v0FullNode)
 	mux.Handle("/rpc/v0", rpcServerv0)
@@ -94,9 +106,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.C
 	if err != nil {
 		return "", nil, err
 	}
-	handler := (http.Handler)(jwtclient.NewAuthMux(
-		localJwt, jwtclient.WarpIJwtAuthClient(cli),
-		mux, logging.Logger("Auth")))
+	handler := (http.Handler)(jwtclient.NewAuthMux(localJwt, jwtclient.WarpIJwtAuthClient(cli), mux))
 
 	var tCnf = &metrics.TraceConfig{}
 	var proxy, sampler, serverName = strings.TrimSpace(cfg.JaegerProxy),

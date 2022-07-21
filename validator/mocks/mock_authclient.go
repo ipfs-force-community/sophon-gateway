@@ -1,10 +1,11 @@
 package mocks
 
 import (
+	"fmt"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/ipfs-force-community/venus-gateway/types"
-	"golang.org/x/xerrors"
 )
 
 type AuthClient struct {
@@ -18,11 +19,11 @@ func (m AuthClient) GetUser(req *auth.GetUserRequest) (*auth.OutputUser, error) 
 
 func (m *AuthClient) GetUserByMiner(req *auth.GetUserByMinerRequest) (*auth.OutputUser, error) {
 	if len(m.miners) == 0 {
-		return nil, xerrors.Errorf("not exists")
+		return nil, fmt.Errorf("not exists")
 	}
 	user, exists := m.miners[req.Miner]
 	if !exists {
-		return nil, xerrors.Errorf("not exists")
+		return nil, fmt.Errorf("not exists")
 	}
 	return user, nil
 }

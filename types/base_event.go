@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,12 +13,12 @@ import (
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/modern-go/reflect2"
-	"golang.org/x/xerrors"
 )
 
 var log = logging.Logger("gateway_stream")
 
-var ErrCloseChannel = xerrors.Errorf("recover send once")
+var ErrCloseChannel = fmt.Errorf("recover send once")
+var ErrRequestTimeout = fmt.Errorf("timer clean this request due to exceed wait time")
 
 type BaseEventStream struct {
 	reqLk     sync.RWMutex
@@ -37,7 +38,7 @@ func NewBaseEventStream(ctx context.Context, cfg *RequestConfig) *BaseEventStrea
 
 func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelInfo, method string, payload []byte, result interface{}) error {
 	if len(channels) == 0 {
-		return xerrors.Errorf("send request must have channel")
+		return fmt.Errorf("send request must have channel")
 	}
 
 	processResp := func(resp *types.ResponseEvent) error {
@@ -56,7 +57,7 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 		return processResp(resp)
 	}
 
-	if ctx.Err() != nil || len(channels) == 1 { //if ctx have done before, not to try others
+	if ctx.Err() != nil || len(channels) == 1 || isTimeoutError(err) { //if ctx have done before, not to try others
 		return err
 	}
 
@@ -79,7 +80,7 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 	case resp := <-respCh:
 		return processResp(resp)
 	case <-ctx.Done():
-		return xerrors.Errorf("request cancel by context")
+		return fmt.Errorf("request cancel by context")
 	}
 }
 
@@ -107,14 +108,14 @@ func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, me
 	case channel.OutBound <- request: //NOTICE this may be panic, but will catch by recover and try other, should never have  other panic
 		log.Debug("send request %s to %s", method, channel.Ip)
 	case <-ctx.Done():
-		return nil, xerrors.Errorf("send request cancel by context %w", ctx.Err())
+		return nil, fmt.Errorf("send request cancel by context %w", ctx.Err())
 	}
 
 	//wait for result
 	//timeout here
 	select {
 	case <-ctx.Done():
-		return nil, xerrors.Errorf("cancel by context %w", ctx.Err())
+		return nil, fmt.Errorf("cancel by context %w", ctx.Err())
 	case respEvent := <-resultCh:
 		return respEvent, nil
 	}
@@ -122,24 +123,30 @@ func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, me
 
 func (e *BaseEventStream) cleanRequests(ctx context.Context) {
 	tm := time.NewTicker(e.cfg.ClearInterval)
-	go func() {
-		for {
-			select {
-			case <-tm.C:
-				e.reqLk.Lock()
-				for id, request := range e.idRequest {
-					if time.Since(request.CreateTime) > e.cfg.RequestTimeout {
-						delete(e.idRequest, id)
+	for {
+		select {
+		case <-tm.C:
+			e.reqLk.Lock()
+			for id, request := range e.idRequest {
+				if time.Since(request.CreateTime) > e.cfg.RequestTimeout {
+					delete(e.idRequest, id)
+					//avoid block this channel, maybe client request come as request timeout by chance
+					select {
+					case request.Result <- &types.ResponseEvent{
+						ID:      id,
+						Payload: nil,
+						Error:   fmt.Errorf("%w %s method %s", ErrRequestTimeout, request.CreateTime, request.Method).Error(),
+					}:
+					default:
 					}
 				}
-				e.reqLk.Unlock()
-			case <-ctx.Done():
-				log.Warnf("return clean request")
-				return
 			}
+			e.reqLk.Unlock()
+		case <-ctx.Done():
+			log.Warnf("return clean request")
+			return
 		}
-
-	}()
+	}
 }
 
 func (e *BaseEventStream) ResponseEvent(ctx context.Context, resp *types.ResponseEvent) error {
@@ -148,11 +155,22 @@ func (e *BaseEventStream) ResponseEvent(ctx context.Context, resp *types.Respons
 	if ok {
 		delete(e.idRequest, resp.ID)
 	} else {
+		e.reqLk.Unlock()
 		return fmt.Errorf("request id %s not exit", resp.ID.String())
 	}
 	e.reqLk.Unlock()
 	if ok {
-		event.Result <- resp
+		select {
+		case event.Result <- resp:
+		default:
+		}
 	}
 	return nil
+}
+
+func isTimeoutError(err error) bool {
+	if !reflect2.IsNil(err) {
+		return strings.Contains(err.Error(), ErrRequestTimeout.Error())
+	}
+	return false
 }

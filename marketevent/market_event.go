@@ -11,7 +11,6 @@ import (
 
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
-	"golang.org/x/xerrors"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
@@ -54,7 +53,7 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 	}
 	err := m.validator.Validate(ctx, policy.Miner)
 	if err != nil {
-		return nil, xerrors.Errorf("verify miner:%s failed:%w", policy.Miner.String(), err)
+		return nil, fmt.Errorf("verify miner:%s failed:%w", policy.Miner.String(), err)
 	}
 
 	out := make(chan *types2.RequestEvent, m.cfg.RequestQueueSize)
@@ -170,13 +169,13 @@ func (m *MarketEventStream) getChannels(mAddr address.Address) ([]*types.Channel
 	var ok bool
 	if channelStore, ok = m.minerConnections[mAddr]; !ok {
 		m.connLk.Unlock()
-		return nil, xerrors.Errorf("no connections for this miner %s", mAddr)
+		return nil, fmt.Errorf("no connections for this miner %s", mAddr)
 	}
 	m.connLk.Unlock()
 
 	channels, err := channelStore.getChannelListByMiners()
 	if err != nil {
-		return nil, xerrors.Errorf("cannot find any connection for miner %s", mAddr)
+		return nil, fmt.Errorf("cannot find any connection for miner %s", mAddr)
 	}
 	return channels, nil
 }

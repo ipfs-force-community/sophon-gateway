@@ -2,12 +2,12 @@ package version
 
 import "fmt"
 
-var CurrentCommit string
+var GitCommit string
 
 // BuildVersion is the local build version, set by build system
-const BuildVersion = "v1.4.0"
+const BuildVersion = "v1.6.0"
 
-var UserVersion = BuildVersion + CurrentCommit
+var UserVersion = BuildVersion + GitCommit
 
 type Version uint32
 
