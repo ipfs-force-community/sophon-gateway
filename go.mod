@@ -7,7 +7,7 @@ require (
 	github.com/filecoin-project/go-jsonrpc v0.1.5
 	github.com/filecoin-project/go-state-types v0.1.10
 	github.com/filecoin-project/specs-storage v0.4.1
-	github.com/filecoin-project/venus v1.6.0
+	github.com/filecoin-project/venus v1.6.1
 	github.com/filecoin-project/venus-auth v1.6.0
 	github.com/gbrlsnchs/jwt/v3 v3.0.1
 	github.com/google/uuid v1.3.0
@@ -85,11 +85,11 @@ require (
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-block-format v0.0.3 // indirect
 	github.com/ipfs/go-datastore v0.5.1 // indirect
-	github.com/ipfs/go-ipfs-blockstore v1.1.2 // indirect
+	github.com/ipfs/go-ipfs-blockstore v1.2.0 // indirect
 	github.com/ipfs/go-ipfs-ds-help v1.1.0 // indirect
 	github.com/ipfs/go-ipfs-util v0.0.2 // indirect
 	github.com/ipfs/go-ipld-cbor v0.0.6 // indirect
-	github.com/ipfs/go-ipld-format v0.2.0 // indirect
+	github.com/ipfs/go-ipld-format v0.4.0 // indirect
 	github.com/ipfs/go-log v1.0.5 // indirect
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
 	github.com/ipsn/go-secp256k1 v0.0.0-20180726113642-9d62b9f0bc52 // indirect
