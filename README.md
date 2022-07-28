@@ -9,3 +9,7 @@ venus-gateway used to simplify deployment and reduce the complexity of miner acc
 Use [Venus Issues](https://github.com/filecoin-project/venus/issues) for reporting issues about this repository.
 
 ![gateway](https://raw.githubusercontent.com/hunjixin/imgpool/master/gateway.png)
+
+### How to use
+
+[quick start](https://github.com/ipfs-force-community/venus-gateway/blob/master/docs/en/getting-started.md) | [中文](https://github.com/ipfs-force-community/venus-gateway/blob/master/docs/zh/%E5%BF%AB%E9%80%9F%E5%90%AF%E7%94%A8.md)

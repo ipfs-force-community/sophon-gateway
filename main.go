@@ -7,40 +7,38 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
-	"github.com/ipfs-force-community/venus-gateway/utils"
-
-	"github.com/ipfs-force-community/venus-gateway/validator"
-
 	"github.com/filecoin-project/go-jsonrpc"
+	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
+	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	"github.com/filecoin-project/venus/venus-shared/api/permission"
 	"github.com/gorilla/mux"
+	"github.com/ipfs-force-community/metrics"
+	"github.com/ipfs-force-community/metrics/ratelimit"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/mitchellh/go-homedir"
 	multiaddr "github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
 	"github.com/urfave/cli/v2"
 	"go.opencensus.io/plugin/ochttp"
 
-	"github.com/ipfs-force-community/metrics/ratelimit"
+	_ "github.com/filecoin-project/venus/pkg/crypto/bls"
+	_ "github.com/filecoin-project/venus/pkg/crypto/secp"
 
-	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
-
-	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
-	"github.com/filecoin-project/venus/venus-shared/api/permission"
-
-	"github.com/ipfs-force-community/metrics"
 	"github.com/ipfs-force-community/venus-gateway/api"
 	"github.com/ipfs-force-community/venus-gateway/cmds"
+	"github.com/ipfs-force-community/venus-gateway/config"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/venus-gateway/utils"
+	"github.com/ipfs-force-community/venus-gateway/validator"
 	"github.com/ipfs-force-community/venus-gateway/version"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
-
-	_ "github.com/filecoin-project/venus/pkg/crypto/bls"
-	_ "github.com/filecoin-project/venus/pkg/crypto/secp"
 )
 
 var log = logging.Logger("main")
@@ -56,6 +54,11 @@ func main() {
 				Name:  "listen",
 				Usage: "host address and port the worker api will listen on",
 				Value: "/ip4/127.0.0.1/tcp/45132",
+			},
+			&cli.StringFlag{
+				Name:    "repo",
+				Value:   "~/.venusgateway",
+				EnvVars: []string{"VENUS-GATEWAY"},
 			},
 		},
 		Commands: []*cli.Command{
@@ -73,31 +76,86 @@ var runCmd = &cli.Command{
 	Name:  "run",
 	Usage: "start venus-gateway daemon",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "auth-url", Usage: "venus auth url", Required: true},
+		&cli.StringFlag{Name: "auth-url", Usage: "venus auth url"},
 		&cli.StringFlag{Name: "jaeger-proxy", EnvVars: []string{"VENUS_GATEWAY_JAEGER_PROXY"}},
 		&cli.Float64Flag{Name: "trace-sampler", EnvVars: []string{"VENUS_GATEWAY_TRACE_SAMPLER"}, Value: 1.0},
 		&cli.StringFlag{Name: "trace-node-name", Value: "venus-gateway"},
 		&cli.StringFlag{Name: "rate-limit-redis", Hidden: true},
 	},
 	Action: func(cctx *cli.Context) error {
-		cfg2 := &types.Config{
-			Listen:         cctx.String("listen"),
-			AuthUrl:        cctx.String("auth-url"),
-			JaegerProxy:    cctx.String("jaeger-proxy"),
-			TraceSampler:   cctx.Float64("trace-sampler"),
-			TraceNodeName:  cctx.String("trace-node-name"),
-			RateLimitRedis: cctx.String("rate-limit-redis"),
+		cfg := config.DefaultConfig()
+
+		repoPath, err := homedir.Expand(cctx.String("repo"))
+		if err != nil {
+			return err
 		}
-		return RunMain(cctx.Context, cfg2)
+		hasRepo, err := hasRepo(repoPath)
+		if err != nil {
+			return err
+		}
+		if hasRepo {
+			cfg, err = config.ReadConfig(filepath.Join(repoPath, config.ConfigFile))
+			if err != nil {
+				return err
+			}
+		}
+
+		parseFlag(cctx, cfg)
+
+		if !hasRepo {
+			if err := os.MkdirAll(repoPath, 0755); err != nil {
+				return err
+			}
+			if err := config.WriteConfig(filepath.Join(repoPath, config.ConfigFile), cfg); err != nil {
+				return err
+			}
+		}
+
+		return RunMain(cctx.Context, repoPath, cfg)
 	},
 }
 
-func RunMain(ctx context.Context, cfg *types.Config) error {
+func hasRepo(path string) (bool, error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	if !fi.IsDir() {
+		return false, fmt.Errorf("%s is not a directory", path)
+	}
+
+	return true, nil
+}
+
+func parseFlag(cctx *cli.Context, cfg *config.Config) {
+	if cctx.IsSet("listen") {
+		cfg.API.ListenAddress = cctx.String("listen")
+	}
+	if cctx.IsSet("auth-url") {
+		cfg.Auth.URL = cctx.String("auth-url")
+	}
+	if cctx.IsSet("jaeger-proxy") {
+		cfg.Trace.JaegerEndpoint = strings.TrimSpace(cctx.String("jaeger-proxy"))
+		cfg.Trace.JaegerTracingEnabled = true
+	}
+	if cctx.IsSet("trace-sampler") {
+		cfg.Trace.ProbabilitySampler = cctx.Float64("trace-sampler")
+	}
+	if cctx.IsSet("trace-node-name") {
+		cfg.Trace.ServerName = strings.TrimSpace(cctx.String("trace-node-name"))
+	}
+	if cctx.IsSet("rate-limit-redis") {
+		cfg.RateLimit.Redis = cctx.String("rate-limit-redis")
+	}
+}
+
+func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	requestCfg := types.DefaultConfig()
 
-	log.Infof("venus-gateway current version %s, listen %s", version.UserVersion, cfg.Listen)
-
-	cli, _ := jwtclient.NewAuthClient(cfg.AuthUrl)
+	cli, _ := jwtclient.NewAuthClient(cfg.Auth.URL)
 
 	minerValidator := validator.NewMinerValidator(cli)
 
@@ -112,14 +170,15 @@ func RunMain(ctx context.Context, cfg *types.Config) error {
 
 	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream)
 
-	log.Info("Setting up control endpoint at " + cfg.Listen)
+	log.Infof("venus-gateway current version %s", version.UserVersion)
+	log.Info("Setting up control endpoint at " + cfg.API.ListenAddress)
 
 	var fullNode v1API.IGatewayStruct
 	permission.PermissionProxy(gatewayAPIImpl, &fullNode)
 	gatewayAPI := (v1API.IGateway)(&fullNode)
 
-	if len(cfg.RateLimitRedis) > 0 {
-		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimitRedis, nil,
+	if len(cfg.RateLimit.Redis) > 0 {
+		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimit.Redis, nil,
 			&jwtclient.ValueFromCtx{},
 			jwtclient.WarpLimitFinder(cli),
 			logging.Logger("rate-limit"))
@@ -145,7 +204,7 @@ func RunMain(ctx context.Context, cfg *types.Config) error {
 
 	mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
-	localJwt, err := utils.NewLocalJwtClient(".")
+	localJwt, err := utils.NewLocalJwtClient(repoPath)
 	if err != nil {
 		return fmt.Errorf("make token failed:%s", err.Error())
 	}
@@ -156,22 +215,18 @@ func RunMain(ctx context.Context, cfg *types.Config) error {
 
 	handler := (http.Handler)(jwtclient.NewAuthMux(localJwt, jwtclient.WarpIJwtAuthClient(cli), mux))
 
-	var tCnf = &metrics.TraceConfig{}
-	var proxy, sampler, serverName = strings.TrimSpace(cfg.JaegerProxy),
-		cfg.TraceSampler,
-		strings.TrimSpace(cfg.TraceNodeName)
-
-	if tCnf.JaegerTracingEnabled = len(proxy) != 0; tCnf.JaegerTracingEnabled {
-		tCnf.ProbabilitySampler, tCnf.JaegerEndpoint, tCnf.ServerName =
-			sampler, proxy, serverName
+	log.Infof("trace config %+v", cfg.Trace)
+	repoter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
+	if err != nil {
+		return fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
 	}
-	if repoter, err := metrics.RegisterJaeger(tCnf.ServerName, tCnf); err != nil {
-		log.Fatalf("register %s JaegerRepoter to %s failed:%s", tCnf.ServerName, tCnf.JaegerEndpoint)
-	} else if repoter != nil {
-		log.Infof("register jaeger-tracing exporter to %s, with node-name:%s", tCnf.JaegerEndpoint, tCnf.ServerName)
+	if repoter != nil {
+		log.Info("register jaeger exporter success!")
+
 		defer metrics.UnregisterJaeger(repoter)
 		handler = &ochttp.Handler{Handler: handler}
 	}
+
 	httptest.NewServer(handler)
 	srv := &http.Server{Handler: handler}
 
@@ -190,7 +245,7 @@ func RunMain(ctx context.Context, cfg *types.Config) error {
 			log.Errorf("shutting down RPC server failed: %s", err)
 		}
 	}()
-	addr, err := multiaddr.NewMultiaddr(cfg.Listen)
+	addr, err := multiaddr.NewMultiaddr(cfg.API.ListenAddress)
 	if err != nil {
 		return err
 	}
@@ -200,7 +255,6 @@ func RunMain(ctx context.Context, cfg *types.Config) error {
 		return err
 	}
 
-	log.Infof("start to rpc listen %s", nl.Addr())
 	if err = srv.Serve(manet.NetListener(nl)); err != nil && err != http.ErrServerClosed {
 		return err
 	}

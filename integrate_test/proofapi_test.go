@@ -17,6 +17,8 @@ import (
 
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 
+	"github.com/ipfs-force-community/metrics"
+	"github.com/ipfs-force-community/venus-gateway/config"
 	"github.com/ipfs-force-community/venus-gateway/testhelper"
 
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
@@ -32,8 +34,6 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
 func TestProofAPI(t *testing.T) {
@@ -198,15 +198,13 @@ func serverProofAPI(ctx context.Context, url, token string) (gateway.IProofEvent
 }
 
 func setupProofDaemon(t *testing.T, validateMiner []address.Address, ctx context.Context, tCfg testConfig) (string, string) {
-	cfg := &types.Config{
-		Listen:         "/ip4/127.0.0.1/tcp/0",
-		AuthUrl:        "127.0.0.1:1",
-		JaegerProxy:    "",
-		TraceSampler:   0,
-		TraceNodeName:  "",
-		RateLimitRedis: "",
+	cfg := &config.Config{
+		API:       &config.APIConfig{ListenAddress: "/ip4/127.0.0.1/tcp/0"},
+		Auth:      &config.AuthConfig{URL: "127.0.0.1:1"},
+		Trace:     &metrics.TraceConfig{JaegerTracingEnabled: false},
+		RateLimit: &config.RateLimitCofnig{Redis: ""},
 	}
-	addr, token, err := MockMain(ctx, validateMiner, cfg, tCfg)
+	addr, token, err := MockMain(ctx, validateMiner, t.TempDir(), cfg, tCfg)
 	require.NoError(t, err)
 	url, err := url.Parse(addr)
 	require.NoError(t, err)

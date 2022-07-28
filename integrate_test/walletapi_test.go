@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/ipfs-force-community/metrics"
+	"github.com/ipfs-force-community/venus-gateway/config"
 	"github.com/ipfs-force-community/venus-gateway/testhelper"
 
 	types2 "github.com/filecoin-project/venus/venus-shared/types"
@@ -25,8 +27,6 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
 func TestWalletAPI(t *testing.T) {
@@ -275,15 +275,14 @@ func serverWalletAPI(ctx context.Context, url, token string) (gateway.IWalletEve
 }
 
 func setupDaemon(t *testing.T, ctx context.Context) (string, string) {
-	cfg := &types.Config{
-		Listen:         "/ip4/127.0.0.1/tcp/0",
-		AuthUrl:        "127.0.0.1:1",
-		JaegerProxy:    "",
-		TraceSampler:   0,
-		TraceNodeName:  "",
-		RateLimitRedis: "",
+	cfg := &config.Config{
+		API:       &config.APIConfig{ListenAddress: "/ip4/127.0.0.1/tcp/0"},
+		Auth:      &config.AuthConfig{URL: "127.0.0.1:1"},
+		Trace:     &metrics.TraceConfig{JaegerTracingEnabled: false},
+		RateLimit: &config.RateLimitCofnig{Redis: ""},
 	}
-	addr, token, err := MockMain(ctx, nil, cfg, defaultTestConfig())
+
+	addr, token, err := MockMain(ctx, nil, t.TempDir(), cfg, defaultTestConfig())
 	require.NoError(t, err)
 	url, err := url.Parse(addr)
 	require.NoError(t, err)

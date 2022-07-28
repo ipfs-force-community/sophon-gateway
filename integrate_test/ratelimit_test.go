@@ -5,21 +5,21 @@ import (
 	"testing"
 
 	"github.com/filecoin-project/go-address"
-	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/metrics"
+	"github.com/ipfs-force-community/venus-gateway/config"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRateLimit(t *testing.T) {
 	ctx := context.Background()
 
-	cfg := &types.Config{
-		Listen:         "/ip4/127.0.0.1/tcp/0",
-		AuthUrl:        "127.0.0.1:1",
-		JaegerProxy:    "",
-		TraceSampler:   0,
-		TraceNodeName:  "",
-		RateLimitRedis: "127.0.0.1:6379",
+	cfg := &config.Config{
+		API:       &config.APIConfig{ListenAddress: "/ip4/127.0.0.1/tcp/0"},
+		Auth:      &config.AuthConfig{URL: "127.0.0.1:1"},
+		Trace:     &metrics.TraceConfig{JaegerTracingEnabled: false},
+		RateLimit: &config.RateLimitCofnig{Redis: "27.0.0.1:6379"},
 	}
-	_, _, err := MockMain(ctx, []address.Address{}, cfg, defaultTestConfig())
+
+	_, _, err := MockMain(ctx, []address.Address{}, t.TempDir(), cfg, defaultTestConfig())
 	require.NoError(t, err)
 }

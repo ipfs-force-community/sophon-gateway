@@ -15,7 +15,7 @@ import (
 	jwt3 "github.com/gbrlsnchs/jwt/v3"
 )
 
-const tokenFile = "token"
+const TokenFile = "token"
 
 // todo: this is a temporary solution
 type LocalJwtClient struct {
@@ -58,7 +58,7 @@ func (l *LocalJwtClient) Verify(ctx context.Context, token string) ([]auth.Permi
 }
 
 func (l *LocalJwtClient) SaveToken() error {
-	return ioutil.WriteFile(path.Join(l.repo, tokenFile), l.Token, 0644)
+	return ioutil.WriteFile(path.Join(l.repo, TokenFile), l.Token, 0644)
 }
 
 var _ jwtclient.IJwtAuthClient = (*LocalJwtClient)(nil)

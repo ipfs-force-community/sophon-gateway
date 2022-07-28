@@ -11,7 +11,7 @@ import (
 
 func TestLocalJwtCreateAndVerify(t *testing.T) {
 	ctx := context.Background()
-	jwt, err := NewLocalJwtClient(".")
+	jwt, err := NewLocalJwtClient(t.TempDir())
 	require.NoError(t, err)
 	perm, err := jwt.Verify(ctx, string(jwt.Token))
 	require.NoError(t, err)

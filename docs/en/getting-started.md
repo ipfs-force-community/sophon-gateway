@@ -19,12 +19,12 @@ make
 Start service.
 
 ```shell script
-./venus-gateway run --auth-url=<auth-url>
+./venus-gateway run
 ```
 
 :::tip
 
-After succussful start, a `token` file will be generated in the working directory, which contains your jwt token for CLI commands.
+A successful startup will generate two files, `config.toml` and `token`, in the default repo directory `~/.venusgateway`. Inside `config.toml` is the configuration item for `venus-gateway`. `token` file is stored in JWT token, used for command execution.
 
 :::
 
