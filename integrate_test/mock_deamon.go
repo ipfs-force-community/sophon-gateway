@@ -21,6 +21,7 @@ import (
 	"github.com/ipfs-force-community/metrics/ratelimit"
 	"github.com/ipfs-force-community/venus-gateway/api"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
+	metrics2 "github.com/ipfs-force-community/venus-gateway/metrics"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/validator"
@@ -107,6 +108,10 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	}
 
 	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(cli), mux))
+
+	if err := metrics2.SetupMetrics(ctx, cfg.Metrics, gatewayAPIImpl); err != nil {
+		return "", nil, err
+	}
 
 	log.Infof("trace config %v", cfg.Trace)
 	repoter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)

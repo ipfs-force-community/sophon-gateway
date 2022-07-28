@@ -201,6 +201,7 @@ func setupProofDaemon(t *testing.T, validateMiner []address.Address, ctx context
 	cfg := &config.Config{
 		API:       &config.APIConfig{ListenAddress: "/ip4/127.0.0.1/tcp/0"},
 		Auth:      &config.AuthConfig{URL: "127.0.0.1:1"},
+		Metrics:   config.DefaultConfig().Metrics,
 		Trace:     &metrics.TraceConfig{JaegerTracingEnabled: false},
 		RateLimit: &config.RateLimitCofnig{Redis: ""},
 	}

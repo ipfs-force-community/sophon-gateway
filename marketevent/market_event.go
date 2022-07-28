@@ -7,7 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ipfs-force-community/venus-gateway/metrics"
 	"github.com/ipfs-force-community/venus-gateway/validator"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
@@ -81,6 +84,11 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 			return
 		}
 
+		ctx, _ = tag.New(ctx, tag.Upsert(metrics.IPKey, ip), tag.Upsert(metrics.MinerAddressKey, mAddr.String()),
+			tag.Upsert(metrics.MinerTypeKey, "market"))
+		stats.Record(ctx, metrics.MinerRegister.M(1))
+		stats.Record(ctx, metrics.MinerSource.M(1))
+
 		out <- &types2.RequestEvent{
 			ID:         sharedTypes.NewUUID(),
 			Method:     "InitConnect",
@@ -134,8 +142,12 @@ func (m *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Addres
 	if err != nil {
 		return false, err
 	}
+
+	start := time.Now()
 	var result bool
 	err = m.SendRequest(ctx, channels, "IsUnsealed", payload, &result)
+	_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(metrics.MinerAddressKey, miner.String())},
+		metrics.IsUnsealed.M(metrics.SinceInMilliseconds(start)))
 	if err == nil {
 		return result, nil
 	}
@@ -161,7 +173,12 @@ func (m *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner addres
 		return err
 	}
 
-	return m.SendRequest(ctx, channels, "SectorsUnsealPiece", payload, nil)
+	start := time.Now()
+	err = m.SendRequest(ctx, channels, "SectorsUnsealPiece", payload, nil)
+	_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(metrics.MinerAddressKey, miner.String())},
+		metrics.SectorsUnsealPiece.M(metrics.SinceInMilliseconds(start)))
+
+	return err
 }
 
 func (m *MarketEventStream) getChannels(mAddr address.Address) ([]*types.ChannelInfo, error) {
