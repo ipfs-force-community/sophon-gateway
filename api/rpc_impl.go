@@ -12,11 +12,13 @@ import (
 	"github.com/filecoin-project/specs-storage/storage"
 
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
+	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
+	"github.com/ipfs-force-community/venus-gateway/version"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
 )
 
@@ -31,6 +33,7 @@ type IGatewayAPI interface {
 	IGatewayPushAPI
 }
 
+var _ v1API.IGateway = (*GatewayAPIImpl)(nil)
 var _ IGatewayAPI = (*GatewayAPIImpl)(nil)
 
 type GatewayAPIImpl struct {
@@ -93,4 +96,8 @@ func (g *GatewayAPIImpl) SectorsUnsealPiece(ctx context.Context, miner address.A
 
 func (g *GatewayAPIImpl) ListMarketConnectionsState(ctx context.Context) ([]types.MarketConnectionState, error) {
 	return g.me.ListMarketConnectionsState(ctx)
+}
+
+func (g *GatewayAPIImpl) Version(ctx context.Context) (sharedTypes.Version, error) {
+	return sharedTypes.Version{Version: version.UserVersion}, nil
 }
