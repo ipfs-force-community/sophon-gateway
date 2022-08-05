@@ -12,6 +12,8 @@ import (
 	"github.com/filecoin-project/specs-storage/storage"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 
+	"github.com/ipfs-force-community/metrics"
+	"github.com/ipfs-force-community/venus-gateway/config"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 
 	"github.com/filecoin-project/go-state-types/abi"
@@ -29,8 +31,6 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
 func TestMarketAPI(t *testing.T) {
@@ -161,15 +161,14 @@ func serverMarketAPI(ctx context.Context, url, token string) (gateway.IMarketCli
 }
 
 func setupMarketDaemon(t *testing.T, validateMiner []address.Address, ctx context.Context) (string, string) {
-	cfg := &types.Config{
-		Listen:         "/ip4/127.0.0.1/tcp/0",
-		AuthUrl:        "127.0.0.1:1",
-		JaegerProxy:    "",
-		TraceSampler:   0,
-		TraceNodeName:  "",
-		RateLimitRedis: "",
+	cfg := &config.Config{
+		API:       &config.APIConfig{ListenAddress: "/ip4/127.0.0.1/tcp/0"},
+		Auth:      &config.AuthConfig{URL: "127.0.0.1:1"},
+		Trace:     &metrics.TraceConfig{JaegerTracingEnabled: false},
+		RateLimit: &config.RateLimitCofnig{Redis: ""},
 	}
-	addr, token, err := MockMain(ctx, validateMiner, cfg, defaultTestConfig())
+
+	addr, token, err := MockMain(ctx, validateMiner, t.TempDir(), cfg, defaultTestConfig())
 	require.NoError(t, err)
 	url, err := url.Parse(addr)
 	require.NoError(t, err)

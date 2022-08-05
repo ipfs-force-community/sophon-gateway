@@ -2,13 +2,14 @@ package integrate
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"time"
 
 	"github.com/filecoin-project/go-address"
 
+	"github.com/ipfs-force-community/venus-gateway/config"
 	"github.com/ipfs-force-community/venus-gateway/utils"
 
 	"github.com/filecoin-project/go-jsonrpc"
@@ -44,16 +45,14 @@ func defaultTestConfig() testConfig {
 	}
 }
 
-func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.Config, tcfg testConfig) (string, []byte, error) {
+func MockMain(ctx context.Context, validateMiner []address.Address, repoPath string, cfg *config.Config, tcfg testConfig) (string, []byte, error) {
 	requestCfg := &types.RequestConfig{
 		RequestQueueSize: 30,
 		RequestTimeout:   tcfg.requestTimeout,
 		ClearInterval:    tcfg.clearInterval,
 	}
 
-	log.Infof("venus-gateway current version %s, listen %s", version.UserVersion, cfg.Listen)
-
-	cli, _ := jwtclient.NewAuthClient(cfg.AuthUrl)
+	cli, _ := jwtclient.NewAuthClient(cfg.Auth.URL)
 
 	minerValidator := validator.MockAuthMinerValidator{ValidatedAddr: validateMiner}
 
@@ -68,14 +67,15 @@ func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.C
 
 	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream)
 
-	log.Info("Setting up control endpoint at " + cfg.Listen)
+	log.Infof("venus-gateway current version %s", version.UserVersion)
+	log.Info("Setting up control endpoint at " + cfg.API.ListenAddress)
 
 	var fullNode v1API.IGatewayStruct
 	permission.PermissionProxy(gatewayAPIImpl, &fullNode)
 	gatewayAPI := (v1API.IGateway)(&fullNode)
 
-	if len(cfg.RateLimitRedis) > 0 {
-		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimitRedis, nil,
+	if len(cfg.RateLimit.Redis) > 0 {
+		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimit.Redis, nil,
 			&jwtclient.ValueFromCtx{},
 			jwtclient.WarpLimitFinder(cli),
 			logging.Logger("rate-limit"))
@@ -102,25 +102,20 @@ func MockMain(ctx context.Context, validateMiner []address.Address, cfg *types.C
 
 	mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
-	localJwt, err := utils.NewLocalJwtClient(".")
+	localJwt, err := utils.NewLocalJwtClient(repoPath)
 	if err != nil {
 		return "", nil, err
 	}
 	handler := (http.Handler)(jwtclient.NewAuthMux(localJwt, jwtclient.WarpIJwtAuthClient(cli), mux))
 
-	var tCnf = &metrics.TraceConfig{}
-	var proxy, sampler, serverName = strings.TrimSpace(cfg.JaegerProxy),
-		cfg.TraceSampler,
-		strings.TrimSpace(cfg.TraceNodeName)
-
-	if tCnf.JaegerTracingEnabled = len(proxy) != 0; tCnf.JaegerTracingEnabled {
-		tCnf.ProbabilitySampler, tCnf.JaegerEndpoint, tCnf.ServerName =
-			sampler, proxy, serverName
+	log.Infof("trace config %v", cfg.Trace)
+	repoter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
+	if err != nil {
+		return "", nil, fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
 	}
-	if repoter, err := metrics.RegisterJaeger(tCnf.ServerName, tCnf); err != nil {
-		log.Fatalf("register %s JaegerRepoter to %s failed:%s", tCnf.ServerName, tCnf.JaegerEndpoint)
-	} else if repoter != nil {
-		log.Infof("register jaeger-tracing exporter to %s, with node-name:%s", tCnf.JaegerEndpoint, tCnf.ServerName)
+	if repoter != nil {
+		log.Info("register jaeger exporter success!")
+
 		defer metrics.UnregisterJaeger(repoter)
 		handler = &ochttp.Handler{Handler: handler}
 	}

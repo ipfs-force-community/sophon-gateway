@@ -139,13 +139,15 @@ func (w *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedT
 			return err
 		}
 	}
-	if err = w.walletConnMgr.addNewAddress(walletAccount, channelId, addrs); err == nil {
-		log.Infof("wallet %s add address %v", walletAccount, addrs)
-	} else {
-		log.Errorf("wallet %s add address %v failed %v", walletAccount, addrs, err)
-	}
 
-	return err
+	err = w.walletConnMgr.addNewAddress(walletAccount, channelId, addrs)
+	if err != nil {
+		log.Errorf("wallet %s add address %v failed %v", walletAccount, addrs, err)
+		return err
+	}
+	log.Infof("wallet %s add address %v successful!", walletAccount, addrs)
+
+	return nil
 }
 
 func (w *WalletEventStream) RemoveAddress(ctx context.Context, channelId sharedTypes.UUID, addrs []address.Address) error {

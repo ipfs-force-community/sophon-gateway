@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ipfs-force-community/venus-gateway/validator"
-
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/network"
@@ -17,6 +15,7 @@ import (
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/venus-gateway/validator"
 	logging "github.com/ipfs/go-log/v2"
 )
 

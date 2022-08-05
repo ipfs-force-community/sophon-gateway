@@ -18,15 +18,6 @@ func DefaultConfig() *RequestConfig {
 	}
 }
 
-type Config struct {
-	Listen         string
-	AuthUrl        string
-	JaegerProxy    string
-	TraceSampler   float64
-	TraceNodeName  string
-	RateLimitRedis string
-}
-
 type APIRegisterHubConfig struct {
 	RegisterAPI     []string `json:"apiRegisterHub"`
 	Token           string   `json:"token"`
