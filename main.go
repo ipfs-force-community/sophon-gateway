@@ -58,7 +58,7 @@ func main() {
 			&cli.StringFlag{
 				Name:    "repo",
 				Value:   "~/.venusgateway",
-				EnvVars: []string{"VENUS-GATEWAY"},
+				EnvVars: []string{"VENUS_GATEWAY"},
 			},
 		},
 		Commands: []*cli.Command{
@@ -171,7 +171,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream)
 
 	log.Infof("venus-gateway current version %s", version.UserVersion)
-	log.Info("Setting up control endpoint at " + cfg.API.ListenAddress)
+	log.Infof("Setting up control endpoint at %v", cfg.API.ListenAddress)
 
 	var fullNode v1API.IGatewayStruct
 	permission.PermissionProxy(gatewayAPIImpl, &fullNode)
