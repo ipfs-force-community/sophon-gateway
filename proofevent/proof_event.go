@@ -12,6 +12,7 @@ import (
 	"github.com/filecoin-project/go-state-types/network"
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
+	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -21,7 +22,7 @@ import (
 
 var log = logging.Logger("proof_stream")
 
-var _ IProofEvent = (*ProofEventStream)(nil)
+var _ gateway.IProofClient = (*ProofEventStream)(nil)
 
 type ProofEventStream struct {
 	connLk           sync.RWMutex

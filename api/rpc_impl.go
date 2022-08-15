@@ -12,8 +12,9 @@ import (
 	"github.com/filecoin-project/specs-storage/storage"
 
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
-	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+
+	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
@@ -23,38 +24,41 @@ import (
 )
 
 type IGatewayPushAPI interface {
-	proofevent.IProofEvent
-	walletevent.IWalletEvent
+	gateway.IProofClient
+	gateway.IWalletClient
 }
 
 type IGatewayAPI interface {
-	proofevent.IProofEventAPI
-	walletevent.IWalletEventAPI
 	IGatewayPushAPI
+
+	gateway.IProofServiceProvider
+	gateway.IWalletServiceProvider
 }
 
-var _ v1API.IGateway = (*GatewayAPIImpl)(nil)
+var _ gateway.IGateway = (*GatewayAPIImpl)(nil)
 var _ IGatewayAPI = (*GatewayAPIImpl)(nil)
 
 type GatewayAPIImpl struct {
-	proofevent.IProofEventAPI
+	gateway.IProofServiceProvider
 	pe *proofevent.ProofEventStream
 
-	walletevent.IWalletEventAPI
+	gateway.IWalletServiceProvider
 	we *walletevent.WalletEventStream
 
-	marketevent.IMarketEventAPI
+	gateway.IMarketServiceProvider
+
 	me *marketevent.MarketEventStream
 }
 
 func NewGatewayAPIImpl(pe *proofevent.ProofEventStream, we *walletevent.WalletEventStream, me *marketevent.MarketEventStream) *GatewayAPIImpl {
 	return &GatewayAPIImpl{
-		IProofEventAPI:  pe,
-		IWalletEventAPI: we,
-		IMarketEventAPI: me,
-		pe:              pe,
-		we:              we,
-		me:              me,
+		pe: pe,
+		we: we,
+		me: me,
+
+		IProofServiceProvider:  pe,
+		IWalletServiceProvider: we,
+		IMarketServiceProvider: me,
 	}
 }
 
