@@ -18,6 +18,7 @@ import (
 
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 
+	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -25,7 +26,7 @@ import (
 
 var log = logging.Logger("market_stream")
 
-var _ IMarketEvent = (*MarketEventStream)(nil)
+var _ gateway.IMarketClient = (*MarketEventStream)(nil)
 
 type MarketEventStream struct {
 	connLk           sync.RWMutex

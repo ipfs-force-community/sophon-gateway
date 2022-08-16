@@ -16,6 +16,7 @@ import (
 	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
 	wcrypto "github.com/filecoin-project/venus/pkg/crypto"
+	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -24,7 +25,7 @@ import (
 
 var log = logging.Logger("event_stream")
 
-var _ IWalletEvent = (*WalletEventStream)(nil)
+var _ gateway.IWalletClient = (*WalletEventStream)(nil)
 
 var hash256 = sha256.New()
 
