@@ -10,10 +10,11 @@ import (
 	"github.com/filecoin-project/go-address"
 
 	"github.com/ipfs-force-community/venus-gateway/config"
-	"github.com/ipfs-force-community/venus-gateway/utils"
 
 	"github.com/filecoin-project/go-jsonrpc"
 
+	"github.com/filecoin-project/venus-auth/auth"
+	"github.com/filecoin-project/venus-auth/core"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/permission"
@@ -102,11 +103,25 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 
 	mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
-	localJwt, err := utils.NewLocalJwtClient(repoPath)
+	// localJwt, err := utils.NewLocalJwtClient(repoPath)
+	// if err != nil {
+	// 	return "", nil, err
+	// }
+
+	seckey, err := jwtclient.RandSecret()
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("failed to generate secret key: %v", err)
 	}
-	handler := (http.Handler)(jwtclient.NewAuthMux(localJwt, jwtclient.WarpIJwtAuthClient(cli), mux))
+
+	localJwtCli, localToken, err := jwtclient.NewLocalAuthClient(seckey, auth.JWTPayload{
+		Perm: core.PermAdmin,
+		Name: "GateWayLocalToken",
+	})
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to generate local jwt client: %v", err)
+	}
+
+	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(cli), mux))
 
 	log.Infof("trace config %v", cfg.Trace)
 	repoter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
@@ -121,5 +136,5 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	}
 
 	srv := httptest.NewServer(handler)
-	return srv.URL, localJwt.Token, nil
+	return srv.URL, localToken, nil
 }
