@@ -6,7 +6,7 @@ import (
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/venus-auth/auth"
-	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
+	"github.com/filecoin-project/venus-auth/jwtclient"
 	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-gateway/validator/mocks"
 	"github.com/stretchr/testify/require"
