@@ -27,8 +27,6 @@ var log = logging.Logger("event_stream")
 
 var _ gateway.IWalletClient = (*WalletEventStream)(nil)
 
-var hash256 = sha256.New()
-
 type WalletEventStream struct {
 	walletConnMgr IWalletConnMgr
 	cfg           *types.RequestConfig
@@ -220,9 +218,7 @@ func (w *WalletEventStream) getValidatedAddress(ctx context.Context, channel *ty
 }
 
 func (w *WalletEventStream) verifyAddress(ctx context.Context, addr address.Address, channel *types.ChannelInfo, signBytes []byte, walletAccount string) error {
-	hasher := sha256.New()
-	_, _ = hasher.Write(append(w.randBytes, signBytes...))
-	signData := hash256.Sum(nil)
+	signData := GetSignData(w.randBytes, signBytes)
 	payload, err := json.Marshal(&types2.WalletSignRequest{
 		Signer: addr,
 		ToSign: signData,
@@ -249,5 +245,5 @@ func GetSignData(datas ...[]byte) []byte {
 	for _, data := range datas {
 		_, _ = hasher.Write(data)
 	}
-	return hash256.Sum(nil)
+	return hasher.Sum(nil)
 }
