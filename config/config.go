@@ -17,6 +17,8 @@ type Config struct {
 	Auth      *AuthConfig
 	Trace     *metrics.TraceConfig
 	RateLimit *RateLimitCofnig
+
+	VerifyWalletAdddresses bool
 }
 
 type APIConfig struct {
@@ -40,6 +42,7 @@ func DefaultConfig() *Config {
 	}
 	cfg.Trace.ServerName = "venus-gateway"
 	cfg.Trace.JaegerEndpoint = ""
+	cfg.VerifyWalletAdddresses = true
 
 	return cfg
 }

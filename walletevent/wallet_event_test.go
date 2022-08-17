@@ -237,7 +237,7 @@ func setupWalletEvent(t *testing.T) *WalletEventStream {
 	})
 
 	ctx := context.Background()
-	return NewWalletEventStream(ctx, authClient, types.DefaultConfig())
+	return NewWalletEventStream(ctx, authClient, types.DefaultConfig(), true)
 }
 
 func setupClient(t *testing.T, ctx context.Context, walletAccount string, supportAccounts []string, event *WalletEventStream) *mockClient {

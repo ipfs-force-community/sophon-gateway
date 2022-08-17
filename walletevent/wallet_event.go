@@ -33,14 +33,17 @@ type WalletEventStream struct {
 	authClient    types.IAuthClient
 	randBytes     []byte
 	*types.BaseEventStream
+
+	verifyWalletAddrs bool
 }
 
-func NewWalletEventStream(ctx context.Context, authClient types.IAuthClient, cfg *types.RequestConfig) *WalletEventStream {
+func NewWalletEventStream(ctx context.Context, authClient types.IAuthClient, cfg *types.RequestConfig, verifyWalletAddrs bool) *WalletEventStream {
 	walletEventStream := &WalletEventStream{
-		walletConnMgr:   newWalletConnMgr(),
-		BaseEventStream: types.NewBaseEventStream(ctx, cfg),
-		cfg:             cfg,
-		authClient:      authClient,
+		walletConnMgr:     newWalletConnMgr(),
+		BaseEventStream:   types.NewBaseEventStream(ctx, cfg),
+		cfg:               cfg,
+		authClient:        authClient,
+		verifyWalletAddrs: verifyWalletAddrs,
 	}
 	var err error
 	walletEventStream.randBytes, err = ioutil.ReadAll(io.LimitReader(rand.Reader, 32))
@@ -133,9 +136,12 @@ func (w *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedT
 	if err != nil {
 		return err
 	}
+
 	for _, addr := range addrs {
-		if err := w.verifyAddress(ctx, addr, info.ChannelInfo, info.signBytes, walletAccount); err != nil {
-			return err
+		if w.verifyWalletAddrs {
+			if err := w.verifyAddress(ctx, addr, info.ChannelInfo, info.signBytes, walletAccount); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -208,8 +214,10 @@ func (w *WalletEventStream) getValidatedAddress(ctx context.Context, channel *ty
 	// validate the wallet is really has the address
 	validAddrs := make([]address.Address, 0, len(addrs))
 	for _, addr := range addrs {
-		if err := w.verifyAddress(ctx, addr, channel, signBytes, walletAccount); err != nil {
-			return nil, err
+		if w.verifyWalletAddrs {
+			if err := w.verifyAddress(ctx, addr, channel, signBytes, walletAccount); err != nil {
+				return nil, err
+			}
 		}
 		validAddrs = append(validAddrs, addr)
 	}
