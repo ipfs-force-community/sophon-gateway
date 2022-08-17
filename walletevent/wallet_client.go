@@ -2,6 +2,7 @@ package walletevent
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -20,6 +21,14 @@ import (
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 	types3 "github.com/ipfs-force-community/venus-gateway/types"
 )
+
+var RandomBytes = func() []byte {
+	buf := make([]byte, 32)
+	if _, err := rand.Read(buf); err != nil {
+		panic(fmt.Sprintf("init random bytes for address verify failed:%s", err))
+	}
+	return buf
+}()
 
 func NewWalletRegisterClient(ctx context.Context, url, token string) (gateway.IWalletServiceProvider, jsonrpc.ClientCloser, error) {
 	headers := http.Header{}
@@ -47,6 +56,7 @@ func NewWalletEventClient(ctx context.Context, process types3.IWalletHandler, cl
 		client:          client,
 		log:             log,
 		supportAccounts: supportAccounts,
+		randomBytes:     RandomBytes,
 		readyCh:         make(chan struct{}),
 	}
 }
