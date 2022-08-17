@@ -138,10 +138,8 @@ func (w *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedT
 	}
 
 	for _, addr := range addrs {
-		if w.verifyWalletAddrs {
-			if err := w.verifyAddress(ctx, addr, info.ChannelInfo, info.signBytes, walletAccount); err != nil {
-				return err
-			}
+		if err := w.verifyAddress(ctx, addr, info.ChannelInfo, info.signBytes, walletAccount); err != nil {
+			return err
 		}
 	}
 
@@ -214,10 +212,8 @@ func (w *WalletEventStream) getValidatedAddress(ctx context.Context, channel *ty
 	// validate the wallet is really has the address
 	validAddrs := make([]address.Address, 0, len(addrs))
 	for _, addr := range addrs {
-		if w.verifyWalletAddrs {
-			if err := w.verifyAddress(ctx, addr, channel, signBytes, walletAccount); err != nil {
-				return nil, err
-			}
+		if err := w.verifyAddress(ctx, addr, channel, signBytes, walletAccount); err != nil {
+			return nil, err
 		}
 		validAddrs = append(validAddrs, addr)
 	}
@@ -226,6 +222,11 @@ func (w *WalletEventStream) getValidatedAddress(ctx context.Context, channel *ty
 }
 
 func (w *WalletEventStream) verifyAddress(ctx context.Context, addr address.Address, channel *types.ChannelInfo, signBytes []byte, walletAccount string) error {
+	if !w.verifyWalletAddrs {
+		log.Infof("skip verify account:%s, address: %s, wallet address verification is disabled.",
+			walletAccount, addr)
+		return nil
+	}
 	signData := GetSignData(w.randBytes, signBytes)
 	payload, err := json.Marshal(&types2.WalletSignRequest{
 		Signer: addr,
