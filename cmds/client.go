@@ -29,7 +29,7 @@ func NewGatewayClient(ctx *cli.Context) (v1API.IGateway, jsonrpc.ClientCloser, e
 		listen = cfg.API.ListenAddress
 	}
 
-	token, err := ioutil.ReadFile(filepath.Join(repoPath, cfg.LocalAuthConfig.TokenFile))
+	token, err := ioutil.ReadFile(filepath.Join(repoPath, "token"))
 	if err != nil {
 		return nil, nil, err
 	}
