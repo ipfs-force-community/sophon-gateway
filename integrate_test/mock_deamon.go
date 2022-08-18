@@ -13,8 +13,6 @@ import (
 
 	"github.com/filecoin-project/go-jsonrpc"
 
-	"github.com/filecoin-project/venus-auth/auth"
-	"github.com/filecoin-project/venus-auth/core"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/permission"
@@ -103,20 +101,8 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 
 	mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
-	// localJwt, err := utils.NewLocalJwtClient(repoPath)
-	// if err != nil {
-	// 	return "", nil, err
-	// }
 
-	seckey, err := jwtclient.RandSecret()
-	if err != nil {
-		return "", nil, fmt.Errorf("failed to generate secret key: %v", err)
-	}
-
-	localJwtCli, localToken, err := jwtclient.NewLocalAuthClient(seckey, auth.JWTPayload{
-		Perm: core.PermAdmin,
-		Name: "GateWayLocalToken",
-	})
+	localJwtCli, localToken, err := jwtclient.NewLocalAuthClient()
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to generate local jwt client: %v", err)
 	}

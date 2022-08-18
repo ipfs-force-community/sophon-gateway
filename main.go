@@ -15,8 +15,6 @@ import (
 	"time"
 
 	"github.com/filecoin-project/go-jsonrpc"
-	"github.com/filecoin-project/venus-auth/auth"
-	"github.com/filecoin-project/venus-auth/core"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/permission"
@@ -212,15 +210,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 
 	mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
-	seckey, err := jwtclient.RandSecret()
-	if err != nil {
-		return fmt.Errorf("failed to generate secret key: %v", err)
-	}
-
-	localJwtCli, localToken, err := jwtclient.NewLocalAuthClient(seckey, auth.JWTPayload{
-		Perm: core.PermAdmin,
-		Name: "GateWayLocalToken",
-	})
+	localJwtCli, localToken, err := jwtclient.NewLocalAuthClient()
 	if err != nil {
 		return fmt.Errorf("failed to generate local jwt client: %v", err)
 	}
