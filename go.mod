@@ -8,7 +8,7 @@ require (
 	github.com/filecoin-project/go-state-types v0.1.10
 	github.com/filecoin-project/specs-storage v0.4.1
 	github.com/filecoin-project/venus v1.6.1-0.20220817072314-7a08054f7d99
-	github.com/filecoin-project/venus-auth v1.6.1-0.20220817031906-a79682942214
+	github.com/filecoin-project/venus-auth v1.6.1-0.20220818090203-d2c23f97f385
 	github.com/gbrlsnchs/jwt/v3 v3.0.1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
@@ -25,8 +25,6 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220418201149-a630d4f3e7a2
 )
-
-require github.com/gbrlsnchs/jwt/v3 v3.0.1 // indirect
 
 require (
 	contrib.go.opencensus.io/exporter/graphite v0.0.0-20200424223504-26b90655e0ce // indirect

@@ -8,22 +8,18 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/ipfs-force-community/metrics"
-	"github.com/ipfs-force-community/venus-gateway/config"
-	"github.com/ipfs-force-community/venus-gateway/testhelper"
-
-	types2 "github.com/filecoin-project/venus/venus-shared/types"
-
 	"github.com/filecoin-project/go-address"
-
 	"github.com/filecoin-project/go-jsonrpc"
-
-	"github.com/filecoin-project/venus/venus-shared/api"
-
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
-
 	logging "github.com/ipfs/go-log/v2"
 
+	"github.com/filecoin-project/venus/venus-shared/api"
+	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	types2 "github.com/filecoin-project/venus/venus-shared/types"
+
+	"github.com/ipfs-force-community/metrics"
+
+	"github.com/ipfs-force-community/venus-gateway/config"
+	"github.com/ipfs-force-community/venus-gateway/testhelper"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
 
 	"github.com/stretchr/testify/require"
@@ -221,15 +217,16 @@ func TestWalletAPI(t *testing.T) {
 		err = walletEvent.SupportAccount(ctx, "123")
 		require.NoError(t, err)
 
-		has, err := sAPi.WalletHas(ctx, "123", addr1)
+		// todo 模拟 账户存在
+		has, err := sAPi.WalletHas(ctx, addr1)
 		require.NoError(t, err)
 		require.True(t, has)
 
-		has, err = sAPi.WalletHas(ctx, "mmn", addr1)
+		has, err = sAPi.WalletHas(ctx, addr1)
 		require.NoError(t, err)
 		require.False(t, has)
 
-		has, err = sAPi.WalletHas(ctx, "123", addr2)
+		has, err = sAPi.WalletHas(ctx, addr2)
 		require.NoError(t, err)
 		require.False(t, has)
 	})
@@ -260,7 +257,8 @@ func TestWalletAPI(t *testing.T) {
 			var msg [32]byte
 			_, err = rand.Read(msg[:])
 			require.NoError(t, err)
-			sig, err := sAPi.WalletSign(ctx, "123", addr1, msg[:], types2.MsgMeta{})
+			// todo 模拟 账户存在
+			sig, err := sAPi.WalletSign(ctx, addr1, msg[:], types2.MsgMeta{})
 			require.NoError(t, err)
 			err = wallet.Verify(ctx, addr1, sig, msg[:])
 			require.NoError(t, err)

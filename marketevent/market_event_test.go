@@ -43,7 +43,7 @@ func TestListenMarketEvent(t *testing.T) {
 		marketEvent := setupMarketEvent(t, supportAccount, minerAddr)
 		client := NewMarketEventClient(marketEvent, addrGetter(), nil, log.With())
 		err := client.listenMarketRequestOnce(jwtclient.CtxWithName(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"), supportAccount))
-		require.Contains(t, err.Error(), "not exists")
+		require.Contains(t, err.Error(), "not exist")
 	})
 
 	t.Run("ip not exit", func(t *testing.T) {
@@ -242,7 +242,6 @@ func setupMarketEvent(t *testing.T, userName string, miners ...address.Address) 
 	user := &auth.OutputUser{
 		Id:         "id",
 		Name:       userName,
-		SourceType: 0,
 		Comment:    "",
 		State:      1,
 		CreateTime: 0,

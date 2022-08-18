@@ -17,21 +17,19 @@ var testArgs = map[string]*struct {
 	user    *auth.OutputUser
 }{
 	"test_01": {true, &auth.OutputUser{
-		Id:         uuid.NewString(),
-		Name:       "test_01",
-		SourceType: 1,
-		Comment:    "test_01",
-		State:      1,
-		Miners:     []*auth.OutputMiner{{Miner: "f01001", User: "test_01"}},
+		Id:      uuid.NewString(),
+		Name:    "test_01",
+		Comment: "test_01",
+		State:   1,
+		Miners:  []*auth.OutputMiner{{Miner: "f01001", User: "test_01"}},
 	}},
 	// test_02, State is disabled, so it should be invalid.
 	"test_02": {false, &auth.OutputUser{
-		Id:         uuid.NewString(),
-		Name:       "test_02",
-		SourceType: 1,
-		Comment:    "test_02",
-		State:      0,
-		Miners:     []*auth.OutputMiner{{Miner: "f01002", User: "test_02"}},
+		Id:      uuid.NewString(),
+		Name:    "test_02",
+		Comment: "test_02",
+		State:   0,
+		Miners:  []*auth.OutputMiner{{Miner: "f01002", User: "test_02"}},
 	}},
 }
 

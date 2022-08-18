@@ -7,18 +7,22 @@ import (
 	"net/http/httptest"
 	"time"
 
+	"github.com/gorilla/mux"
+	logging "github.com/ipfs/go-log/v2"
+	"go.opencensus.io/plugin/ochttp"
+
 	"github.com/filecoin-project/go-address"
-
-	"github.com/ipfs-force-community/venus-gateway/config"
-
 	"github.com/filecoin-project/go-jsonrpc"
 
-	"github.com/filecoin-project/venus-auth/jwtclient"
-	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
-	"github.com/filecoin-project/venus/venus-shared/api/permission"
-	"github.com/gorilla/mux"
 	"github.com/ipfs-force-community/metrics"
 	"github.com/ipfs-force-community/metrics/ratelimit"
+	"github.com/ipfs-force-community/venus-gateway/config"
+
+	"github.com/filecoin-project/venus-auth/jwtclient"
+
+	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	"github.com/filecoin-project/venus/venus-shared/api/permission"
+
 	"github.com/ipfs-force-community/venus-gateway/api"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	metrics2 "github.com/ipfs-force-community/venus-gateway/metrics"
@@ -27,8 +31,6 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/validator"
 	"github.com/ipfs-force-community/venus-gateway/version"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
-	logging "github.com/ipfs/go-log/v2"
-	"go.opencensus.io/plugin/ochttp"
 )
 
 var log = logging.Logger("mock main")
@@ -53,6 +55,11 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	}
 
 	cli, _ := jwtclient.NewAuthClient(cfg.Auth.URL)
+	// Add user: Identifies the configured user in the chain service
+	//_, err := cli.CreateUser(&auth.CreateUserRequest{Name: "defaultLocalToken", State: core.UserStateEnabled})
+	//if err != nil {
+	//	return "", nil, err
+	//}
 
 	minerValidator := validator.MockAuthMinerValidator{ValidatedAddr: validateMiner}
 

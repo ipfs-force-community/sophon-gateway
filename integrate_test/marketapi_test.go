@@ -7,30 +7,25 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/ipfs/go-cid"
+	"github.com/stretchr/testify/require"
 
+	"github.com/ipfs/go-cid"
+	logging "github.com/ipfs/go-log/v2"
+
+	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-jsonrpc"
+	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/specs-storage/storage"
+
+	"github.com/filecoin-project/venus/venus-shared/api"
+	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 
 	"github.com/ipfs-force-community/metrics"
+
 	"github.com/ipfs-force-community/venus-gateway/config"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
-
-	"github.com/filecoin-project/go-state-types/abi"
-
 	"github.com/ipfs-force-community/venus-gateway/testhelper"
-
-	"github.com/filecoin-project/go-address"
-
-	"github.com/filecoin-project/go-jsonrpc"
-
-	"github.com/filecoin-project/venus/venus-shared/api"
-
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
-
-	logging "github.com/ipfs/go-log/v2"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestMarketAPI(t *testing.T) {
