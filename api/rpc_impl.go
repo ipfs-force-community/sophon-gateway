@@ -12,11 +12,10 @@ import (
 	"github.com/filecoin-project/specs-storage/storage"
 
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
-	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
-
 	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
-
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
+
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/version"
@@ -74,12 +73,12 @@ func (g *GatewayAPIImpl) ListMinerConnection(ctx context.Context, addr address.A
 	return g.pe.ListMinerConnection(ctx, addr)
 }
 
-func (g *GatewayAPIImpl) WalletHas(ctx context.Context, supportAccount string, addr address.Address) (bool, error) {
-	return g.we.WalletHas(ctx, supportAccount, addr)
+func (g *GatewayAPIImpl) WalletHas(ctx context.Context, addr address.Address) (bool, error) {
+	return g.we.WalletHas(ctx, addr)
 }
 
-func (g *GatewayAPIImpl) WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
-	return g.we.WalletSign(ctx, account, addr, toSign, meta)
+func (g *GatewayAPIImpl) WalletSign(ctx context.Context, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
+	return g.we.WalletSign(ctx, addr, toSign, meta)
 }
 
 func (g *GatewayAPIImpl) ListWalletInfo(ctx context.Context) ([]*types.WalletDetail, error) {

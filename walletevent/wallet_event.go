@@ -10,19 +10,25 @@ import (
 	"io/ioutil"
 	"time"
 
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
+
+	logging "github.com/ipfs/go-log/v2"
+	"github.com/pkg/errors"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
+
+	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/jwtclient"
+
 	wcrypto "github.com/filecoin-project/venus/pkg/crypto"
 	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
+
 	"github.com/ipfs-force-community/venus-gateway/metrics"
 	"github.com/ipfs-force-community/venus-gateway/types"
-	logging "github.com/ipfs/go-log/v2"
-	"github.com/pkg/errors"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 )
 
 var log = logging.Logger("event_stream")
@@ -61,16 +67,36 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 	if !exit {
 		return nil, errors.New("unable to get account name in method ListenWalletEvent request")
 	}
+
 	ip, _ := jwtclient.CtxGetTokenLocation(ctx) //todo sure exit?
 	out := make(chan *types2.RequestEvent, w.cfg.RequestQueueSize)
 
 	ctx, _ = tag.New(ctx, tag.Upsert(metrics.WalletAccountKey, walletAccount), tag.Upsert(metrics.IPKey, ip))
 
+	// Account must exist in venus-auth
+	_, err := w.authClient.GetUser(&auth.GetUserRequest{Name: walletAccount})
+	if err != nil {
+		return nil, fmt.Errorf("check user %s: %w", walletAccount, err)
+	}
+
+	for _, account := range policy.SupportAccounts {
+		_, err := w.authClient.GetUser(&auth.GetUserRequest{Name: account})
+		if err != nil {
+			return nil, fmt.Errorf("check user %s: %w", account, err)
+		}
+	}
+
 	go func() {
 		channel := types.NewChannelInfo(ip, out)
 		defer close(out)
-		//todo validate the account exit or not
 		addrs, err := w.getValidatedAddress(ctx, channel, policy.SignBytes, walletAccount)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+
+		// register signer address to venus-auth
+		err = w.registerSignerAddress(ctx, walletAccount, addrs...)
 		if err != nil {
 			log.Error(err)
 			return
@@ -161,7 +187,8 @@ func (w *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedT
 	}
 	log.Infof("wallet %s add address %v successful!", walletAccount, addrs)
 
-	return nil
+	// register signer address to venus-auth
+	return w.registerSignerAddress(ctx, walletAccount, addrs...)
 }
 
 func (w *WalletEventStream) RemoveAddress(ctx context.Context, channelId sharedTypes.UUID, addrs []address.Address) error {
@@ -180,14 +207,42 @@ func (w *WalletEventStream) RemoveAddress(ctx context.Context, channelId sharedT
 	} else {
 		log.Infof("wallet %s remove address %v failed %v", walletAccount, addrs, err)
 	}
+
 	return err
 }
 
-func (w *WalletEventStream) WalletHas(ctx context.Context, supportAccount string, addr address.Address) (bool, error) {
-	return w.walletConnMgr.hasWalletChannel(supportAccount, addr)
+func (w *WalletEventStream) getAccountOfAddress(addr address.Address) (string, error) {
+	account := ""
+	switch addr.Protocol() {
+	//case address.ID:
+	//	user, err := w.authClient.GetUserByMiner(&auth.GetUserByMinerRequest{Miner: addr.String()})
+	//	if err != nil {
+	//		return "", err
+	//	}
+	//	account = user.Name
+	case address.SECP256K1, address.BLS:
+		user, err := w.authClient.GetUserBySigner(&auth.GetUserBySignerRequest{Signer: addr.String()})
+		if err != nil {
+			return "", err
+		}
+		account = user.Name
+	default:
+		return "", fmt.Errorf("unexpected address protocol %v", addr.Protocol())
+	}
+
+	return account, nil
 }
 
-func (w *WalletEventStream) WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
+func (w *WalletEventStream) WalletHas(ctx context.Context, addr address.Address) (bool, error) {
+	account, err := w.getAccountOfAddress(addr)
+	if err != nil {
+		return false, err
+	}
+
+	return w.walletConnMgr.hasWalletChannel(account, addr)
+}
+
+func (w *WalletEventStream) WalletSign(ctx context.Context, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
 	payload, err := json.Marshal(&types2.WalletSignRequest{
 		Signer: addr,
 		ToSign: toSign,
@@ -197,6 +252,10 @@ func (w *WalletEventStream) WalletSign(ctx context.Context, account string, addr
 		return nil, err
 	}
 
+	account, err := w.getAccountOfAddress(addr)
+	if err != nil {
+		return nil, err
+	}
 	channels, err := w.walletConnMgr.getChannels(account, addr)
 	if err != nil {
 		return nil, err
@@ -273,6 +332,34 @@ func (w *WalletEventStream) verifyAddress(ctx context.Context, addr address.Addr
 		return fmt.Errorf("wallet %s verify address %s failed: %v", walletAccount, addr.String(), err)
 	}
 	log.Infof("wallet %s verify address %s success", walletAccount, addr)
+
+	return nil
+}
+
+func (w *WalletEventStream) registerSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) error {
+	for _, addr := range addrs {
+		if addr.Protocol() != address.SECP256K1 && addr.Protocol() != address.BLS {
+			return fmt.Errorf("%s cannot be used for signing", addr.String())
+		}
+
+		has, err := w.authClient.HasSigner(&auth.HasSignerRequest{Signer: addr.String(), User: walletAccount})
+		if err != nil {
+			return fmt.Errorf("checking for existence of %s: %w", addr.String(), err)
+		}
+
+		if !has {
+			bCreate, err := w.authClient.UpsertSigner(walletAccount, addr.String())
+			if err != nil {
+				return fmt.Errorf("upsert %s to venus-auth: %w", addr.String(), err)
+			}
+
+			opStr := "create"
+			if !bCreate {
+				opStr = "update"
+			}
+			log.Infof("venus-auth %s %s for user %s success.", opStr, addr.String(), walletAccount)
+		}
+	}
 
 	return nil
 }

@@ -8,7 +8,7 @@ require (
 	github.com/filecoin-project/go-state-types v0.9.0
 	github.com/filecoin-project/specs-storage v0.4.1
 	github.com/filecoin-project/venus v1.6.1-0.20220817072314-7a08054f7d99
-	github.com/filecoin-project/venus-auth v1.6.1-0.20220817031906-a79682942214
+	github.com/filecoin-project/venus-auth v1.6.1-0.20220818090203-d2c23f97f385
 	github.com/gbrlsnchs/jwt/v3 v3.0.1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
@@ -24,21 +24,6 @@ require (
 	go.opencensus.io v0.23.0
 	go.uber.org/zap v1.22.0
 	golang.org/x/net v0.0.0-20220812174116-3211cb980234
-)
-
-require (
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
-	github.com/gbrlsnchs/jwt/v3 v3.0.1 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
-	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/libp2p/go-libp2p v0.22.0 // indirect
-	github.com/libp2p/go-libp2p-pubsub v0.8.0 // indirect
-	github.com/libp2p/go-msgio v0.2.0 // indirect
-	github.com/mattn/go-pointer v0.0.1 // indirect
-	github.com/whyrusleeping/timecache v0.0.0-20160911033111-cfcb2f1abfee // indirect
-	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
-	go.opentelemetry.io/otel v1.7.0 // indirect
-	go.opentelemetry.io/otel/trace v1.7.0 // indirect
 )
 
 require (
