@@ -12,7 +12,7 @@ import (
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/venus-auth/auth"
-	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
+	"github.com/filecoin-project/venus-auth/jwtclient"
 	_ "github.com/filecoin-project/venus/pkg/crypto/secp"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/ipfs-force-community/venus-gateway/types"

@@ -3,17 +3,19 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/filecoin-project/go-jsonrpc"
-	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
+	"github.com/filecoin-project/venus-auth/jwtclient"
 	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/permission"
 	"github.com/gorilla/mux"
@@ -35,7 +37,6 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
-	"github.com/ipfs-force-community/venus-gateway/utils"
 	"github.com/ipfs-force-community/venus-gateway/validator"
 	"github.com/ipfs-force-community/venus-gateway/version"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
@@ -160,11 +161,11 @@ func parseFlag(cctx *cli.Context, cfg *config.Config) {
 func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	requestCfg := types.DefaultConfig()
 
-	cli, _ := jwtclient.NewAuthClient(cfg.Auth.URL)
+	remoteJwtCli, _ := jwtclient.NewAuthClient(cfg.Auth.URL)
 
-	minerValidator := validator.NewMinerValidator(cli)
+	minerValidator := validator.NewMinerValidator(remoteJwtCli)
 
-	walletStream := walletevent.NewWalletEventStream(ctx, cli, requestCfg, cfg.EnableVeirfyAddress)
+	walletStream := walletevent.NewWalletEventStream(ctx, remoteJwtCli, requestCfg, cfg.EnableVeirfyAddress)
 
 	proofStream := proofevent.NewProofEventStream(ctx, minerValidator, requestCfg)
 	marketStream := marketevent.NewMarketEventStream(ctx, minerValidator, &types.RequestConfig{
@@ -185,7 +186,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	if len(cfg.RateLimit.Redis) > 0 {
 		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimit.Redis, nil,
 			&jwtclient.ValueFromCtx{},
-			jwtclient.WarpLimitFinder(cli),
+			jwtclient.WarpLimitFinder(remoteJwtCli),
 			logging.Logger("rate-limit"))
 		_ = logging.SetLogLevel("rate-limit", "info")
 		if err != nil {
@@ -209,16 +210,17 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 
 	mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
-	localJwt, err := utils.NewLocalJwtClient(repoPath)
+	localJwtCli, localToken, err := jwtclient.NewLocalAuthClient()
 	if err != nil {
-		return fmt.Errorf("make token failed:%s", err.Error())
+		return fmt.Errorf("failed to generate local jwt client: %v", err)
 	}
-	err = localJwt.SaveToken()
+	// save local token to token file
+	err = ioutil.WriteFile(path.Join(repoPath, "token"), localToken, 0644)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to save local token to token file: %w", err)
 	}
 
-	handler := (http.Handler)(jwtclient.NewAuthMux(localJwt, jwtclient.WarpIJwtAuthClient(cli), mux))
+	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(remoteJwtCli), mux))
 
 	log.Infof("trace config %+v", cfg.Trace)
 	repoter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)

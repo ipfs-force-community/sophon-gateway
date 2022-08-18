@@ -11,7 +11,6 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/ipfs-force-community/venus-gateway/config"
-	"github.com/ipfs-force-community/venus-gateway/utils"
 )
 
 func NewGatewayClient(ctx *cli.Context) (v1API.IGateway, jsonrpc.ClientCloser, error) {
@@ -20,16 +19,17 @@ func NewGatewayClient(ctx *cli.Context) (v1API.IGateway, jsonrpc.ClientCloser, e
 		return nil, nil, err
 	}
 
+	cfg, err := config.ReadConfig(filepath.Join(repoPath, config.ConfigFile))
+	if err != nil {
+		return nil, nil, err
+	}
+
 	listen := ctx.String("listen")
 	if !ctx.IsSet("listen") {
-		cfg, err := config.ReadConfig(filepath.Join(repoPath, config.ConfigFile))
-		if err != nil {
-			return nil, nil, err
-		}
 		listen = cfg.API.ListenAddress
 	}
 
-	token, err := ioutil.ReadFile(filepath.Join(repoPath, utils.TokenFile))
+	token, err := ioutil.ReadFile(filepath.Join(repoPath, cfg.LocalAuthConfig.TokenFile))
 	if err != nil {
 		return nil, nil, err
 	}

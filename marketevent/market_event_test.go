@@ -11,7 +11,7 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/specs-storage/storage"
 	"github.com/filecoin-project/venus-auth/auth"
-	"github.com/filecoin-project/venus-auth/cmd/jwtclient"
+	"github.com/filecoin-project/venus-auth/jwtclient"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/validator"

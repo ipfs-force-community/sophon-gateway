@@ -54,7 +54,7 @@ func TestWalletAPI(t *testing.T) {
 		err = walletEvent.SupportAccount(ctx, "123")
 		require.NoError(t, err)
 
-		walletDetail, err := sAPi.ListWalletInfoByWallet(ctx, "GateWayLocalToken")
+		walletDetail, err := sAPi.ListWalletInfoByWallet(ctx, "defaultLocalToken")
 		require.NoError(t, err)
 		require.Contains(t, walletDetail.SupportAccounts, "123")
 	})
@@ -83,7 +83,7 @@ func TestWalletAPI(t *testing.T) {
 		err = walletEvent.AddNewAddress(ctx, []address.Address{toAddAddr1, toAddAddr2})
 		require.NoError(t, err)
 
-		walletDetail, err := sAPi.ListWalletInfoByWallet(ctx, "GateWayLocalToken")
+		walletDetail, err := sAPi.ListWalletInfoByWallet(ctx, "defaultLocalToken")
 		require.NoError(t, err)
 		require.Contains(t, walletDetail.ConnectStates[0].Addrs, toAddAddr1)
 		require.Contains(t, walletDetail.ConnectStates[0].Addrs, toAddAddr2)
@@ -113,7 +113,7 @@ func TestWalletAPI(t *testing.T) {
 
 		err = walletEvent.RemoveAddress(ctx, []address.Address{toRemoveAddr1})
 		require.NoError(t, err)
-		walletDetail, err := sAPi.ListWalletInfoByWallet(ctx, "GateWayLocalToken")
+		walletDetail, err := sAPi.ListWalletInfoByWallet(ctx, "defaultLocalToken")
 		require.NoError(t, err)
 		require.NotContains(t, walletDetail.ConnectStates[0].Addrs, toRemoveAddr1)
 		require.Contains(t, walletDetail.ConnectStates[0].Addrs, toRemoveAddr2)
@@ -121,7 +121,7 @@ func TestWalletAPI(t *testing.T) {
 		err = walletEvent.RemoveAddress(ctx, []address.Address{toRemoveAddr2})
 		require.NoError(t, err)
 
-		walletDetail, err = sAPi.ListWalletInfoByWallet(ctx, "GateWayLocalToken")
+		walletDetail, err = sAPi.ListWalletInfoByWallet(ctx, "defaultLocalToken")
 		require.NoError(t, err)
 		require.NotContains(t, walletDetail.ConnectStates[0].Addrs, toRemoveAddr2)
 	})
@@ -150,7 +150,7 @@ func TestWalletAPI(t *testing.T) {
 
 		err = walletEvent.RemoveAddress(ctx, []address.Address{toRemoveAddr1, toRemoveAddr2})
 		require.NoError(t, err)
-		walletDetail, err := sAPi.ListWalletInfoByWallet(ctx, "GateWayLocalToken")
+		walletDetail, err := sAPi.ListWalletInfoByWallet(ctx, "defaultLocalToken")
 		require.NoError(t, err)
 		require.NotContains(t, walletDetail.ConnectStates[0].Addrs, toRemoveAddr1)
 		require.NotContains(t, walletDetail.ConnectStates[0].Addrs, toRemoveAddr2)

@@ -13,10 +13,11 @@ const (
 )
 
 type Config struct {
-	API       *APIConfig
-	Auth      *AuthConfig
-	Trace     *metrics.TraceConfig
-	RateLimit *RateLimitCofnig
+	API             *APIConfig
+	Auth            *AuthConfig
+	Trace           *metrics.TraceConfig
+	RateLimit       *RateLimitCofnig
+	LocalAuthConfig *LocalAuthConfig
 
 	EnableVeirfyAddress bool
 }
@@ -33,12 +34,17 @@ type RateLimitCofnig struct {
 	Redis string
 }
 
+type LocalAuthConfig struct {
+	TokenFile string
+}
+
 func DefaultConfig() *Config {
 	cfg := &Config{
-		API:       &APIConfig{ListenAddress: "/ip4/127.0.0.1/tcp/45132"},
-		Auth:      &AuthConfig{URL: "http://127.0.0.1:8989"},
-		Trace:     metrics.DefaultTraceConfig(),
-		RateLimit: &RateLimitCofnig{Redis: ""},
+		API:             &APIConfig{ListenAddress: "/ip4/127.0.0.1/tcp/45132"},
+		Auth:            &AuthConfig{URL: "http://127.0.0.1:8989"},
+		Trace:           metrics.DefaultTraceConfig(),
+		RateLimit:       &RateLimitCofnig{Redis: ""},
+		LocalAuthConfig: &LocalAuthConfig{TokenFile: "token"},
 	}
 	cfg.Trace.ServerName = "venus-gateway"
 	cfg.Trace.JaegerEndpoint = ""
