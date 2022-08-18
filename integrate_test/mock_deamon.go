@@ -101,7 +101,6 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 
 	mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
-
 	localJwtCli, localToken, err := jwtclient.NewLocalAuthClient()
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to generate local jwt client: %v", err)
