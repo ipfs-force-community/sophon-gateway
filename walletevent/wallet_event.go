@@ -27,22 +27,23 @@ var log = logging.Logger("event_stream")
 
 var _ gateway.IWalletClient = (*WalletEventStream)(nil)
 
-var hash256 = sha256.New()
-
 type WalletEventStream struct {
 	walletConnMgr IWalletConnMgr
 	cfg           *types.RequestConfig
 	authClient    types.IAuthClient
 	randBytes     []byte
 	*types.BaseEventStream
+
+	verifyWalletAddrs bool
 }
 
-func NewWalletEventStream(ctx context.Context, authClient types.IAuthClient, cfg *types.RequestConfig) *WalletEventStream {
+func NewWalletEventStream(ctx context.Context, authClient types.IAuthClient, cfg *types.RequestConfig, verifyWalletAddrs bool) *WalletEventStream {
 	walletEventStream := &WalletEventStream{
-		walletConnMgr:   newWalletConnMgr(),
-		BaseEventStream: types.NewBaseEventStream(ctx, cfg),
-		cfg:             cfg,
-		authClient:      authClient,
+		walletConnMgr:     newWalletConnMgr(),
+		BaseEventStream:   types.NewBaseEventStream(ctx, cfg),
+		cfg:               cfg,
+		authClient:        authClient,
+		verifyWalletAddrs: verifyWalletAddrs,
 	}
 	var err error
 	walletEventStream.randBytes, err = ioutil.ReadAll(io.LimitReader(rand.Reader, 32))
@@ -135,6 +136,7 @@ func (w *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedT
 	if err != nil {
 		return err
 	}
+
 	for _, addr := range addrs {
 		if err := w.verifyAddress(ctx, addr, info.ChannelInfo, info.signBytes, walletAccount); err != nil {
 			return err
@@ -220,9 +222,12 @@ func (w *WalletEventStream) getValidatedAddress(ctx context.Context, channel *ty
 }
 
 func (w *WalletEventStream) verifyAddress(ctx context.Context, addr address.Address, channel *types.ChannelInfo, signBytes []byte, walletAccount string) error {
-	hasher := sha256.New()
-	_, _ = hasher.Write(append(w.randBytes, signBytes...))
-	signData := hash256.Sum(nil)
+	if !w.verifyWalletAddrs {
+		log.Infof("skip verify account:%s, address: %s, wallet address verification is disabled.",
+			walletAccount, addr)
+		return nil
+	}
+	signData := GetSignData(w.randBytes, signBytes)
 	payload, err := json.Marshal(&types2.WalletSignRequest{
 		Signer: addr,
 		ToSign: signData,
@@ -249,5 +254,5 @@ func GetSignData(datas ...[]byte) []byte {
 	for _, data := range datas {
 		_, _ = hasher.Write(data)
 	}
-	return hash256.Sum(nil)
+	return hasher.Sum(nil)
 }

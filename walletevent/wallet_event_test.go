@@ -2,6 +2,9 @@ package walletevent
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"fmt"
 	"testing"
 
 	"github.com/ipfs-force-community/venus-gateway/testhelper"
@@ -234,7 +237,7 @@ func setupWalletEvent(t *testing.T) *WalletEventStream {
 	})
 
 	ctx := context.Background()
-	return NewWalletEventStream(ctx, authClient, types.DefaultConfig())
+	return NewWalletEventStream(ctx, authClient, types.DefaultConfig(), true)
 }
 
 func setupClient(t *testing.T, ctx context.Context, walletAccount string, supportAccounts []string, event *WalletEventStream) *mockClient {
@@ -273,4 +276,31 @@ func (m *mockClient) supportNewAccount(ctx context.Context, account string) erro
 	ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
 	ctx = jwtclient.CtxWithName(ctx, m.walletAccount)
 	return m.walletEventClient.SupportAccount(ctx, account)
+}
+
+func TestGetSignBytes(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		testGetSignBytes(t)
+	}
+}
+
+func testGetSignBytes(t *testing.T) {
+	getRandBytes := func() []byte {
+		buf := make([]byte, 32)
+		if _, err := rand.Read(buf); err != nil {
+			panic(fmt.Sprintf("init random bytes for address verify failed:%s", err))
+		}
+		return buf
+	}
+
+	data1 := getRandBytes()
+	data2 := getRandBytes()
+
+	hasher := sha256.New()
+	_, _ = hasher.Write(append(data1, data2...))
+	signData1 := hasher.Sum(nil)
+
+	signData2 := GetSignData(data1, data2)
+
+	require.Equal(t, signData1, signData2)
 }

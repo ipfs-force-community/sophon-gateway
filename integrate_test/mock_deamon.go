@@ -56,7 +56,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 
 	minerValidator := validator.MockAuthMinerValidator{ValidatedAddr: validateMiner}
 
-	walletStream := walletevent.NewWalletEventStream(ctx, cli, requestCfg)
+	walletStream := walletevent.NewWalletEventStream(ctx, cli, requestCfg, true)
 
 	proofStream := proofevent.NewProofEventStream(ctx, minerValidator, requestCfg)
 	marketStream := marketevent.NewMarketEventStream(ctx, minerValidator, &types.RequestConfig{
