@@ -35,6 +35,7 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/cmds"
 	"github.com/ipfs-force-community/venus-gateway/config"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
+	metrics2 "github.com/ipfs-force-community/venus-gateway/metrics"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/validator"
@@ -161,7 +162,10 @@ func parseFlag(cctx *cli.Context, cfg *config.Config) {
 func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	requestCfg := types.DefaultConfig()
 
-	remoteJwtCli, _ := jwtclient.NewAuthClient(cfg.Auth.URL)
+	remoteJwtCli, err := jwtclient.NewAuthClient(cfg.Auth.URL)
+	if err != nil {
+		return err
+	}
 
 	minerValidator := validator.NewMinerValidator(remoteJwtCli)
 
@@ -221,6 +225,10 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	}
 
 	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(remoteJwtCli), mux))
+
+	if err := metrics2.SetupMetrics(ctx, cfg.Metrics, gatewayAPIImpl); err != nil {
+		return err
+	}
 
 	log.Infof("trace config %+v", cfg.Trace)
 	repoter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
