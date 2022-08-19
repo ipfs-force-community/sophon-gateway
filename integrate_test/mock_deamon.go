@@ -18,6 +18,7 @@ import (
 	"github.com/ipfs-force-community/metrics/ratelimit"
 	"github.com/ipfs-force-community/venus-gateway/config"
 
+	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
 	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
@@ -29,6 +30,7 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/validator"
+	"github.com/ipfs-force-community/venus-gateway/validator/mocks"
 	"github.com/ipfs-force-community/venus-gateway/version"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
 )
@@ -54,16 +56,20 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 		ClearInterval:    tcfg.clearInterval,
 	}
 
-	cli, _ := jwtclient.NewAuthClient(cfg.Auth.URL)
-	// Add user: Identifies the configured user in the chain service
-	//_, err := cli.CreateUser(&auth.CreateUserRequest{Name: "defaultLocalToken", State: core.UserStateEnabled})
-	//if err != nil {
-	//	return "", nil, err
-	//}
-
 	minerValidator := validator.MockAuthMinerValidator{ValidatedAddr: validateMiner}
 
-	walletStream := walletevent.NewWalletEventStream(ctx, cli, requestCfg, true)
+	// In WalletEvent, IAuthClient must be called
+	user := []*auth.OutputUser{
+		{
+			Name: "defaultLocalToken",
+		},
+		{
+			Name: "admin",
+		},
+	}
+	authClient := mocks.NewMockAuthClient()
+	authClient.AddMockUser(user...)
+	walletStream := walletevent.NewWalletEventStream(ctx, authClient, requestCfg, true)
 
 	proofStream := proofevent.NewProofEventStream(ctx, minerValidator, requestCfg)
 	marketStream := marketevent.NewMarketEventStream(ctx, minerValidator, &types.RequestConfig{
@@ -84,7 +90,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	if len(cfg.RateLimit.Redis) > 0 {
 		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimit.Redis, nil,
 			&jwtclient.ValueFromCtx{},
-			jwtclient.WarpLimitFinder(cli),
+			authClient,
 			logging.Logger("rate-limit"))
 		_ = logging.SetLogLevel("rate-limit", "info")
 		if err != nil {
@@ -114,7 +120,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 		return "", nil, fmt.Errorf("failed to generate local jwt client: %v", err)
 	}
 
-	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(cli), mux))
+	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, authClient, mux))
 
 	if err := metrics2.SetupMetrics(ctx, cfg.Metrics, gatewayAPIImpl); err != nil {
 		return "", nil, err

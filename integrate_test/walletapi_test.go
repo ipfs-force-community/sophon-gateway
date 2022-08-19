@@ -214,21 +214,14 @@ func TestWalletAPI(t *testing.T) {
 		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
 		go walletEvent.ListenWalletRequest(ctx)
 		walletEvent.WaitReady(ctx)
-		err = walletEvent.SupportAccount(ctx, "123")
-		require.NoError(t, err)
 
-		// todo 模拟 账户存在
 		has, err := sAPi.WalletHas(ctx, addr1)
 		require.NoError(t, err)
 		require.True(t, has)
 
-		has, err = sAPi.WalletHas(ctx, addr1)
-		require.NoError(t, err)
-		require.False(t, has)
-
-		has, err = sAPi.WalletHas(ctx, addr2)
-		require.NoError(t, err)
-		require.False(t, has)
+		_, err = sAPi.WalletHas(ctx, addr2)
+		require.NotNil(t, err)
+		require.Contains(t, err.Error(), "not exist")
 	})
 
 	t.Run("wallet wallet sign and verify", func(t *testing.T) {
@@ -275,7 +268,7 @@ func serverWalletAPI(ctx context.Context, url, token string) (gateway.IWalletEve
 func setupDaemon(t *testing.T, ctx context.Context) (string, string) {
 	cfg := &config.Config{
 		API:       &config.APIConfig{ListenAddress: "/ip4/127.0.0.1/tcp/0"},
-		Auth:      &config.AuthConfig{URL: "127.0.0.1:1"},
+		Auth:      &config.AuthConfig{URL: "127.0.0.1:1"}, // nouse
 		Metrics:   config.DefaultConfig().Metrics,
 		Trace:     &metrics.TraceConfig{JaegerTracingEnabled: false},
 		RateLimit: &config.RateLimitCofnig{Redis: ""},
