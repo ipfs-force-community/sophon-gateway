@@ -55,6 +55,8 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
 	}
+
+	// Chain services serve those miners should be controlled by themselves,so the user and miner cannot be forcibly bound here.
 	err := m.validator.Validate(ctx, policy.Miner)
 	if err != nil {
 		return nil, fmt.Errorf("verify miner:%s failed:%w", policy.Miner.String(), err)

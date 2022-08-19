@@ -37,7 +37,8 @@ func TestListenWalletEvent(t *testing.T) {
 		walletInfo, err := walletEvent.ListWalletInfoByWallet(ctx, walletAccount)
 		require.NoError(t, err)
 		require.Equal(t, walletInfo.Account, walletAccount)
-		require.Equal(t, walletInfo.SupportAccounts, []string{"walletAccount", "admin"})
+		require.Contains(t, walletInfo.SupportAccounts, "walletAccount")
+		require.Contains(t, walletInfo.SupportAccounts, "admin")
 	})
 
 	t.Run("multiple listen", func(t *testing.T) {

@@ -51,6 +51,8 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
 	}
+
+	// Chain services serve those miners should be controlled by themselves,so the user and miner cannot be forcibly bound here.
 	err := e.validator.Validate(ctx, policy.MinerAddress)
 	if err != nil {
 		return nil, fmt.Errorf("verify miner:%s failed:%w", policy.MinerAddress.String(), err)

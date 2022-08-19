@@ -1,10 +1,18 @@
 package mocks
 
 import (
+	"context"
 	"errors"
+	"fmt"
 
 	"github.com/filecoin-project/go-address"
+	rpcAuth "github.com/filecoin-project/go-jsonrpc/auth"
+
 	"github.com/filecoin-project/venus-auth/auth"
+	"github.com/filecoin-project/venus-auth/jwtclient"
+
+	"github.com/ipfs-force-community/metrics/ratelimit"
+
 	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
@@ -120,6 +128,18 @@ func (m *AuthClient) AddMockUser(users ...*auth.OutputUser) {
 	}
 }
 
+func (m *AuthClient) GetUserLimit(username, service, api string) (*ratelimit.Limit, error) {
+	if _, ok := m.users[username]; !ok {
+		return nil, fmt.Errorf("%s not exist", username)
+	}
+
+	return &ratelimit.Limit{Account: username}, nil
+}
+
+func (m *AuthClient) Verify(ctx context.Context, token string) ([]rpcAuth.Permission, error) {
+	panic("Don't call me")
+}
+
 func NewMockAuthClient() *AuthClient {
 	address.CurrentNetwork = address.Mainnet
 	return &AuthClient{
@@ -130,3 +150,5 @@ func NewMockAuthClient() *AuthClient {
 }
 
 var _ types.IAuthClient = (*AuthClient)(nil)
+var _ ratelimit.ILimitFinder = (*AuthClient)(nil)
+var _ jwtclient.IJwtAuthClient = (*AuthClient)(nil)
