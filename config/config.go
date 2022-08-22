@@ -13,12 +13,11 @@ const (
 )
 
 type Config struct {
-	API             *APIConfig
-	Auth            *AuthConfig
-	Metrics         *metrics.MetricsConfig
-	Trace           *metrics.TraceConfig
-	RateLimit       *RateLimitCofnig
-	LocalAuthConfig *LocalAuthConfig
+	API       *APIConfig
+	Auth      *AuthConfig
+	Metrics   *metrics.MetricsConfig
+	Trace     *metrics.TraceConfig
+	RateLimit *RateLimitCofnig
 
 	EnableVeirfyAddress bool
 }
@@ -35,18 +34,13 @@ type RateLimitCofnig struct {
 	Redis string
 }
 
-type LocalAuthConfig struct {
-	TokenFile string
-}
-
 func DefaultConfig() *Config {
 	cfg := &Config{
-		API:             &APIConfig{ListenAddress: "/ip4/127.0.0.1/tcp/45132"},
-		Auth:            &AuthConfig{URL: "http://127.0.0.1:8989"},
-		Metrics:         metrics.DefaultMetricsConfig(),
-		Trace:           metrics.DefaultTraceConfig(),
-		RateLimit:       &RateLimitCofnig{Redis: ""},
-		LocalAuthConfig: &LocalAuthConfig{TokenFile: "token"},
+		API:       &APIConfig{ListenAddress: "/ip4/127.0.0.1/tcp/45132"},
+		Auth:      &AuthConfig{URL: "http://127.0.0.1:8989"},
+		Metrics:   metrics.DefaultMetricsConfig(),
+		Trace:     metrics.DefaultTraceConfig(),
+		RateLimit: &RateLimitCofnig{Redis: ""},
 	}
 	namespace := "gateway"
 	cfg.Metrics.Exporter.Prometheus.Namespace = namespace
