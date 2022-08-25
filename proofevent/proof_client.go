@@ -101,7 +101,10 @@ func (e *ProofEvent) listenProofRequestOnce(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("odd error in connect %v", err)
 			}
-			e.readyCh <- struct{}{}
+			select {
+			case e.readyCh <- struct{}{}:
+			default:
+			}
 			e.log.Infof("success to connect with proof %s", req.ChannelId)
 		case "ComputeProof":
 			req := gateway.ComputeProofRequest{}
