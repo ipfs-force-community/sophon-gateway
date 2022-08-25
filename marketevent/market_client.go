@@ -101,7 +101,10 @@ func (e *MarketEvent) listenMarketRequestOnce(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("odd error in connect %v", err)
 			}
-			e.readyCh <- struct{}{}
+			select {
+			case e.readyCh <- struct{}{}:
+			default:
+			}
 			e.log.Infof("success to connect with market %s", req.ChannelId)
 		case "IsUnsealed":
 			req := gateway.IsUnsealRequest{}
