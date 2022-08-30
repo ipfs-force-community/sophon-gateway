@@ -67,3 +67,4 @@ build: $(BUILD_DEPS)
 
 docker:
 	docker build --build-arg https_proxy=$(BUILD_DOCKER_PROXY) -t venus-gateway .
+	docker tag venus-gateway filvenus/venus-gateway:test
