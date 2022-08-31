@@ -9,3 +9,4 @@ clienttoken
 coverage.txt
 build-dep
 .vscode
+dockerfile
