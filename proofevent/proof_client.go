@@ -46,7 +46,7 @@ func NewProofEvent(client gateway2.IProofServiceProvider, mAddr address.Address,
 		mAddr:        mAddr,
 		proofHandler: proofHandler,
 		log:          log,
-		readyCh:      make(chan struct{}),
+		readyCh:      make(chan struct{}, 1),
 	}
 }
 
@@ -101,10 +101,7 @@ func (e *ProofEvent) listenProofRequestOnce(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("odd error in connect %v", err)
 			}
-			select {
-			case e.readyCh <- struct{}{}:
-			default:
-			}
+			e.readyCh <- struct{}{}
 			e.log.Infof("success to connect with proof %s", req.ChannelId)
 		case "ComputeProof":
 			req := gateway.ComputeProofRequest{}

@@ -57,7 +57,7 @@ func NewWalletEventClient(ctx context.Context, process types3.IWalletHandler, cl
 		log:             log,
 		supportAccounts: supportAccounts,
 		randomBytes:     RandomBytes,
-		readyCh:         make(chan struct{}),
+		readyCh:         make(chan struct{}, 1),
 	}
 }
 
@@ -130,10 +130,7 @@ func (e *WalletEventClient) listenWalletRequestOnce(ctx context.Context) error {
 			}
 			e.channel = req.ChannelId
 			e.log.Infof("connect to server success %v", req.ChannelId)
-			select {
-			case e.readyCh <- struct{}{}:
-			default:
-			}
+			e.readyCh <- struct{}{}
 			//do not response
 		case "WalletList":
 			go e.walletList(ctx, event.ID)
