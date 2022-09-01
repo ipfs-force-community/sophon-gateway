@@ -46,7 +46,7 @@ func NewMarketEventClient(client gateway2.IMarketServiceProvider, mAddr address.
 		mAddr:         mAddr,
 		marketHandler: marketHandler,
 		log:           log,
-		readyCh:       make(chan struct{}),
+		readyCh:       make(chan struct{}, 1),
 	}
 }
 
@@ -101,10 +101,7 @@ func (e *MarketEvent) listenMarketRequestOnce(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("odd error in connect %v", err)
 			}
-			select {
-			case e.readyCh <- struct{}{}:
-			default:
-			}
+			e.readyCh <- struct{}{}
 			e.log.Infof("success to connect with market %s", req.ChannelId)
 		case "IsUnsealed":
 			req := gateway.IsUnsealRequest{}
