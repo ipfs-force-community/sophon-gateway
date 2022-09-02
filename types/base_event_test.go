@@ -255,22 +255,27 @@ type mockClient struct {
 
 	closeCh   chan struct{}
 	waitClose chan struct{}
+
+	cancel context.CancelFunc
 }
 
 func setupClient(t *testing.T, event *BaseEventStream, ip string) *mockClient {
 	requestCh := make(chan *types.RequestEvent)
+	ctx, cancel := context.WithCancel(context.Background())
 
 	return &mockClient{
 		t:         t,
 		requestCh: requestCh,
 		event:     event,
-		channel:   NewChannelInfo(ip, requestCh),
+		channel:   NewChannelInfo(ctx, ip, requestCh),
 		closeCh:   make(chan struct{}),
 		waitClose: make(chan struct{}),
+		cancel:    cancel,
 	}
 }
 
 func (m *mockClient) close() {
+	m.cancel()
 	close(m.requestCh)
 	m.closeCh <- struct{}{}
 	<-m.waitClose

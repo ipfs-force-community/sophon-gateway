@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
@@ -17,7 +18,7 @@ import (
 
 var log = logging.Logger("gateway_stream")
 
-var ErrCloseChannel = fmt.Errorf("recover send once")
+var ErrCloseChannel = fmt.Errorf("channel closed")
 var ErrRequestTimeout = fmt.Errorf("timer clean this request due to exceed wait time")
 
 type BaseEventStream struct {
@@ -65,11 +66,19 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 	log.Warnf("the first channel is fail, try to other channel")
 	otherChannels := channels[1:]
 	respCh := make(chan *types.ResponseEvent)
+	errRespCount := new(int64)
 	for _, channel := range otherChannels {
 		go func(channel *ChannelInfo) {
 			respEvent, err := e.sendOnce(ctx, channel, method, payload)
 			if err != nil {
+				atomic.AddInt64(errRespCount, 1)
 				log.Errorf("send request %s to %s failed %v", method, channel.Ip, err)
+				// all requests failed
+				if atomic.LoadInt64(errRespCount) == int64(len(otherChannels)) {
+					respCh <- &types.ResponseEvent{
+						Error: fmt.Sprintf("all request failed: %s %s %v", method, channel.Ip, err),
+					}
+				}
 				return
 			}
 			respCh <- respEvent
@@ -85,12 +94,6 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 }
 
 func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, method string, payload []byte) (response *types.ResponseEvent, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = ErrCloseChannel
-		}
-	}()
-
 	id := sharedTypes.NewUUID()
 	resultCh := make(chan *types.ResponseEvent, 1)
 	request := &types.RequestEvent{
@@ -105,15 +108,20 @@ func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, me
 	e.reqLk.Unlock()
 
 	select {
-	case channel.OutBound <- request: //NOTICE this may be panic, but will catch by recover and try other, should never have  other panic
-		log.Debug("send request %s to %s", method, channel.Ip)
+	case <-channel.Ctx.Done():
+		return nil, ErrCloseChannel
 	case <-ctx.Done():
 		return nil, fmt.Errorf("send request cancel by context %w", ctx.Err())
+	default:
+		channel.OutBound <- request //NOTICE this may be panic, but will catch by recover and try other, should never have  other panic
+		log.Debug("send request %s to %s", method, channel.Ip)
 	}
 
 	//wait for result
 	//timeout here
 	select {
+	case <-channel.Ctx.Done():
+		return nil, ErrCloseChannel
 	case <-ctx.Done():
 		return nil, fmt.Errorf("cancel by context %w", ctx.Err())
 	case respEvent := <-resultCh:

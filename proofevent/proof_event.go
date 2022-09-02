@@ -57,7 +57,8 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.
 	}
 
 	out := make(chan *types2.RequestEvent, e.cfg.RequestQueueSize)
-	channel := types.NewChannelInfo(ip, out)
+	reqEventChan := make(chan *types2.RequestEvent, e.cfg.RequestQueueSize)
+	channel := types.NewChannelInfo(ctx, ip, reqEventChan)
 	mAddr := policy.MinerAddress
 	e.connLk.Lock()
 	var channelStore *channelStore
@@ -65,6 +66,20 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.
 	if channelStore, ok = e.minerConnections[mAddr]; !ok {
 		channelStore = newChannelStore()
 		e.minerConnections[policy.MinerAddress] = channelStore
+	}
+
+	removeChannel := func() {
+		e.connLk.Lock()
+		channelStore := e.minerConnections[mAddr]
+		e.connLk.Unlock()
+		_ = channelStore.removeChanel(channel)
+		if channelStore.empty() {
+			e.connLk.Lock()
+			delete(e.minerConnections, mAddr)
+			e.connLk.Unlock()
+		}
+
+		log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
 	}
 
 	e.connLk.Unlock()
@@ -75,8 +90,9 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.
 			ChannelId: channel.ChannelId,
 		})
 		if err != nil {
+			removeChannel()
 			close(out)
-			log.Errorf("marshal failed %v", err)
+			log.Errorf("marshal failed %s %v", channel.ChannelId, err)
 			return
 		}
 
@@ -85,26 +101,26 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.
 		stats.Record(ctx, metrics.MinerRegister.M(1))
 		stats.Record(ctx, metrics.MinerSource.M(1))
 
-		out <- &types2.RequestEvent{
+		reqEventChan <- &types2.RequestEvent{
 			ID:         sharedTypes.NewUUID(),
 			Method:     "InitConnect",
 			Payload:    connectBytes,
 			CreateTime: time.Now(),
 			Result:     nil,
 		} // no response
-		defer close(out)
-		<-ctx.Done()
-		e.connLk.Lock()
-		channelStore := e.minerConnections[mAddr]
-		e.connLk.Unlock()
-		_ = channelStore.removeChanel(channel)
-		if channelStore.empty() {
-			e.connLk.Lock()
-			delete(e.minerConnections, mAddr)
-			e.connLk.Unlock()
+
+		// avoid data race
+		for {
+			select {
+			case <-ctx.Done():
+				removeChannel()
+				close(out)
+				stats.Record(ctx, metrics.MinerUnregister.M(1))
+				return
+			case c := <-reqEventChan:
+				out <- c
+			}
 		}
-		log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
-		stats.Record(ctx, metrics.MinerUnregister.M(1))
 	}()
 	return out, nil
 }
