@@ -19,7 +19,7 @@ type Config struct {
 	Trace     *metrics.TraceConfig
 	RateLimit *RateLimitCofnig
 
-	EnableVeirfyAddress bool
+	DisableAddressVeirfication bool
 }
 
 type APIConfig struct {
@@ -49,7 +49,7 @@ func DefaultConfig() *Config {
 	cfg.Metrics.Exporter.Graphite.Port = 4569
 	cfg.Trace.ServerName = "venus-gateway"
 	cfg.Trace.JaegerEndpoint = ""
-	cfg.EnableVeirfyAddress = true
+	cfg.DisableAddressVeirfication = false
 
 	return cfg
 }

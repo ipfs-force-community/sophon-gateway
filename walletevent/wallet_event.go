@@ -36,16 +36,16 @@ type WalletEventStream struct {
 	randBytes     []byte
 	*types.BaseEventStream
 
-	verifyWalletAddrs bool
+	disableVerifyWalletAddrs bool
 }
 
-func NewWalletEventStream(ctx context.Context, authClient types.IAuthClient, cfg *types.RequestConfig, verifyWalletAddrs bool) *WalletEventStream {
+func NewWalletEventStream(ctx context.Context, authClient types.IAuthClient, cfg *types.RequestConfig, diableVerifyWalletAddrs bool) *WalletEventStream {
 	walletEventStream := &WalletEventStream{
-		walletConnMgr:     newWalletConnMgr(),
-		BaseEventStream:   types.NewBaseEventStream(ctx, cfg),
-		cfg:               cfg,
-		authClient:        authClient,
-		verifyWalletAddrs: verifyWalletAddrs,
+		walletConnMgr:            newWalletConnMgr(),
+		BaseEventStream:          types.NewBaseEventStream(ctx, cfg),
+		cfg:                      cfg,
+		authClient:               authClient,
+		disableVerifyWalletAddrs: diableVerifyWalletAddrs,
 	}
 	var err error
 	walletEventStream.randBytes, err = ioutil.ReadAll(io.LimitReader(rand.Reader, 32))
@@ -247,7 +247,7 @@ func (w *WalletEventStream) getValidatedAddress(ctx context.Context, channel *ty
 }
 
 func (w *WalletEventStream) verifyAddress(ctx context.Context, addr address.Address, channel *types.ChannelInfo, signBytes []byte, walletAccount string) error {
-	if !w.verifyWalletAddrs {
+	if w.disableVerifyWalletAddrs {
 		log.Infof("skip verify account:%s, address: %s, wallet address verification is disabled.",
 			walletAccount, addr)
 		return nil
