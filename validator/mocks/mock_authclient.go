@@ -61,35 +61,6 @@ func (m *AuthClient) GetUserBySigner(req *auth.GetUserBySignerRequest) (*auth.Ou
 	return nil, errors.New("not exist")
 }
 
-func (m *AuthClient) UpsertMiner(userName, miner string) (bool, error) {
-	_, err := m.GetUser(&auth.GetUserRequest{Name: userName})
-	if err != nil {
-		return false, err
-	}
-
-	_, bUpdate := m.miners[miner]
-	m.miners[miner] = userName
-
-	// The original intention of venus-auth is to return true for creation and false for update
-	return !bUpdate, nil
-}
-
-func (m AuthClient) HasMiner(req *auth.HasMinerRequest) (bool, error) {
-	username, ok := m.miners[req.Miner]
-
-	if !ok {
-		return ok, nil
-	}
-
-	if len(req.User) > 0 {
-		if username != req.User {
-			return false, nil
-		}
-	}
-
-	return ok, nil
-}
-
 func (m AuthClient) UpsertSigner(userName, signer string) (bool, error) {
 	_, err := m.GetUser(&auth.GetUserRequest{Name: userName})
 	if err != nil {
@@ -101,22 +72,6 @@ func (m AuthClient) UpsertSigner(userName, signer string) (bool, error) {
 
 	// The original intention of venus-auth is to return true for creation and false for update
 	return !bUpdate, nil
-}
-
-func (m AuthClient) HasSigner(req *auth.HasSignerRequest) (bool, error) {
-	username, ok := m.signers[req.Signer]
-
-	if !ok {
-		return ok, nil
-	}
-
-	if len(req.User) > 0 {
-		if username != req.User {
-			return false, nil
-		}
-	}
-
-	return ok, nil
 }
 
 func (m *AuthClient) AddMockUser(users ...*auth.OutputUser) {
