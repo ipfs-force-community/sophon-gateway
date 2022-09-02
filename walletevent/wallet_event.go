@@ -211,30 +211,30 @@ func (w *WalletEventStream) RemoveAddress(ctx context.Context, channelId sharedT
 	return err
 }
 
-func (w *WalletEventStream) getAccountOfAddress(addr address.Address) (string, error) {
-	account := ""
-	switch addr.Protocol() {
-	//case address.ID:
-	//	user, err := w.authClient.GetUserByMiner(&auth.GetUserByMinerRequest{Miner: addr.String()})
-	//	if err != nil {
-	//		return "", err
-	//	}
-	//	account = user.Name
-	case address.SECP256K1, address.BLS:
-		user, err := w.authClient.GetUserBySigner(&auth.GetUserBySignerRequest{Signer: addr.String()})
-		if err != nil {
-			return "", err
-		}
-		account = user.Name
-	default:
-		return "", fmt.Errorf("unexpected address protocol %v", addr.Protocol())
+func (w *WalletEventStream) isSignerAddress(addr address.Address) bool {
+	protocol := addr.Protocol()
+	if protocol == address.SECP256K1 || protocol == address.BLS {
+		return true
 	}
 
-	return account, nil
+	return false
+}
+
+func (w *WalletEventStream) getAccountOfSigner(addr address.Address) (string, error) {
+	if !w.isSignerAddress(addr) {
+		return "", fmt.Errorf("%s is not a signable address", addr.String())
+	}
+
+	user, err := w.authClient.GetUserBySigner(&auth.GetUserBySignerRequest{Signer: addr.String()})
+	if err != nil {
+		return "", err
+	}
+
+	return user.Name, nil
 }
 
 func (w *WalletEventStream) WalletHas(ctx context.Context, addr address.Address) (bool, error) {
-	account, err := w.getAccountOfAddress(addr)
+	account, err := w.getAccountOfSigner(addr)
 	if err != nil {
 		return false, err
 	}
@@ -252,7 +252,7 @@ func (w *WalletEventStream) WalletSign(ctx context.Context, addr address.Address
 		return nil, err
 	}
 
-	account, err := w.getAccountOfAddress(addr)
+	account, err := w.getAccountOfSigner(addr)
 	if err != nil {
 		return nil, err
 	}
@@ -338,27 +338,20 @@ func (w *WalletEventStream) verifyAddress(ctx context.Context, addr address.Addr
 
 func (w *WalletEventStream) registerSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) error {
 	for _, addr := range addrs {
-		if addr.Protocol() != address.SECP256K1 && addr.Protocol() != address.BLS {
-			return fmt.Errorf("%s cannot be used for signing", addr.String())
+		if !w.isSignerAddress(addr) {
+			return fmt.Errorf("%s is not a signable address", addr.String())
 		}
 
-		has, err := w.authClient.HasSigner(&auth.HasSignerRequest{Signer: addr.String(), User: walletAccount})
+		bCreate, err := w.authClient.UpsertSigner(walletAccount, addr.String())
 		if err != nil {
-			return fmt.Errorf("checking for existence of %s: %w", addr.String(), err)
+			return fmt.Errorf("upsert %s to venus-auth: %w", addr.String(), err)
 		}
 
-		if !has {
-			bCreate, err := w.authClient.UpsertSigner(walletAccount, addr.String())
-			if err != nil {
-				return fmt.Errorf("upsert %s to venus-auth: %w", addr.String(), err)
-			}
-
-			opStr := "create"
-			if !bCreate {
-				opStr = "update"
-			}
-			log.Infof("venus-auth %s %s for user %s success.", opStr, addr.String(), walletAccount)
+		opStr := "create"
+		if !bCreate {
+			opStr = "update"
 		}
+		log.Infof("venus-auth %s %s for user %s success.", opStr, addr.String(), walletAccount)
 	}
 
 	return nil
