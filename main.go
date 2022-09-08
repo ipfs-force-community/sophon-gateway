@@ -14,13 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/filecoin-project/go-jsonrpc"
-	"github.com/filecoin-project/venus-auth/jwtclient"
-	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
-	"github.com/filecoin-project/venus/venus-shared/api/permission"
 	"github.com/gorilla/mux"
-	"github.com/ipfs-force-community/metrics"
-	"github.com/ipfs-force-community/metrics/ratelimit"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/mitchellh/go-homedir"
 	multiaddr "github.com/multiformats/go-multiaddr"
@@ -28,8 +22,17 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.opencensus.io/plugin/ochttp"
 
+	"github.com/filecoin-project/go-jsonrpc"
+
+	"github.com/filecoin-project/venus-auth/jwtclient"
+
 	_ "github.com/filecoin-project/venus/pkg/crypto/bls"
 	_ "github.com/filecoin-project/venus/pkg/crypto/secp"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
+	"github.com/filecoin-project/venus/venus-shared/api/permission"
+
+	"github.com/ipfs-force-community/metrics"
+	"github.com/ipfs-force-community/metrics/ratelimit"
 
 	"github.com/ipfs-force-community/venus-gateway/api"
 	"github.com/ipfs-force-community/venus-gateway/cmds"
@@ -181,9 +184,9 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	log.Infof("venus-gateway current version %s", version.UserVersion)
 	log.Infof("Setting up control endpoint at %v", cfg.API.ListenAddress)
 
-	var fullNode v1API.IGatewayStruct
+	var fullNode v2API.IGatewayStruct
 	permission.PermissionProxy(gatewayAPIImpl, &fullNode)
-	gatewayAPI := (v1API.IGateway)(&fullNode)
+	gatewayAPI := (v2API.IGateway)(&fullNode)
 
 	if len(cfg.RateLimit.Redis) > 0 {
 		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimit.Redis, nil,
@@ -194,21 +197,25 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		if err != nil {
 			return err
 		}
-		var rateLimitAPI v1API.IGatewayStruct
+		var rateLimitAPI v2API.IGatewayStruct
 		limiter.ProxyLimitFullAPI(gatewayAPI, &rateLimitAPI)
 		gatewayAPI = &rateLimitAPI
 	}
 
 	mux := mux.NewRouter()
 	//v1api
-	rpcServerv1 := jsonrpc.NewServer()
-	rpcServerv1.Register("Gateway", gatewayAPI)
-	mux.Handle("/rpc/v1", rpcServerv1)
+	rpcServerV2 := jsonrpc.NewServer()
+	rpcServerV2.Register("Gateway", gatewayAPI)
+	mux.Handle("/rpc/v2", rpcServerV2)
 
-	v0FullNode := api.WrapperV1Full{IGateway: gatewayAPI}
-	rpcServerv0 := jsonrpc.NewServer()
-	rpcServerv0.Register("Gateway", v0FullNode)
-	mux.Handle("/rpc/v0", rpcServerv0)
+	lowerFullNode := api.WrapperV2Full{IGateway: gatewayAPI}
+	rpcServerV1 := jsonrpc.NewServer()
+	rpcServerV1.Register("Gateway", lowerFullNode)
+	mux.Handle("/rpc/v1", rpcServerV1)
+
+	rpcServerV0 := jsonrpc.NewServer()
+	rpcServerV0.Register("Gateway", lowerFullNode)
+	mux.Handle("/rpc/v0", rpcServerV0)
 
 	mux.PathPrefix("/").Handler(http.DefaultServeMux)
 

@@ -21,7 +21,7 @@ import (
 	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
-	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	"github.com/filecoin-project/venus/venus-shared/api/permission"
 
 	"github.com/ipfs-force-community/venus-gateway/api"
@@ -83,9 +83,9 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	log.Infof("venus-gateway current version %s", version.UserVersion)
 	log.Info("Setting up control endpoint at " + cfg.API.ListenAddress)
 
-	var fullNode v1API.IGatewayStruct
+	var fullNode v2API.IGatewayStruct
 	permission.PermissionProxy(gatewayAPIImpl, &fullNode)
-	gatewayAPI := (v1API.IGateway)(&fullNode)
+	gatewayAPI := (v2API.IGateway)(&fullNode)
 
 	if len(cfg.RateLimit.Redis) > 0 {
 		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimit.Redis, nil,
@@ -96,7 +96,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 		if err != nil {
 			return "", nil, err
 		}
-		var rateLimitAPI v1API.IGatewayStruct
+		var rateLimitAPI v2API.IGatewayStruct
 		limiter.ProxyLimitFullAPI(gatewayAPI, &rateLimitAPI)
 		gatewayAPI = &rateLimitAPI
 	}
@@ -108,7 +108,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	mux.Handle("/rpc/v1", rpcServerv1)
 
 	//v0api
-	v0FullNode := api.WrapperV1Full{IGateway: gatewayAPI}
+	v0FullNode := api.WrapperV2Full{IGateway: gatewayAPI}
 	rpcServerv0 := jsonrpc.NewServer()
 	rpcServerv0.Register("Gateway", v0FullNode)
 	mux.Handle("/rpc/v0", rpcServerv0)

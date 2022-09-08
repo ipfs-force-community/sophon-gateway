@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	"github.com/ipfs-force-community/metrics"
 	logging "github.com/ipfs/go-log/v2"
 	"go.opencensus.io/stats/view"
+
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 )
 
 var log = logging.Logger("metrics")
 
-func SetupMetrics(ctx context.Context, metricsConfig *metrics.MetricsConfig, api v1API.IGateway) error {
+func SetupMetrics(ctx context.Context, metricsConfig *metrics.MetricsConfig, api v2API.IGateway) error {
 	log.Infof("metrics config: enabled: %v, exporter type: %s, prometheus: %+v, graphite: %+v",
 		metricsConfig.Enabled, metricsConfig.Exporter.Type, metricsConfig.Exporter.Prometheus,
 		metricsConfig.Exporter.Graphite)

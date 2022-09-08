@@ -13,7 +13,7 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 
 	"github.com/filecoin-project/venus/venus-shared/api"
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	types2 "github.com/filecoin-project/venus/venus-shared/types"
 
 	"github.com/ipfs-force-community/metrics"
@@ -259,10 +259,10 @@ func TestWalletAPI(t *testing.T) {
 	})
 }
 
-func serverWalletAPI(ctx context.Context, url, token string) (gateway.IWalletEvent, jsonrpc.ClientCloser, error) {
+func serverWalletAPI(ctx context.Context, url, token string) (v2API.IWalletEvent, jsonrpc.ClientCloser, error) {
 	headers := http.Header{}
 	headers.Add(api.AuthorizationHeader, "Bearer "+token)
-	return gateway.NewIGatewayRPC(ctx, url, headers)
+	return v2API.NewIGatewayRPC(ctx, url, headers)
 }
 
 func setupDaemon(t *testing.T, ctx context.Context) (string, string) {

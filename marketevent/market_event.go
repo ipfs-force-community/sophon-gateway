@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ipfs-force-community/venus-gateway/metrics"
-	"github.com/ipfs-force-community/venus-gateway/validator"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
@@ -21,15 +19,18 @@ import (
 
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
+
+	"github.com/ipfs-force-community/venus-gateway/metrics"
 	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/venus-gateway/validator"
 )
 
 var log = logging.Logger("market_stream")
 
-var _ gateway.IMarketClient = (*MarketEventStream)(nil)
+var _ v2API.IMarketClient = (*MarketEventStream)(nil)
 
 type MarketEventStream struct {
 	connLk           sync.RWMutex

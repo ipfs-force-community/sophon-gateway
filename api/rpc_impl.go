@@ -12,7 +12,7 @@ import (
 	"github.com/filecoin-project/specs-storage/storage"
 
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
 
@@ -23,28 +23,28 @@ import (
 )
 
 type IGatewayPushAPI interface {
-	gateway.IProofClient
-	gateway.IWalletClient
+	v2API.IProofClient
+	v2API.IWalletClient
 }
 
 type IGatewayAPI interface {
 	IGatewayPushAPI
 
-	gateway.IProofServiceProvider
-	gateway.IWalletServiceProvider
+	v2API.IProofServiceProvider
+	v2API.IWalletServiceProvider
 }
 
-var _ gateway.IGateway = (*GatewayAPIImpl)(nil)
+var _ v2API.IGateway = (*GatewayAPIImpl)(nil)
 var _ IGatewayAPI = (*GatewayAPIImpl)(nil)
 
 type GatewayAPIImpl struct {
-	gateway.IProofServiceProvider
+	v2API.IProofServiceProvider
 	pe *proofevent.ProofEventStream
 
-	gateway.IWalletServiceProvider
+	v2API.IWalletServiceProvider
 	we *walletevent.WalletEventStream
 
-	gateway.IMarketServiceProvider
+	v2API.IMarketServiceProvider
 
 	me *marketevent.MarketEventStream
 }
