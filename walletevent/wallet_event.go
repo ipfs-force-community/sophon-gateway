@@ -96,11 +96,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 		}
 
 		// register signer address to venus-auth
-		err = w.registerSignerAddress(ctx, walletAccount, addrs...)
-		if err != nil {
-			log.Error(err)
-			return
-		}
+		w.registerSignerAddress(ctx, walletAccount, addrs...)
 
 		walletChannelInfo := newWalletChannelInfo(channel, addrs, policy.SignBytes)
 
@@ -136,6 +132,15 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 		stats.Record(ctx, metrics.WalletUnregister.M(1))
 		if err = w.walletConnMgr.removeConn(walletAccount, walletChannelInfo); err != nil {
 			log.Errorf("validate address error %v", err)
+
+			// unregister all signer of this account
+			signers := make([]address.Address, len(walletChannelInfo.addrs))
+			idx := 0
+			for addr := range walletChannelInfo.addrs {
+				signers[idx] = addr
+				idx++
+			}
+			w.unregisterSignerAddress(ctx, walletAccount, signers...)
 		}
 	}()
 	return out, nil
@@ -188,7 +193,9 @@ func (w *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedT
 	log.Infof("wallet %s add address %v successful!", walletAccount, addrs)
 
 	// register signer address to venus-auth
-	return w.registerSignerAddress(ctx, walletAccount, addrs...)
+	w.registerSignerAddress(ctx, walletAccount, addrs...)
+
+	return nil
 }
 
 func (w *WalletEventStream) RemoveAddress(ctx context.Context, channelId sharedTypes.UUID, addrs []address.Address) error {
@@ -202,13 +209,17 @@ func (w *WalletEventStream) RemoveAddress(ctx context.Context, channelId sharedT
 			metrics.WalletRemoveAddr.M(1))
 	}
 	err := w.walletConnMgr.removeAddress(walletAccount, channelId, addrs)
-	if err == nil {
-		log.Infof("wallet %s remove address %v", walletAccount, addrs)
-	} else {
+	if err != nil {
 		log.Infof("wallet %s remove address %v failed %v", walletAccount, addrs, err)
+		return err
 	}
 
-	return err
+	log.Infof("wallet %s remove address %v", walletAccount, addrs)
+
+	// unregister signer address to venus-auth
+	w.unregisterSignerAddress(ctx, walletAccount, addrs...)
+
+	return nil
 }
 
 func (w *WalletEventStream) isSignerAddress(addr address.Address) bool {
@@ -220,26 +231,42 @@ func (w *WalletEventStream) isSignerAddress(addr address.Address) bool {
 	return false
 }
 
-func (w *WalletEventStream) getAccountOfSigner(addr address.Address) (string, error) {
+func (w *WalletEventStream) getAccountOfSigner(addr address.Address) ([]string, error) {
 	if !w.isSignerAddress(addr) {
-		return "", fmt.Errorf("%s is not a signable address", addr.String())
+		return nil, fmt.Errorf("%s is not a signable address", addr.String())
 	}
 
-	user, err := w.authClient.GetUserBySigner(&auth.GetUserBySignerRequest{Signer: addr.String()})
+	users, err := w.authClient.GetUserBySigner(addr.String())
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return user.Name, nil
+	accounts := make([]string, len(users))
+	for idx, user := range users {
+		accounts[idx] = user.Name
+	}
+
+	return accounts, nil
 }
 
 func (w *WalletEventStream) WalletHas(ctx context.Context, addr address.Address) (bool, error) {
-	account, err := w.getAccountOfSigner(addr)
+	accounts, err := w.getAccountOfSigner(addr)
 	if err != nil {
 		return false, err
 	}
 
-	return w.walletConnMgr.hasWalletChannel(account, addr)
+	for _, account := range accounts {
+		bHas, err := w.walletConnMgr.hasWalletChannel(account, addr)
+		if err != nil {
+			return false, err
+		}
+
+		if bHas {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (w *WalletEventStream) WalletSign(ctx context.Context, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
@@ -252,19 +279,27 @@ func (w *WalletEventStream) WalletSign(ctx context.Context, addr address.Address
 		return nil, err
 	}
 
-	account, err := w.getAccountOfSigner(addr)
+	accounts, err := w.getAccountOfSigner(addr)
 	if err != nil {
 		return nil, err
 	}
-	channels, err := w.walletConnMgr.getChannels(account, addr)
-	if err != nil {
-		return nil, err
+
+	channels := make([]*types.ChannelInfo, 0)
+	for _, account := range accounts {
+		cs, err := w.walletConnMgr.getChannels(account, addr)
+		if err != nil {
+			// It should continue as long as the channel can be found
+			log.Warnf("get channel for %s of %s: %s", account, addr, err.Error())
+			continue
+		}
+
+		channels = append(channels, cs...)
 	}
 
 	start := time.Now()
 	var result crypto.Signature
 	err = w.SendRequest(ctx, channels, "WalletSign", payload, &result)
-	_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(metrics.WalletAccountKey, account)},
+	_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(metrics.WalletAccountKey, fmt.Sprintf("%v", accounts))},
 		metrics.WalletSign.M(metrics.SinceInMilliseconds(start)))
 	if err != nil {
 		return nil, err
@@ -336,15 +371,17 @@ func (w *WalletEventStream) verifyAddress(ctx context.Context, addr address.Addr
 	return nil
 }
 
-func (w *WalletEventStream) registerSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) error {
+func (w *WalletEventStream) registerSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) {
 	for _, addr := range addrs {
 		if !w.isSignerAddress(addr) {
-			return fmt.Errorf("%s is not a signable address", addr.String())
+			log.Errorf("%s is not a signable address", addr.String())
+			continue
 		}
 
-		bCreate, err := w.authClient.UpsertSigner(walletAccount, addr.String())
+		bCreate, err := w.authClient.RegisterSigner(walletAccount, addr.String())
 		if err != nil {
-			return fmt.Errorf("upsert %s to venus-auth: %w", addr.String(), err)
+			log.Errorf("register %s to venus-auth: %w", addr.String(), err)
+			continue
 		}
 
 		opStr := "create"
@@ -353,8 +390,23 @@ func (w *WalletEventStream) registerSignerAddress(ctx context.Context, walletAcc
 		}
 		log.Infof("venus-auth %s %s for user %s success.", opStr, addr.String(), walletAccount)
 	}
+}
 
-	return nil
+func (w *WalletEventStream) unregisterSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) {
+	for _, addr := range addrs {
+		if !w.isSignerAddress(addr) {
+			log.Errorf("%s is not a signable address", addr.String())
+			continue
+		}
+
+		_, err := w.authClient.UnregisterSigner(walletAccount, addr.String())
+		if err != nil {
+			log.Errorf("unregister %s for %s: %w", addr.String(), walletAccount, err)
+			continue
+		}
+
+		log.Infof("venus-auth unregister %s for user %s success.", addr.String(), walletAccount)
+	}
 }
 
 func GetSignData(datas ...[]byte) []byte {
