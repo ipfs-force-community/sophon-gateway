@@ -18,7 +18,7 @@ import (
 	"github.com/filecoin-project/specs-storage/storage"
 
 	"github.com/filecoin-project/venus/venus-shared/api"
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 
 	"github.com/ipfs-force-community/metrics"
@@ -149,10 +149,10 @@ func TestMarketAPI(t *testing.T) {
 	})
 }
 
-func serverMarketAPI(ctx context.Context, url, token string) (gateway.IMarketClient, jsonrpc.ClientCloser, error) {
+func serverMarketAPI(ctx context.Context, url, token string) (v2API.IMarketClient, jsonrpc.ClientCloser, error) {
 	headers := http.Header{}
 	headers.Add(api.AuthorizationHeader, "Bearer "+token)
-	return gateway.NewIGatewayRPC(ctx, url, headers)
+	return v2API.NewIGatewayRPC(ctx, url, headers)
 }
 
 func setupMarketDaemon(t *testing.T, validateMiner []address.Address, ctx context.Context) (string, string) {

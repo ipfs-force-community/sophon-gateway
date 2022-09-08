@@ -8,18 +8,17 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/filecoin-project/venus/venus-shared/api"
-
 	"go.uber.org/zap"
 
+	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-jsonrpc"
 
-	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/venus/venus-shared/api"
 	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	sharedGatewayTypes "github.com/filecoin-project/venus/venus-shared/types/gateway"
 
-	types2 "github.com/filecoin-project/venus/venus-shared/types"
-	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
-	types3 "github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
 var RandomBytes = func() []byte {
@@ -41,16 +40,16 @@ func NewWalletRegisterClient(ctx context.Context, url, token string) (gateway.IW
 }
 
 type WalletEventClient struct {
-	processor       types3.IWalletHandler
+	processor       types.IWalletHandler
 	client          gateway.IWalletServiceProvider
 	randomBytes     []byte
 	log             *zap.SugaredLogger
-	channel         types2.UUID
+	channel         sharedTypes.UUID
 	supportAccounts []string
 	readyCh         chan struct{}
 }
 
-func NewWalletEventClient(ctx context.Context, process types3.IWalletHandler, client gateway.IWalletServiceProvider, log *zap.SugaredLogger, supportAccounts []string) *WalletEventClient {
+func NewWalletEventClient(ctx context.Context, process types.IWalletHandler, client gateway.IWalletServiceProvider, log *zap.SugaredLogger, supportAccounts []string) *WalletEventClient {
 	return &WalletEventClient{
 		processor:       process,
 		client:          client,
@@ -109,7 +108,7 @@ func (e *WalletEventClient) WaitReady(ctx context.Context) {
 func (e *WalletEventClient) listenWalletRequestOnce(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	policy := &types.WalletRegisterPolicy{
+	policy := &sharedGatewayTypes.WalletRegisterPolicy{
 		SupportAccounts: e.supportAccounts,
 		SignBytes:       e.randomBytes,
 	}
@@ -123,7 +122,7 @@ func (e *WalletEventClient) listenWalletRequestOnce(ctx context.Context) error {
 	for event := range walletEventCh {
 		switch event.Method {
 		case "InitConnect":
-			req := types.ConnectedCompleted{}
+			req := sharedGatewayTypes.ConnectedCompleted{}
 			err := json.Unmarshal(event.Payload, &req)
 			if err != nil {
 				e.log.Errorf("init connect error %s", err)
@@ -144,7 +143,7 @@ func (e *WalletEventClient) listenWalletRequestOnce(ctx context.Context) error {
 	return nil
 }
 
-func (e *WalletEventClient) walletList(ctx context.Context, id types2.UUID) {
+func (e *WalletEventClient) walletList(ctx context.Context, id sharedTypes.UUID) {
 	addrs, err := e.processor.WalletList(ctx)
 	if err != nil {
 		e.log.Errorf("WalletList error %s", err)
@@ -154,9 +153,9 @@ func (e *WalletEventClient) walletList(ctx context.Context, id types2.UUID) {
 	e.value(ctx, id, addrs)
 }
 
-func (e *WalletEventClient) walletSign(ctx context.Context, event *types.RequestEvent) {
+func (e *WalletEventClient) walletSign(ctx context.Context, event *sharedGatewayTypes.RequestEvent) {
 	e.log.Debug("receive WalletSign event")
-	req := types.WalletSignRequest{}
+	req := sharedGatewayTypes.WalletSignRequest{}
 	err := json.Unmarshal(event.Payload, &req)
 	if err != nil {
 		e.log.Errorf("unmarshal WalletSignRequest error %s", err)
@@ -164,7 +163,7 @@ func (e *WalletEventClient) walletSign(ctx context.Context, event *types.Request
 		return
 	}
 	e.log.Debug("start WalletSign")
-	sig, err := e.processor.WalletSign(ctx, req.Signer, req.ToSign, types2.MsgMeta{Type: req.Meta.Type, Extra: req.Meta.Extra})
+	sig, err := e.processor.WalletSign(ctx, req.Signer, req.ToSign, sharedTypes.MsgMeta{Type: req.Meta.Type, Extra: req.Meta.Extra})
 	if err != nil {
 		e.log.Errorf("WalletSign error %s", err)
 		e.error(ctx, event.ID, err)
@@ -175,11 +174,11 @@ func (e *WalletEventClient) walletSign(ctx context.Context, event *types.Request
 	e.log.Debug("end WalletSign response")
 }
 
-func (e *WalletEventClient) value(ctx context.Context, id types2.UUID, val interface{}) {
+func (e *WalletEventClient) value(ctx context.Context, id sharedTypes.UUID, val interface{}) {
 	respBytes, err := json.Marshal(val)
 	if err != nil {
 		e.log.Errorf("marshal address list error %s", err)
-		err = e.client.ResponseWalletEvent(ctx, &types.ResponseEvent{
+		err = e.client.ResponseWalletEvent(ctx, &sharedGatewayTypes.ResponseEvent{
 			ID:      id,
 			Payload: nil,
 			Error:   err.Error(),
@@ -187,7 +186,7 @@ func (e *WalletEventClient) value(ctx context.Context, id types2.UUID, val inter
 		e.log.Errorf("response wallet event error %s", err)
 		return
 	}
-	err = e.client.ResponseWalletEvent(ctx, &types.ResponseEvent{
+	err = e.client.ResponseWalletEvent(ctx, &sharedGatewayTypes.ResponseEvent{
 		ID:      id,
 		Payload: respBytes,
 		Error:   "",
@@ -197,8 +196,8 @@ func (e *WalletEventClient) value(ctx context.Context, id types2.UUID, val inter
 	}
 }
 
-func (e *WalletEventClient) error(ctx context.Context, id types2.UUID, err error) {
-	err = e.client.ResponseWalletEvent(ctx, &types.ResponseEvent{
+func (e *WalletEventClient) error(ctx context.Context, id sharedTypes.UUID, err error) {
+	err = e.client.ResponseWalletEvent(ctx, &sharedGatewayTypes.ResponseEvent{
 		ID:      id,
 		Payload: nil,
 		Error:   err.Error(),

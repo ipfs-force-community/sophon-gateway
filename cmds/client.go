@@ -5,15 +5,16 @@ import (
 	"path/filepath"
 
 	"github.com/filecoin-project/go-jsonrpc"
-	_ "github.com/filecoin-project/venus/venus-shared/api"
-	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	"github.com/mitchellh/go-homedir"
 	"github.com/urfave/cli/v2"
+
+	_ "github.com/filecoin-project/venus/venus-shared/api"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 
 	"github.com/ipfs-force-community/venus-gateway/config"
 )
 
-func NewGatewayClient(ctx *cli.Context) (v1API.IGateway, jsonrpc.ClientCloser, error) {
+func NewGatewayClient(ctx *cli.Context) (v2API.IGateway, jsonrpc.ClientCloser, error) {
 	repoPath, err := homedir.Expand(ctx.String("repo"))
 	if err != nil {
 		return nil, nil, err
@@ -34,5 +35,5 @@ func NewGatewayClient(ctx *cli.Context) (v1API.IGateway, jsonrpc.ClientCloser, e
 		return nil, nil, err
 	}
 
-	return v1API.DialIGatewayRPC(ctx.Context, listen, string(token), nil)
+	return v2API.DialIGatewayRPC(ctx.Context, listen, string(token), nil)
 }

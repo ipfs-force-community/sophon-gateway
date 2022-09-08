@@ -23,9 +23,9 @@ import (
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
 	wcrypto "github.com/filecoin-project/venus/pkg/crypto"
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
-	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
+	sharedGatewayTypes "github.com/filecoin-project/venus/venus-shared/types/gateway"
 
 	"github.com/ipfs-force-community/venus-gateway/metrics"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -33,7 +33,7 @@ import (
 
 var log = logging.Logger("event_stream")
 
-var _ gateway.IWalletClient = (*WalletEventStream)(nil)
+var _ v2API.IWalletClient = (*WalletEventStream)(nil)
 
 type WalletEventStream struct {
 	walletConnMgr IWalletConnMgr
@@ -62,14 +62,14 @@ func NewWalletEventStream(ctx context.Context, authClient types.IAuthClient, cfg
 	return walletEventStream
 }
 
-func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types2.WalletRegisterPolicy) (<-chan *types2.RequestEvent, error) {
+func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *sharedGatewayTypes.WalletRegisterPolicy) (<-chan *sharedGatewayTypes.RequestEvent, error) {
 	walletAccount, exit := jwtclient.CtxGetName(ctx)
 	if !exit {
 		return nil, errors.New("unable to get account name in method ListenWalletEvent request")
 	}
 
 	ip, _ := jwtclient.CtxGetTokenLocation(ctx) //todo sure exit?
-	out := make(chan *types2.RequestEvent, w.cfg.RequestQueueSize)
+	out := make(chan *sharedGatewayTypes.RequestEvent, w.cfg.RequestQueueSize)
 
 	ctx, _ = tag.New(ctx, tag.Upsert(metrics.WalletAccountKey, walletAccount), tag.Upsert(metrics.IPKey, ip))
 
@@ -116,7 +116,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 		stats.Record(ctx, metrics.WalletRegister.M(1))
 		stats.Record(ctx, metrics.WalletSource.M(1))
 
-		connectBytes, err := json.Marshal(types2.ConnectedCompleted{
+		connectBytes, err := json.Marshal(sharedGatewayTypes.ConnectedCompleted{
 			ChannelId: walletChannelInfo.ChannelId,
 		})
 		if err != nil {
@@ -124,7 +124,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 			return
 		}
 
-		out <- &types2.RequestEvent{
+		out <- &sharedGatewayTypes.RequestEvent{
 			ID:         sharedTypes.NewUUID(),
 			Method:     "InitConnect",
 			CreateTime: time.Now(),
@@ -141,7 +141,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 	return out, nil
 }
 
-func (w *WalletEventStream) ResponseWalletEvent(ctx context.Context, resp *types2.ResponseEvent) error {
+func (w *WalletEventStream) ResponseWalletEvent(ctx context.Context, resp *sharedGatewayTypes.ResponseEvent) error {
 	return w.ResponseEvent(ctx, resp)
 }
 
@@ -243,7 +243,7 @@ func (w *WalletEventStream) WalletHas(ctx context.Context, addr address.Address)
 }
 
 func (w *WalletEventStream) WalletSign(ctx context.Context, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
-	payload, err := json.Marshal(&types2.WalletSignRequest{
+	payload, err := json.Marshal(&sharedGatewayTypes.WalletSignRequest{
 		Signer: addr,
 		ToSign: toSign,
 		Meta:   meta,
@@ -273,11 +273,11 @@ func (w *WalletEventStream) WalletSign(ctx context.Context, addr address.Address
 	return &result, nil
 }
 
-func (w *WalletEventStream) ListWalletInfo(ctx context.Context) ([]*types2.WalletDetail, error) {
+func (w *WalletEventStream) ListWalletInfo(ctx context.Context) ([]*sharedGatewayTypes.WalletDetail, error) {
 	return w.walletConnMgr.listWalletInfo(ctx)
 }
 
-func (w *WalletEventStream) ListWalletInfoByWallet(ctx context.Context, wallet string) (*types2.WalletDetail, error) {
+func (w *WalletEventStream) ListWalletInfoByWallet(ctx context.Context, wallet string) (*sharedGatewayTypes.WalletDetail, error) {
 	return w.walletConnMgr.listWalletInfoByWallet(ctx, wallet)
 }
 
@@ -312,7 +312,7 @@ func (w *WalletEventStream) verifyAddress(ctx context.Context, addr address.Addr
 		return nil
 	}
 	signData := GetSignData(w.randBytes, signBytes)
-	payload, err := json.Marshal(&types2.WalletSignRequest{
+	payload, err := json.Marshal(&sharedGatewayTypes.WalletSignRequest{
 		Signer: addr,
 		ToSign: signData,
 		Meta:   sharedTypes.MsgMeta{Type: sharedTypes.MTVerifyAddress, Extra: w.randBytes},

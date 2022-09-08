@@ -7,40 +7,38 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ipfs-force-community/venus-gateway/types"
-
 	"go.uber.org/zap"
 
+	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-jsonrpc"
-	"github.com/filecoin-project/venus/venus-shared/api"
-	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 
-	gateway2 "github.com/filecoin-project/venus/venus-shared/api/gateway/v0"
-	types3 "github.com/filecoin-project/venus/venus-shared/types"
+	"github.com/filecoin-project/venus/venus-shared/api"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/filecoin-project/venus/venus-shared/types/gateway"
 
-	"github.com/filecoin-project/go-address"
+	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
 type ProofEvent struct {
-	client       gateway2.IProofServiceProvider
+	client       v2API.IProofServiceProvider
 	mAddr        address.Address
 	proofHandler types.ProofHandler
 	log          *zap.SugaredLogger
 	readyCh      chan struct{}
 }
 
-func NewProofRegisterClient(ctx context.Context, url, token string) (gateway2.IProofServiceProvider, jsonrpc.ClientCloser, error) {
+func NewProofRegisterClient(ctx context.Context, url, token string) (v2API.IProofServiceProvider, jsonrpc.ClientCloser, error) {
 	headers := http.Header{}
 	headers.Add(api.AuthorizationHeader, "Bearer "+token)
-	client, closer, err := v1API.NewIGatewayRPC(ctx, url, headers)
+	client, closer, err := v2API.NewIGatewayRPC(ctx, url, headers)
 	if err != nil {
 		return nil, nil, err
 	}
 	return client, closer, nil
 }
 
-func NewProofEvent(client gateway2.IProofServiceProvider, mAddr address.Address, proofHandler types.ProofHandler, log *zap.SugaredLogger) *ProofEvent {
+func NewProofEvent(client v2API.IProofServiceProvider, mAddr address.Address, proofHandler types.ProofHandler, log *zap.SugaredLogger) *ProofEvent {
 	return &ProofEvent{
 		client:       client,
 		mAddr:        mAddr,
@@ -120,7 +118,7 @@ func (e *ProofEvent) listenProofRequestOnce(ctx context.Context) error {
 }
 
 // context.Context, []builtin.ExtendedSectorInfo, abi.PoStRandomness, abi.ChainEpoch, network.Version
-func (e *ProofEvent) processComputeProof(ctx context.Context, reqId types3.UUID, req gateway.ComputeProofRequest) {
+func (e *ProofEvent) processComputeProof(ctx context.Context, reqId sharedTypes.UUID, req gateway.ComputeProofRequest) {
 	proof, err := e.proofHandler.ComputeProof(ctx, req.SectorInfos, req.Rand, req.Height, req.NWVersion)
 	if err != nil {
 		e.error(ctx, reqId, err)
@@ -129,7 +127,7 @@ func (e *ProofEvent) processComputeProof(ctx context.Context, reqId types3.UUID,
 	e.value(ctx, reqId, proof)
 }
 
-func (e *ProofEvent) value(ctx context.Context, id types3.UUID, val interface{}) {
+func (e *ProofEvent) value(ctx context.Context, id sharedTypes.UUID, val interface{}) {
 	respBytes, err := json.Marshal(val)
 	if err != nil {
 		e.log.Errorf("marshal address list error %s", err)
@@ -146,7 +144,7 @@ func (e *ProofEvent) value(ctx context.Context, id types3.UUID, val interface{})
 	}
 }
 
-func (e *ProofEvent) error(ctx context.Context, id types3.UUID, err error) {
+func (e *ProofEvent) error(ctx context.Context, id sharedTypes.UUID, err error) {
 	err = e.client.ResponseProofEvent(ctx, &gateway.ResponseEvent{
 		ID:      id,
 		Payload: nil,
