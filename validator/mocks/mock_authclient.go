@@ -24,7 +24,7 @@ type AuthClient struct {
 	miners map[string]string
 
 	// key: signer address, v: username
-	signers map[string]string
+	signers map[string][]string
 }
 
 func (m AuthClient) GetUser(req *auth.GetUserRequest) (*auth.OutputUser, error) {
@@ -48,30 +48,72 @@ func (m *AuthClient) GetUserByMiner(req *auth.GetUserByMinerRequest) (*auth.Outp
 	return nil, errors.New("not exist")
 }
 
-func (m *AuthClient) GetUserBySigner(req *auth.GetUserBySignerRequest) (*auth.OutputUser, error) {
-	username, ok := m.signers[req.Signer]
+func (m *AuthClient) GetUserBySigner(signer string) (auth.ListUsersResponse, error) {
+	names, ok := m.signers[signer]
 	if !ok {
 		return nil, errors.New("not exist")
 	}
 
-	if user, ok := m.users[username]; ok {
-		return user, nil
+	users := make(auth.ListUsersResponse, 0)
+	for _, name := range names {
+		if user, ok := m.users[name]; ok {
+			users = append(users, user)
+		}
 	}
 
-	return nil, errors.New("not exist")
+	return users, nil
 }
 
-func (m AuthClient) UpsertSigner(userName, signer string) (bool, error) {
+func (m AuthClient) RegisterSigner(userName, signer string) (bool, error) {
 	_, err := m.GetUser(&auth.GetUserRequest{Name: userName})
 	if err != nil {
 		return false, err
 	}
 
-	_, bUpdate := m.signers[signer]
-	m.signers[signer] = userName
+	bCreate := true
+	names, ok := m.signers[signer]
+	if !ok {
+		m.signers[signer] = []string{userName}
+	} else {
+		for _, name := range names {
+			if name == userName {
+				bCreate = false
+				break
+			}
+		}
+
+		if bCreate {
+			names = append(names, userName)
+			m.signers[signer] = names
+		}
+	}
 
 	// The original intention of venus-auth is to return true for creation and false for update
-	return !bUpdate, nil
+	return bCreate, nil
+}
+
+func (m AuthClient) UnregisterSigner(userName, signer string) (bool, error) {
+	bDel := false
+
+	_, err := m.GetUser(&auth.GetUserRequest{Name: userName})
+	if err != nil {
+		return false, err
+	}
+
+	names, ok := m.signers[signer]
+	if ok {
+		idx := 0
+		for _, name := range names {
+			if name != userName {
+				names[idx] = name
+				idx++
+			} else {
+				bDel = true
+			}
+		}
+	}
+
+	return bDel, nil
 }
 
 func (m *AuthClient) AddMockUser(users ...*auth.OutputUser) {
@@ -100,7 +142,7 @@ func NewMockAuthClient() *AuthClient {
 	return &AuthClient{
 		users:   make(map[string]*auth.OutputUser),
 		miners:  make(map[string]string),
-		signers: make(map[string]string),
+		signers: make(map[string][]string),
 	}
 }
 
