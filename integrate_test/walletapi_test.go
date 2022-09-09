@@ -278,6 +278,6 @@ func setupDaemon(t *testing.T, ctx context.Context) (string, string) {
 	require.NoError(t, err)
 	url, err := url.Parse(addr)
 	require.NoError(t, err)
-	wsUrl := fmt.Sprintf("ws://127.0.0.1:%s/rpc/v0", url.Port())
+	wsUrl := fmt.Sprintf("ws://127.0.0.1:%s/rpc/v2", url.Port())
 	return wsUrl, string(token)
 }
