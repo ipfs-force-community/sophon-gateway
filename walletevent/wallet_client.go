@@ -14,7 +14,7 @@ import (
 	"github.com/filecoin-project/go-jsonrpc"
 
 	"github.com/filecoin-project/venus/venus-shared/api"
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	sharedGatewayTypes "github.com/filecoin-project/venus/venus-shared/types/gateway"
 
@@ -29,10 +29,10 @@ var RandomBytes = func() []byte {
 	return buf
 }()
 
-func NewWalletRegisterClient(ctx context.Context, url, token string) (gateway.IWalletServiceProvider, jsonrpc.ClientCloser, error) {
+func NewWalletRegisterClient(ctx context.Context, url, token string) (v2API.IWalletServiceProvider, jsonrpc.ClientCloser, error) {
 	headers := http.Header{}
 	headers.Add(api.AuthorizationHeader, "Bearer "+token)
-	client, closer, err := gateway.NewIGatewayRPC(ctx, url, headers)
+	client, closer, err := v2API.NewIGatewayRPC(ctx, url, headers)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -41,7 +41,7 @@ func NewWalletRegisterClient(ctx context.Context, url, token string) (gateway.IW
 
 type WalletEventClient struct {
 	processor       types.IWalletHandler
-	client          gateway.IWalletServiceProvider
+	client          v2API.IWalletServiceProvider
 	randomBytes     []byte
 	log             *zap.SugaredLogger
 	channel         sharedTypes.UUID
@@ -49,7 +49,7 @@ type WalletEventClient struct {
 	readyCh         chan struct{}
 }
 
-func NewWalletEventClient(ctx context.Context, process types.IWalletHandler, client gateway.IWalletServiceProvider, log *zap.SugaredLogger, supportAccounts []string) *WalletEventClient {
+func NewWalletEventClient(ctx context.Context, process types.IWalletHandler, client v2API.IWalletServiceProvider, log *zap.SugaredLogger, supportAccounts []string) *WalletEventClient {
 	return &WalletEventClient{
 		processor:       process,
 		client:          client,

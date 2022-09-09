@@ -209,6 +209,6 @@ func setupProofDaemon(t *testing.T, validateMiner []address.Address, ctx context
 	require.NoError(t, err)
 	url, err := url.Parse(addr)
 	require.NoError(t, err)
-	wsUrl := fmt.Sprintf("ws://127.0.0.1:%s/rpc/v1", url.Port())
+	wsUrl := fmt.Sprintf("ws://127.0.0.1:%s/rpc/v2", url.Port())
 	return wsUrl, string(token)
 }

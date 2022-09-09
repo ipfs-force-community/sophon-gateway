@@ -102,16 +102,21 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	}
 
 	mux := mux.NewRouter()
+	//v2api
+	rpcServerV2 := jsonrpc.NewServer()
+	rpcServerV2.Register("Gateway", gatewayAPI)
+	mux.Handle("/rpc/v2", rpcServerV2)
+
 	//v1api
-	rpcServerv1 := jsonrpc.NewServer()
-	rpcServerv1.Register("Gateway", gatewayAPI)
-	mux.Handle("/rpc/v1", rpcServerv1)
+	lowerFullNode := api.WrapperV2Full{IGateway: gatewayAPI}
+	rpcServerV1 := jsonrpc.NewServer()
+	rpcServerV1.Register("Gateway", lowerFullNode)
+	mux.Handle("/rpc/v1", rpcServerV1)
 
 	//v0api
-	v0FullNode := api.WrapperV2Full{IGateway: gatewayAPI}
-	rpcServerv0 := jsonrpc.NewServer()
-	rpcServerv0.Register("Gateway", v0FullNode)
-	mux.Handle("/rpc/v0", rpcServerv0)
+	rpcServerV0 := jsonrpc.NewServer()
+	rpcServerV0.Register("Gateway", lowerFullNode)
+	mux.Handle("/rpc/v0", rpcServerV0)
 
 	mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
