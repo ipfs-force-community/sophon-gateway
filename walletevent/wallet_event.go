@@ -131,8 +131,8 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 		<-ctx.Done()
 		stats.Record(ctx, metrics.WalletUnregister.M(1))
 		if err = w.walletConnMgr.removeConn(walletAccount, walletChannelInfo); err != nil {
-			log.Errorf("validate address error %v", err)
-
+			log.Errorf("remove Conn error %v", err)
+		} else {
 			// unregister all signer of this account
 			signers := make([]address.Address, len(walletChannelInfo.addrs))
 			idx := 0
