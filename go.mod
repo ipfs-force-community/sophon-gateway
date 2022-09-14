@@ -7,8 +7,8 @@ require (
 	github.com/filecoin-project/go-jsonrpc v0.1.5
 	github.com/filecoin-project/go-state-types v0.1.10
 	github.com/filecoin-project/specs-storage v0.4.1
-	github.com/filecoin-project/venus v1.6.1-0.20220908070513-deed89e37367
-	github.com/filecoin-project/venus-auth v1.6.1-0.20220908063015-5f08555e7d87
+	github.com/filecoin-project/venus v1.7.1-0.20220909084750-9361a9370b46
+	github.com/filecoin-project/venus-auth v1.7.1-0.20220914025723-3667cbc2b890
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v1.0.1-0.20220719063006-2c54bb379466
@@ -25,7 +25,15 @@ require (
 	golang.org/x/net v0.0.0-20220418201149-a630d4f3e7a2
 )
 
-require github.com/gbrlsnchs/jwt/v3 v3.0.1 // indirect
+require (
+	github.com/gbrlsnchs/jwt/v3 v3.0.1 // indirect
+	github.com/libp2p/go-libp2p-discovery v0.6.0 // indirect
+	github.com/libp2p/go-libp2p-peerstore v0.6.0 // indirect
+	github.com/libp2p/go-libp2p-pubsub v0.6.1 // indirect
+	github.com/libp2p/go-msgio v0.2.0 // indirect
+	github.com/multiformats/go-multiaddr-fmt v0.1.0 // indirect
+	github.com/whyrusleeping/timecache v0.0.0-20160911033111-cfcb2f1abfee // indirect
+)
 
 require (
 	contrib.go.opencensus.io/exporter/graphite v0.0.0-20200424223504-26b90655e0ce // indirect
