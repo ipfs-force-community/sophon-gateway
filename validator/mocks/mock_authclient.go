@@ -111,6 +111,7 @@ func (m AuthClient) UnregisterSigner(userName, signer string) (bool, error) {
 				bDel = true
 			}
 		}
+		m.signers[signer] = names[:idx]
 	}
 
 	return bDel, nil
