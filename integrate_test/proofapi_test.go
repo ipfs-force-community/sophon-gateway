@@ -107,15 +107,16 @@ func TestProofAPI(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			wg.Add(1)
 			go func() {
+				defer wg.Done()
 				_, err := sAPi.ComputeProof(ctx, mAddr, nil, nil, 0, 0)
 				lk.Lock()
 				defer lk.Unlock()
 				errs = append(errs, err)
 			}()
 		}
-		wg.Done()
+		wg.Wait()
 		for _, err := range errs {
-			require.Contains(t, err, "timer clean this request due to exceed wait time")
+			require.Contains(t, err.Error(), "timer clean this request due to exceed wait time")
 		}
 	})
 
