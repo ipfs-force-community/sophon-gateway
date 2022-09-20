@@ -4,12 +4,15 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"github.com/filecoin-project/go-address"
+
 	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/jwtclient"
-	"github.com/google/uuid"
+
 	"github.com/ipfs-force-community/venus-gateway/validator/mocks"
-	"github.com/stretchr/testify/require"
 )
 
 var testArgs = map[string]*struct {
@@ -34,6 +37,7 @@ var testArgs = map[string]*struct {
 }
 
 func TestAuthMinerValidator_Validate(t *testing.T) {
+	address.CurrentNetwork = address.Mainnet
 	authClient := mocks.NewMockAuthClient()
 	validator := NewMinerValidator(authClient)
 

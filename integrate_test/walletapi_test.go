@@ -164,21 +164,25 @@ func TestWalletAPI(t *testing.T) {
 		require.NoError(t, err)
 		defer cCloser()
 
+		ctxClient01, cancelClient01 := context.WithCancel(context.Background())
+		defer cancelClient01()
 		wallet := testhelper.NewMemWallet()
-		addr1, err := wallet.AddKey(ctx)
+		addr1, err := wallet.AddKey(ctxClient01)
 		require.NoError(t, err)
 
-		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
-		go walletEvent.ListenWalletRequest(ctx)
-		walletEvent.WaitReady(ctx)
+		walletEvent := walletevent.NewWalletEventClient(ctxClient01, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
+		go walletEvent.ListenWalletRequest(ctxClient01)
+		walletEvent.WaitReady(ctxClient01)
 
+		ctxClient02, cancelClient02 := context.WithCancel(context.Background())
+		defer cancelClient02()
 		wallet2 := testhelper.NewMemWallet()
-		addr2, err := wallet2.AddKey(ctx)
+		addr2, err := wallet2.AddKey(ctxClient02)
 		require.NoError(t, err)
 
-		walletEvent2 := walletevent.NewWalletEventClient(ctx, wallet2, walletEventClient, logging.Logger("test").With(), []string{"admin"})
-		go walletEvent2.ListenWalletRequest(ctx)
-		walletEvent2.WaitReady(ctx)
+		walletEvent2 := walletevent.NewWalletEventClient(ctxClient02, wallet2, walletEventClient, logging.Logger("test").With(), []string{"admin"})
+		go walletEvent2.ListenWalletRequest(ctxClient02)
+		walletEvent2.WaitReady(ctxClient02)
 
 		walletInfo, err := sAPi.ListWalletInfo(ctx)
 		require.NoError(t, err)

@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
-	"github.com/filecoin-project/go-address"
 	rpcAuth "github.com/filecoin-project/go-jsonrpc/auth"
 
 	"github.com/filecoin-project/venus-auth/auth"
@@ -18,16 +18,18 @@ import (
 
 type AuthClient struct {
 	// key: username, v: user
-	users map[string]*auth.OutputUser
-
-	// key: miner address, v: username
-	miners map[string]string
+	users  map[string]*auth.OutputUser
+	lkUser sync.RWMutex
 
 	// key: signer address, v: username
-	signers map[string][]string
+	signers  map[string][]string
+	lkSigner sync.RWMutex
 }
 
-func (m AuthClient) GetUser(req *auth.GetUserRequest) (*auth.OutputUser, error) {
+func (m *AuthClient) GetUser(req *auth.GetUserRequest) (*auth.OutputUser, error) {
+	m.lkUser.Lock()
+	defer m.lkUser.Unlock()
+
 	if user, ok := m.users[req.Name]; ok {
 		return user, nil
 	}
@@ -36,24 +38,30 @@ func (m AuthClient) GetUser(req *auth.GetUserRequest) (*auth.OutputUser, error) 
 }
 
 func (m *AuthClient) GetUserByMiner(req *auth.GetUserByMinerRequest) (*auth.OutputUser, error) {
-	username, ok := m.miners[req.Miner]
-	if !ok {
-		return nil, errors.New("not exist")
-	}
+	m.lkUser.Lock()
+	defer m.lkUser.Unlock()
 
-	if user, ok := m.users[username]; ok {
-		return user, nil
+	for _, user := range m.users {
+		for _, miner := range user.Miners {
+			if req.Miner == miner.Miner {
+				return user, nil
+			}
+		}
 	}
 
 	return nil, errors.New("not exist")
 }
 
 func (m *AuthClient) GetUserBySigner(signer string) (auth.ListUsersResponse, error) {
+	m.lkSigner.Lock()
 	names, ok := m.signers[signer]
+	m.lkSigner.Unlock()
 	if !ok {
 		return nil, errors.New("not exist")
 	}
 
+	m.lkUser.Lock()
+	defer m.lkUser.Unlock()
 	users := make(auth.ListUsersResponse, 0)
 	for _, name := range names {
 		if user, ok := m.users[name]; ok {
@@ -64,13 +72,15 @@ func (m *AuthClient) GetUserBySigner(signer string) (auth.ListUsersResponse, err
 	return users, nil
 }
 
-func (m AuthClient) RegisterSigner(userName, signer string) (bool, error) {
+func (m *AuthClient) RegisterSigner(userName, signer string) (bool, error) {
 	_, err := m.GetUser(&auth.GetUserRequest{Name: userName})
 	if err != nil {
 		return false, err
 	}
 
 	bCreate := true
+	m.lkSigner.Lock()
+	defer m.lkSigner.Unlock()
 	names, ok := m.signers[signer]
 	if !ok {
 		m.signers[signer] = []string{userName}
@@ -92,14 +102,15 @@ func (m AuthClient) RegisterSigner(userName, signer string) (bool, error) {
 	return bCreate, nil
 }
 
-func (m AuthClient) UnregisterSigner(userName, signer string) (bool, error) {
-	bDel := false
-
+func (m *AuthClient) UnregisterSigner(userName, signer string) (bool, error) {
 	_, err := m.GetUser(&auth.GetUserRequest{Name: userName})
 	if err != nil {
 		return false, err
 	}
 
+	bDel := false
+	m.lkSigner.Lock()
+	defer m.lkSigner.Unlock()
 	names, ok := m.signers[signer]
 	if ok {
 		idx := 0
@@ -118,15 +129,18 @@ func (m AuthClient) UnregisterSigner(userName, signer string) (bool, error) {
 }
 
 func (m *AuthClient) AddMockUser(users ...*auth.OutputUser) {
+	m.lkUser.Lock()
+	defer m.lkUser.Unlock()
+
 	for _, user := range users {
 		m.users[user.Name] = user
-		for _, miner := range user.Miners {
-			m.miners[miner.Miner] = miner.User
-		}
 	}
 }
 
 func (m *AuthClient) GetUserLimit(username, service, api string) (*ratelimit.Limit, error) {
+	m.lkUser.Lock()
+	defer m.lkUser.Unlock()
+
 	if _, ok := m.users[username]; !ok {
 		return nil, fmt.Errorf("%s not exist", username)
 	}
@@ -139,10 +153,8 @@ func (m *AuthClient) Verify(ctx context.Context, token string) ([]rpcAuth.Permis
 }
 
 func NewMockAuthClient() *AuthClient {
-	address.CurrentNetwork = address.Mainnet
 	return &AuthClient{
 		users:   make(map[string]*auth.OutputUser),
-		miners:  make(map[string]string),
 		signers: make(map[string][]string),
 	}
 }
