@@ -67,6 +67,7 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 	otherChannels := channels[1:]
 	respCh := make(chan *types.ResponseEvent)
 	errRespCount := new(int64)
+	sendRespOnce := sync.Once{}
 	for _, channel := range otherChannels {
 		go func(channel *ChannelInfo) {
 			respEvent, err := e.sendOnce(ctx, channel, method, payload)
@@ -81,7 +82,10 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 				}
 				return
 			}
-			respCh <- respEvent
+			// only send once, avoid goroutine leak
+			sendRespOnce.Do(func() {
+				respCh <- respEvent
+			})
 		}(channel)
 	}
 
