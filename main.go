@@ -203,7 +203,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	}
 
 	mux := mux.NewRouter()
-	//v1api
+	// v2api(newest api)
 	rpcServerV2 := jsonrpc.NewServer()
 	rpcServerV2.Register("Gateway", gatewayAPI)
 	mux.Handle("/rpc/v2", rpcServerV2)
@@ -212,10 +212,6 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	rpcServerV1 := jsonrpc.NewServer()
 	rpcServerV1.Register("Gateway", lowerFullNode)
 	mux.Handle("/rpc/v1", rpcServerV1)
-
-	rpcServerV0 := jsonrpc.NewServer()
-	rpcServerV0.Register("Gateway", lowerFullNode)
-	mux.Handle("/rpc/v0", rpcServerV0)
 
 	mux.PathPrefix("/").Handler(http.DefaultServeMux)
 

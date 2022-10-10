@@ -12,8 +12,6 @@ import (
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
 	"github.com/ipfs-force-community/metrics/ratelimit"
-
-	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
 type AuthClient struct {
@@ -72,60 +70,73 @@ func (m *AuthClient) GetUserBySigner(signer string) (auth.ListUsersResponse, err
 	return users, nil
 }
 
-func (m *AuthClient) RegisterSigner(userName, signer string) (bool, error) {
+func (m *AuthClient) RegisterSigners(userName string, signers []string) error {
 	_, err := m.GetUser(&auth.GetUserRequest{Name: userName})
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	bCreate := true
 	m.lkSigner.Lock()
 	defer m.lkSigner.Unlock()
-	names, ok := m.signers[signer]
-	if !ok {
-		m.signers[signer] = []string{userName}
-	} else {
-		for _, name := range names {
-			if name == userName {
-				bCreate = false
-				break
+	for _, signer := range signers {
+		names, ok := m.signers[signer]
+		if !ok {
+			m.signers[signer] = []string{userName}
+		} else {
+			bCreate := true
+			for _, name := range names {
+				if name == userName {
+					bCreate = false
+					break
+				}
 			}
-		}
 
-		if bCreate {
-			names = append(names, userName)
-			m.signers[signer] = names
+			if bCreate {
+				names = append(names, userName)
+				m.signers[signer] = names
+			}
 		}
 	}
 
-	// The original intention of venus-auth is to return true for creation and false for update
-	return bCreate, nil
+	return nil
 }
 
-func (m *AuthClient) UnregisterSigner(userName, signer string) (bool, error) {
+func (m *AuthClient) UnregisterSigners(userName string, signers []string) error {
 	_, err := m.GetUser(&auth.GetUserRequest{Name: userName})
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	bDel := false
 	m.lkSigner.Lock()
 	defer m.lkSigner.Unlock()
-	names, ok := m.signers[signer]
-	if ok {
-		idx := 0
-		for _, name := range names {
-			if name != userName {
-				names[idx] = name
-				idx++
-			} else {
-				bDel = true
+	for _, signer := range signers {
+		names, ok := m.signers[signer]
+		if ok {
+			idx := 0
+			for _, name := range names {
+				if name != userName {
+					names[idx] = name
+					idx++
+				}
 			}
+			m.signers[signer] = names[:idx]
 		}
-		m.signers[signer] = names[:idx]
 	}
 
-	return bDel, nil
+	return nil
+}
+
+func (m *AuthClient) VerifyUsers(names []string) error {
+	m.lkUser.Lock()
+	defer m.lkUser.Unlock()
+
+	for _, name := range names {
+		if _, ok := m.users[name]; !ok {
+			return errors.New("not exist")
+		}
+	}
+
+	return nil
 }
 
 func (m *AuthClient) AddMockUser(users ...*auth.OutputUser) {
@@ -159,6 +170,6 @@ func NewMockAuthClient() *AuthClient {
 	}
 }
 
-var _ types.IAuthClient = (*AuthClient)(nil)
+var _ jwtclient.IAuthClient = (*AuthClient)(nil)
 var _ ratelimit.ILimitFinder = (*AuthClient)(nil)
 var _ jwtclient.IJwtAuthClient = (*AuthClient)(nil)
