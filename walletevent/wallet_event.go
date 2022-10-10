@@ -19,7 +19,6 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
 
-	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
 	wcrypto "github.com/filecoin-project/venus/pkg/crypto"
@@ -38,14 +37,14 @@ var _ v2API.IWalletClient = (*WalletEventStream)(nil)
 type WalletEventStream struct {
 	walletConnMgr IWalletConnMgr
 	cfg           *types.RequestConfig
-	authClient    types.IAuthClient
+	authClient    jwtclient.IAuthClient
 	randBytes     []byte
 	*types.BaseEventStream
 
 	disableVerifyWalletAddrs bool
 }
 
-func NewWalletEventStream(ctx context.Context, authClient types.IAuthClient, cfg *types.RequestConfig, diableVerifyWalletAddrs bool) *WalletEventStream {
+func NewWalletEventStream(ctx context.Context, authClient jwtclient.IAuthClient, cfg *types.RequestConfig, diableVerifyWalletAddrs bool) *WalletEventStream {
 	walletEventStream := &WalletEventStream{
 		walletConnMgr:            newWalletConnMgr(),
 		BaseEventStream:          types.NewBaseEventStream(ctx, cfg),
@@ -73,17 +72,12 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 
 	ctx, _ = tag.New(ctx, tag.Upsert(metrics.WalletAccountKey, walletAccount), tag.Upsert(metrics.IPKey, ip))
 
-	// Account must exist in venus-auth
-	_, err := w.authClient.GetUser(&auth.GetUserRequest{Name: walletAccount})
+	// Verify account: must exist in venus-auth
+	accounts := policy.SupportAccounts
+	accounts = append(accounts, walletAccount)
+	err := w.authClient.VerifyUsers(accounts)
 	if err != nil {
-		return nil, fmt.Errorf("check user %s: %w", walletAccount, err)
-	}
-
-	for _, account := range policy.SupportAccounts {
-		_, err := w.authClient.GetUser(&auth.GetUserRequest{Name: account})
-		if err != nil {
-			return nil, fmt.Errorf("check user %s: %w", account, err)
-		}
+		return nil, fmt.Errorf("verify user %v failed: %w", accounts, err)
 	}
 
 	go func() {
@@ -96,10 +90,13 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 		}
 
 		// register signer address to venus-auth
-		w.registerSignerAddress(ctx, walletAccount, addrs...)
+		if err := w.registerSignerAddress(ctx, walletAccount, addrs...); err != nil {
+			log.Errorf("register %v for %s failed: %w", addrs, walletAccount, err)
+			return
+		}
+		log.Infof("register %v for %s success", addrs, walletAccount)
 
 		walletChannelInfo := newWalletChannelInfo(channel, addrs, policy.SignBytes)
-
 		err = w.walletConnMgr.addNewConn(walletAccount, policy, walletChannelInfo)
 		if err != nil {
 			log.Errorf("validate address error %v", err)
@@ -140,7 +137,12 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 				signers[idx] = addr
 				idx++
 			}
-			w.unregisterSignerAddress(ctx, walletAccount, signers...)
+
+			if err := w.unregisterSignerAddress(ctx, walletAccount, signers...); err != nil {
+				log.Errorf("unregister %v for %s failed: %w", signers, walletAccount, err)
+			} else {
+				log.Infof("unregister %v for %s success", signers, walletAccount)
+			}
 		}
 	}()
 	return out, nil
@@ -193,7 +195,11 @@ func (w *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedT
 	log.Infof("wallet %s add address %v successful!", walletAccount, addrs)
 
 	// register signer address to venus-auth
-	w.registerSignerAddress(ctx, walletAccount, addrs...)
+	if err := w.registerSignerAddress(ctx, walletAccount, addrs...); err != nil {
+		log.Errorf("register %v for %s failed: %w", addrs, walletAccount, err)
+		return err
+	}
+	log.Infof("register %v for %s success", addrs, walletAccount)
 
 	return nil
 }
@@ -217,7 +223,11 @@ func (w *WalletEventStream) RemoveAddress(ctx context.Context, channelId sharedT
 	log.Infof("wallet %s remove address %v", walletAccount, addrs)
 
 	// unregister signer address to venus-auth
-	w.unregisterSignerAddress(ctx, walletAccount, addrs...)
+	if err := w.unregisterSignerAddress(ctx, walletAccount, addrs...); err != nil {
+		log.Errorf("unregister %v for %s failed: %w", addrs, walletAccount, err)
+		return err
+	}
+	log.Infof("unregister %v for %s success", addrs, walletAccount)
 
 	return nil
 }
@@ -371,42 +381,32 @@ func (w *WalletEventStream) verifyAddress(ctx context.Context, addr address.Addr
 	return nil
 }
 
-func (w *WalletEventStream) registerSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) {
+func (w *WalletEventStream) registerSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) error {
+	signers := make([]string, 0)
 	for _, addr := range addrs {
 		if !w.isSignerAddress(addr) {
-			log.Errorf("%s is not a signable address", addr.String())
+			log.Warnf("%s is not a signable address", addr.String())
 			continue
 		}
 
-		bCreate, err := w.authClient.RegisterSigner(walletAccount, addr.String())
-		if err != nil {
-			log.Errorf("register %s to venus-auth: %w", addr.String(), err)
-			continue
-		}
-
-		opStr := "create"
-		if !bCreate {
-			opStr = "update"
-		}
-		log.Infof("venus-auth %s %s for user %s success.", opStr, addr.String(), walletAccount)
+		signers = append(signers, addr.String())
 	}
+
+	return w.authClient.RegisterSigners(walletAccount, signers)
 }
 
-func (w *WalletEventStream) unregisterSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) {
+func (w *WalletEventStream) unregisterSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) error {
+	signers := make([]string, 0)
 	for _, addr := range addrs {
 		if !w.isSignerAddress(addr) {
-			log.Errorf("%s is not a signable address", addr.String())
+			log.Warnf("%s is not a signable address", addr.String())
 			continue
 		}
 
-		_, err := w.authClient.UnregisterSigner(walletAccount, addr.String())
-		if err != nil {
-			log.Errorf("unregister %s for %s: %w", addr.String(), walletAccount, err)
-			continue
-		}
-
-		log.Infof("venus-auth unregister %s for user %s success.", addr.String(), walletAccount)
+		signers = append(signers, addr.String())
 	}
+
+	return w.authClient.UnregisterSigners(walletAccount, signers)
 }
 
 func GetSignData(datas ...[]byte) []byte {

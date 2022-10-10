@@ -9,12 +9,10 @@ import (
 	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/core"
 	"github.com/filecoin-project/venus-auth/jwtclient"
-
-	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
 type AuthMinerValidator struct {
-	authClient types.IAuthClient
+	authClient jwtclient.IAuthClient
 }
 
 type IAuthMinerValidator interface {
@@ -42,6 +40,6 @@ func (amv *AuthMinerValidator) Validate(ctx context.Context, miner address.Addre
 	return nil
 }
 
-func NewMinerValidator(authClient types.IAuthClient) IAuthMinerValidator {
+func NewMinerValidator(authClient jwtclient.IAuthClient) IAuthMinerValidator {
 	return &AuthMinerValidator{authClient: authClient}
 }

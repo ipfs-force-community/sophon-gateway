@@ -113,10 +113,10 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	rpcServerV1.Register("Gateway", lowerFullNode)
 	mux.Handle("/rpc/v1", rpcServerV1)
 
-	//v0api
-	rpcServerV0 := jsonrpc.NewServer()
-	rpcServerV0.Register("Gateway", lowerFullNode)
-	mux.Handle("/rpc/v0", rpcServerV0)
+	//v0api, once history
+	//rpcServerV0 := jsonrpc.NewServer()
+	//rpcServerV0.Register("Gateway", lowerFullNode)
+	//mux.Handle("/rpc/v0", rpcServerV0)
 
 	mux.PathPrefix("/").Handler(http.DefaultServeMux)
 
