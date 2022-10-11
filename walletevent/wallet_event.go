@@ -129,20 +129,23 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 		stats.Record(ctx, metrics.WalletUnregister.M(1))
 		if err = w.walletConnMgr.removeConn(walletAccount, walletChannelInfo); err != nil {
 			log.Errorf("remove Conn error %v", err)
-		} else {
-			// unregister all signer of this account
-			signers := make([]address.Address, len(walletChannelInfo.addrs))
-			idx := 0
-			for addr := range walletChannelInfo.addrs {
-				signers[idx] = addr
-				idx++
-			}
-
-			if err := w.unregisterSignerAddress(ctx, walletAccount, signers...); err != nil {
-				log.Errorf("unregister %v for %s failed: %w", signers, walletAccount, err)
-			} else {
-				log.Infof("unregister %v for %s success", signers, walletAccount)
-			}
+		} else { // nolint
+			// The records bound to the system will not have a lot of records, and there will be no additional effects.
+			// There are expenses and other potential risks for each disconnection of betting sales.
+			// Therefore, it is not used first.
+			//// unregister all signer of this account
+			//signers := make([]address.Address, len(walletChannelInfo.addrs))
+			//idx := 0
+			//for addr := range walletChannelInfo.addrs {
+			//	signers[idx] = addr
+			//	idx++
+			//}
+			//
+			//if err := w.unregisterSignerAddress(ctx, walletAccount, signers...); err != nil {
+			//	log.Errorf("unregister %v for %s failed: %w", signers, walletAccount, err)
+			//} else {
+			//	log.Infof("unregister %v for %s success", signers, walletAccount)
+			//}
 		}
 	}()
 	return out, nil
@@ -222,12 +225,15 @@ func (w *WalletEventStream) RemoveAddress(ctx context.Context, channelId sharedT
 
 	log.Infof("wallet %s remove address %v", walletAccount, addrs)
 
-	// unregister signer address to venus-auth
-	if err := w.unregisterSignerAddress(ctx, walletAccount, addrs...); err != nil {
-		log.Errorf("unregister %v for %s failed: %w", addrs, walletAccount, err)
-		return err
-	}
-	log.Infof("unregister %v for %s success", addrs, walletAccount)
+	// The records bound to the system will not have a lot of records, and there will be no additional effects.
+	// There are expenses and other potential risks for each disconnection of betting sales.
+	// Therefore, it is not used first.
+	//// unregister signer address to venus-auth
+	//if err := w.unregisterSignerAddress(ctx, walletAccount, addrs...); err != nil {
+	//	log.Errorf("unregister %v for %s failed: %w", addrs, walletAccount, err)
+	//	return err
+	//}
+	//log.Infof("unregister %v for %s success", addrs, walletAccount)
 
 	return nil
 }
@@ -395,6 +401,7 @@ func (w *WalletEventStream) registerSignerAddress(ctx context.Context, walletAcc
 	return w.authClient.RegisterSigners(walletAccount, signers)
 }
 
+// nolint: unused
 func (w *WalletEventStream) unregisterSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) error {
 	signers := make([]string, 0)
 	for _, addr := range addrs {
