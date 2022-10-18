@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
@@ -66,20 +65,23 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 	log.Warnf("the first channel is fail, try to other channel")
 	otherChannels := channels[1:]
 	respCh := make(chan *types.ResponseEvent)
-	errRespCount := new(int64)
+	lk := sync.Mutex{}
+	errRespCount := 0
 	respOnce := sync.Once{}
 	for _, channel := range otherChannels {
 		go func(channel *ChannelInfo) {
 			respEvent, err := e.sendOnce(ctx, channel, method, payload)
 			if err != nil {
-				atomic.AddInt64(errRespCount, 1)
-				log.Errorf("send request %s to %s failed %v", method, channel.Ip, err)
+				lk.Lock()
+				errRespCount++
+				log.Errorf("send request %s failed %v", method, err)
 				// all requests failed
-				if atomic.LoadInt64(errRespCount) == int64(len(otherChannels)) {
+				if errRespCount == len(otherChannels) {
 					respCh <- &types.ResponseEvent{
-						Error: fmt.Sprintf("all request failed: %s %s %v", method, channel.Ip, err),
+						Error: fmt.Sprintf("all request failed: %s %v", method, err),
 					}
 				}
+				lk.Unlock()
 				return
 			}
 			// only send once, avoid goroutine leak
