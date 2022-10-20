@@ -63,7 +63,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 	}
 	ip, _ := jwtclient.CtxGetTokenLocation(ctx) //todo sure exit?
 	out := make(chan *types2.RequestEvent, w.cfg.RequestQueueSize)
-
+	walletLog := log.With("account", walletAccount).With("ip", ip)
 	ctx, _ = tag.New(ctx, tag.Upsert(metrics.WalletAccountKey, walletAccount), tag.Upsert(metrics.IPKey, ip))
 
 	go func() {
@@ -72,7 +72,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 		//todo validate the account exit or not
 		addrs, err := w.getValidatedAddress(ctx, channel, policy.SignBytes, walletAccount)
 		if err != nil {
-			log.Error(err)
+			walletLog.Errorf("unable to value address %v", err)
 			return
 		}
 
@@ -80,11 +80,11 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 
 		err = w.walletConnMgr.addNewConn(walletAccount, policy, walletChannelInfo)
 		if err != nil {
-			log.Errorf("validate address error %v", err)
+			walletLog.Errorf("validate address error %v", err)
 			return
 		}
 
-		log.Infof("add new connections %s %s", walletAccount, walletChannelInfo.ChannelId)
+		walletLog.Infof("add new connections %s", walletChannelInfo.ChannelId)
 		//todo rescan address to add new address or remove
 
 		stats.Record(ctx, metrics.WalletRegister.M(1))
@@ -94,7 +94,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 			ChannelId: walletChannelInfo.ChannelId,
 		})
 		if err != nil {
-			log.Errorf("marshal failed %v", err)
+			walletLog.Errorf("marshal failed %v", err)
 			return
 		}
 
@@ -109,7 +109,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 		<-ctx.Done()
 		stats.Record(ctx, metrics.WalletUnregister.M(1))
 		if err = w.walletConnMgr.removeConn(walletAccount, walletChannelInfo); err != nil {
-			log.Errorf("validate address error %v", err)
+			walletLog.Errorf("remove connect error %v", err)
 		}
 	}()
 	return out, nil
