@@ -63,11 +63,12 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 
 	//code below unable to work as expect , because there no way to detect network issue in gateway,
 	log.Warnf("the first channel is fail, try to other channel")
+
+	var lk sync.Mutex
+	var respOnce sync.Once
 	otherChannels := channels[1:]
 	respCh := make(chan *types.ResponseEvent)
-	lk := sync.Mutex{}
 	errRespCount := 0
-	respOnce := sync.Once{}
 	for _, channel := range otherChannels {
 		go func(channel *ChannelInfo) {
 			respEvent, err := e.sendOnce(ctx, channel, method, payload)
