@@ -35,7 +35,8 @@ func NewProofHander(t *testing.T,
 	expectEpoch abi.ChainEpoch,
 	expectVersion network.Version,
 	expectProof []builtin.PoStProof,
-	fail bool) types.ProofHandler {
+	fail bool,
+) types.ProofHandler {
 	return &proofhandler{
 		t:                t,
 		expectInfos:      expectInfos,

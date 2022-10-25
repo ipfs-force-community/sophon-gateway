@@ -109,7 +109,7 @@ var runCmd = &cli.Command{
 		parseFlag(cctx, cfg)
 
 		if !hasRepo {
-			if err := os.MkdirAll(repoPath, 0755); err != nil {
+			if err := os.MkdirAll(repoPath, 0o755); err != nil {
 				return err
 			}
 			if err := config.WriteConfig(filepath.Join(repoPath, config.ConfigFile), cfg); err != nil {
@@ -175,7 +175,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	proofStream := proofevent.NewProofEventStream(ctx, minerValidator, requestCfg)
 	marketStream := marketevent.NewMarketEventStream(ctx, minerValidator, &types.RequestConfig{
 		RequestQueueSize: 30,
-		RequestTimeout:   time.Hour * 7, //wait seven hour to do unseal
+		RequestTimeout:   time.Hour * 7, // wait seven hour to do unseal
 		ClearInterval:    time.Minute * 5,
 	})
 
@@ -220,7 +220,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		return fmt.Errorf("failed to generate local jwt client: %v", err)
 	}
 	// save local token to token file
-	err = ioutil.WriteFile(path.Join(repoPath, "token"), localToken, 0644)
+	err = ioutil.WriteFile(path.Join(repoPath, "token"), localToken, 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to save local token to token file: %w", err)
 	}

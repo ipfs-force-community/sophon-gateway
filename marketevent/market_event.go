@@ -101,12 +101,11 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 		} // no response
 		<-ctx.Done()
 		m.connLk.Lock()
-		defer m.connLk.Unlock() //connection read and remove should in one lock
+		defer m.connLk.Unlock() // connection read and remove should in one lock
 		channelStore := m.minerConnections[mAddr]
 		_ = channelStore.removeChanel(channel)
 		if channelStore.empty() {
 			delete(m.minerConnections, mAddr)
-
 		}
 		log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
 	}()

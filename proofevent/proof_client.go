@@ -71,7 +71,7 @@ func (e *ProofEvent) ListenProofRequest(ctx context.Context) {
 		}
 
 		e.log.Info("restarting listenProofRequest")
-		//try clear ready channel
+		// try clear ready channel
 		select {
 		case <-e.readyCh:
 		default:

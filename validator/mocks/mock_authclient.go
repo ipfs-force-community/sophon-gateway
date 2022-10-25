@@ -170,6 +170,8 @@ func NewMockAuthClient() *AuthClient {
 	}
 }
 
-var _ jwtclient.IAuthClient = (*AuthClient)(nil)
-var _ ratelimit.ILimitFinder = (*AuthClient)(nil)
-var _ jwtclient.IJwtAuthClient = (*AuthClient)(nil)
+var (
+	_ jwtclient.IAuthClient    = (*AuthClient)(nil)
+	_ ratelimit.ILimitFinder   = (*AuthClient)(nil)
+	_ jwtclient.IJwtAuthClient = (*AuthClient)(nil)
+)

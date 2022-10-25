@@ -49,7 +49,7 @@ type IWalletConnMgr interface {
 var _ IWalletConnMgr = (*walletConnMgr)(nil)
 
 type walletConnMgr struct {
-	infoLk      sync.Mutex //todo a big lock here , maybe need a smaller lock
+	infoLk      sync.Mutex // todo a big lock here , maybe need a smaller lock
 	walletInfos map[string]*WalletInfo
 }
 
@@ -98,7 +98,6 @@ func (w *walletConnMgr) addNewConn(walletAccount string, policy *types2.WalletRe
 		"signBytes", policy.SignBytes,
 	)
 	return nil
-
 }
 
 func (w *walletConnMgr) getConn(walletAccount string, channelID sharedTypes.UUID) (*walletChannelInfo, error) {

@@ -26,7 +26,7 @@ func TestListenMarketEvent(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		minerAddr := address.NewForTestGetter()()
-		//register
+		// register
 		marketEvent := setupMarketEvent(t, supportAccount, minerAddr)
 
 		client := NewMarketEventClient(marketEvent, minerAddr, nil, log.With())
@@ -51,7 +51,7 @@ func TestListenMarketEvent(t *testing.T) {
 		defer cancel()
 		addrGetter := address.NewForTestGetter()
 		minerAddr := addrGetter()
-		//register
+		// register
 		marketEvent := setupMarketEvent(t, supportAccount, minerAddr)
 		client := NewMarketEventClient(marketEvent, minerAddr, nil, log.With())
 		err := client.listenMarketRequestOnce(jwtclient.CtxWithName(ctx, supportAccount))
@@ -224,7 +224,7 @@ func TestListMarketConnectionsState(t *testing.T) {
 	defer cancel()
 	walletAccount := "client_account"
 	minerAddr := address.NewForTestGetter()()
-	//register
+	// register
 	marketEvent := setupMarketEvent(t, walletAccount, minerAddr)
 	handler := testhelper.NewMarketHandler(t)
 	client := NewMarketEventClient(marketEvent, minerAddr, handler, log.With())

@@ -72,7 +72,7 @@ func (e *MarketEvent) ListenMarketRequest(ctx context.Context) {
 		}
 
 		e.log.Info("restarting listen market event ")
-		//try clear ready channel
+		// try clear ready channel
 		select {
 		case <-e.readyCh:
 		default:

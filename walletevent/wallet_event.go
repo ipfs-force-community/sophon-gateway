@@ -67,7 +67,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 		return nil, errors.New("unable to get account name in method ListenWalletEvent request")
 	}
 
-	ip, _ := jwtclient.CtxGetTokenLocation(ctx) //todo sure exit?
+	ip, _ := jwtclient.CtxGetTokenLocation(ctx) // todo sure exit?
 	out := make(chan *sharedGatewayTypes.RequestEvent, w.cfg.RequestQueueSize)
 
 	ctx, _ = tag.New(ctx, tag.Upsert(metrics.WalletAccountKey, walletAccount), tag.Upsert(metrics.IPKey, ip))
@@ -104,7 +104,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 		}
 
 		log.Infof("add new connections %s %s", walletAccount, walletChannelInfo.ChannelId)
-		//todo rescan address to add new address or remove
+		// todo rescan address to add new address or remove
 
 		stats.Record(ctx, metrics.WalletRegister.M(1))
 		stats.Record(ctx, metrics.WalletSource.M(1))
@@ -123,7 +123,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 			CreateTime: time.Now(),
 			Payload:    connectBytes,
 			Result:     nil,
-		} //not response
+		} // not response
 
 		<-ctx.Done()
 		stats.Record(ctx, metrics.WalletUnregister.M(1))

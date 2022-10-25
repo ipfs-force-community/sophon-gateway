@@ -63,7 +63,7 @@ func TestListenWalletEvent(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		walletEvent := setupWalletEvent(t, walletAccount, supportAccount...)
-		//register
+		// register
 		client := setupClient(t, ctx, walletAccount, supportAccount, walletEvent)
 		err := client.walletEventClient.listenWalletRequestOnce(ctx)
 		require.Contains(t, err.Error(), "unable to get account name in method ListenWalletEvent request")
@@ -123,7 +123,7 @@ func TestAddNewAddress(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx = jwtclient.CtxWithName(ctx, walletAccount)
-	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1}) //allow dup add
+	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1}) // allow dup add
 	require.NoError(t, err)
 
 	ctx = jwtclient.CtxWithName(ctx, walletAccount)
@@ -192,7 +192,7 @@ func TestRemoveNewAddressAndWalletHas(t *testing.T) {
 
 func TestWalletSign(t *testing.T) {
 	walletAccount := "walletAccount"
-	//register
+	// register
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -228,7 +228,6 @@ func TestWalletSign(t *testing.T) {
 		})
 		require.EqualError(t, err, "mock error")
 	}
-
 }
 
 func setupWalletEvent(t *testing.T, walletAccount string, accounts ...string) *WalletEventStream {

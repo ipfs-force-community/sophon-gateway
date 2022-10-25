@@ -136,7 +136,7 @@ func TestMarketAPI(t *testing.T) {
 		require.Len(t, connectsState, 1)
 		require.Equal(t, mAddr, connectsState[0].Addr)
 
-		//add another
+		// add another
 		marketEventClient2 := marketevent.NewMarketEventClient(walletEventClient, mAddr2, handler, logging.Logger("test").With())
 		go marketEventClient2.ListenMarketRequest(ctx)
 		marketEventClient2.WaitReady(ctx)

@@ -90,7 +90,7 @@ func (e *WalletEventClient) ListenWalletRequest(ctx context.Context) {
 			return
 		}
 		e.log.Info("restarting listenWalletRequestOnce")
-		//try clear ready channel
+		// try clear ready channel
 		select {
 		case <-e.readyCh:
 		default:
@@ -130,7 +130,7 @@ func (e *WalletEventClient) listenWalletRequestOnce(ctx context.Context) error {
 			e.channel = req.ChannelId
 			e.log.Infof("connect to server success %v", req.ChannelId)
 			e.readyCh <- struct{}{}
-			//do not response
+			// do not response
 		case "WalletList":
 			go e.walletList(ctx, event.ID)
 		case "WalletSign":

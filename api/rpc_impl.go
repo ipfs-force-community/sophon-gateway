@@ -34,8 +34,10 @@ type IGatewayAPI interface {
 	v2API.IWalletServiceProvider
 }
 
-var _ v2API.IGateway = (*GatewayAPIImpl)(nil)
-var _ IGatewayAPI = (*GatewayAPIImpl)(nil)
+var (
+	_ v2API.IGateway = (*GatewayAPIImpl)(nil)
+	_ IGatewayAPI    = (*GatewayAPIImpl)(nil)
+)
 
 type GatewayAPIImpl struct {
 	v2API.IProofServiceProvider

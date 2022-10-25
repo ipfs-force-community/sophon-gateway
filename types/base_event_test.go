@@ -34,7 +34,7 @@ func TestSendRequest(t *testing.T) {
 		client := setupClient(t, eventSteam, "127.1.1.1")
 		go client.start(ctx)
 		clients = append(clients, client)
-		var getConns = func() []*ChannelInfo {
+		getConns := func() []*ChannelInfo {
 			var channels []*ChannelInfo
 			for _, client := range clients {
 				channels = append(channels, client.channel)
@@ -45,7 +45,7 @@ func TestSendRequest(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	//test for bug https://github.com/filecoin-project/venus/issues/4992
+	// test for bug https://github.com/filecoin-project/venus/issues/4992
 	t.Run("fix deadlock", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -59,7 +59,7 @@ func TestSendRequest(t *testing.T) {
 		client := setupClient(t, eventSteam, "127.1.1.1")
 		go client.start(ctx)
 		clients = append(clients, client)
-		var getConns = func() []*ChannelInfo {
+		getConns := func() []*ChannelInfo {
 			var channels []*ChannelInfo
 			for _, client := range clients {
 				channels = append(channels, client.channel)
@@ -91,7 +91,7 @@ func TestSendRequest(t *testing.T) {
 			go client.start(ctx)
 			clients = append(clients, client)
 		}
-		var getConns = func() []*ChannelInfo {
+		getConns := func() []*ChannelInfo {
 			var channels []*ChannelInfo
 			for _, client := range clients {
 				channels = append(channels, client.channel)
@@ -112,7 +112,7 @@ func TestSendRequest(t *testing.T) {
 		result := &mockResult{}
 
 		var clients []*mockClient
-		var getConns = func() []*ChannelInfo {
+		getConns := func() []*ChannelInfo {
 			var channels []*ChannelInfo
 			for _, client := range clients {
 				channels = append(channels, client.channel)
@@ -136,7 +136,7 @@ func TestSendRequest(t *testing.T) {
 		client := setupClient(t, eventSteam, "127.1.1.1")
 		go client.start(ctx)
 		clients = append(clients, client)
-		var getConns = func() []*ChannelInfo {
+		getConns := func() []*ChannelInfo {
 			var channels []*ChannelInfo
 			for _, client := range clients {
 				channels = append(channels, client.channel)
@@ -167,7 +167,7 @@ func TestSendRequest(t *testing.T) {
 		go client2.start(ctx)
 		clients = append(clients, client2)
 
-		var getConns = func() []*ChannelInfo {
+		getConns := func() []*ChannelInfo {
 			var channels []*ChannelInfo
 			for _, client := range clients {
 				channels = append(channels, client.channel)
@@ -195,7 +195,7 @@ func TestSendRequest(t *testing.T) {
 			clients = append(clients, client)
 		}
 
-		var getConns = func() []*ChannelInfo {
+		getConns := func() []*ChannelInfo {
 			var channels []*ChannelInfo
 			for _, client := range clients {
 				channels = append(channels, client.channel)

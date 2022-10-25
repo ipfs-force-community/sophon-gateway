@@ -184,8 +184,7 @@ func TestProofAPI(t *testing.T) {
 	})
 }
 
-type timeoutHandler struct {
-}
+type timeoutHandler struct{}
 
 func (*timeoutHandler) ComputeProof(context.Context, []builtin.ExtendedSectorInfo, abi.PoStRandomness, abi.ChainEpoch, network.Version) ([]builtin.PoStProof, error) {
 	time.Sleep(time.Hour)

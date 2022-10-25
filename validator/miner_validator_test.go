@@ -59,5 +59,4 @@ func TestAuthMinerValidator_Validate(t *testing.T) {
 
 		require.Error(t, validator.Validate(ctx, notExistsMiner))
 	}
-
 }
