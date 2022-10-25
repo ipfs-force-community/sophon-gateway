@@ -88,7 +88,6 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 		//todo rescan address to add new address or remove
 
 		stats.Record(ctx, metrics.WalletRegister.M(1))
-		stats.Record(ctx, metrics.WalletSource.M(1))
 
 		connectBytes, err := json.Marshal(types2.ConnectedCompleted{
 			ChannelId: walletChannelInfo.ChannelId,
