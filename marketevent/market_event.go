@@ -61,7 +61,7 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 	}
 
 	out := make(chan *types2.RequestEvent, m.cfg.RequestQueueSize)
-	channel := types.NewChannelInfo(ip, out)
+	channel := types.NewChannelInfo(ctx, ip, out)
 	mAddr := policy.Miner
 	m.connLk.Lock()
 	var channelStore *channelStore

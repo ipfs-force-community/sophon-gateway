@@ -3,6 +3,7 @@ package proofevent
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -57,6 +58,39 @@ func TestListenProofEvent(t *testing.T) {
 				return
 			}
 		}
+	})
+
+	t.Run("data race", func(t *testing.T) {
+		proof := setupProofEvent(t, []address.Address{addr1})
+		ctx, cancel := context.WithCancel(context.Background())
+		proofClient := NewProofEvent(proof, addr1, testhelper.NewTimeoutProofHandler(time.Second), log.With())
+		go proofClient.ListenProofRequest(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"))
+		proofClient.WaitReady(ctx)
+
+		// fill request
+		wg := sync.WaitGroup{}
+		reqCount := gtypes.DefaultConfig().RequestQueueSize * 2
+		wg.Add(reqCount)
+		for i := 0; i < reqCount; i++ {
+			go func() {
+				wg.Done()
+				_, _ = proof.ComputeProof(context.Background(), addr1, []builtin.ExtendedSectorInfo{}, []byte{}, 100, 16)
+			}()
+		}
+		wg.Wait()
+
+		//cancel and got a close request channel
+		cancel()
+
+		wg2 := sync.WaitGroup{}
+		wg2.Add(reqCount)
+		go func() {
+			for i := 0; i < reqCount; i++ {
+				defer wg2.Done()
+				_, _ = proof.ComputeProof(context.Background(), addr1, []builtin.ExtendedSectorInfo{}, []byte{}, 100, 16)
+			}
+		}()
+		wg2.Wait()
 	})
 
 	t.Run("invalidate address", func(t *testing.T) {

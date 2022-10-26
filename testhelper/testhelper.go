@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/filecoin-project/specs-storage/storage"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
@@ -115,4 +116,19 @@ func (p *MarketHandler) SectorsUnsealPiece(ctx context.Context, pieceCid cid.Cid
 		return fmt.Errorf("mock error")
 	}
 	return nil
+}
+
+var _ types.ProofHandler = (*timeoutProofHandler)(nil)
+
+type timeoutProofHandler struct {
+	waitTime time.Duration
+}
+
+func NewTimeoutProofHandler(waitTime time.Duration) types.ProofHandler {
+	return &timeoutProofHandler{waitTime: waitTime}
+}
+
+func (h *timeoutProofHandler) ComputeProof(context.Context, []builtin.ExtendedSectorInfo, abi.PoStRandomness, abi.ChainEpoch, network.Version) ([]builtin.PoStProof, error) {
+	time.Sleep(h.waitTime)
+	return nil, nil
 }

@@ -67,7 +67,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *types
 	ctx, _ = tag.New(ctx, tag.Upsert(metrics.WalletAccountKey, walletAccount), tag.Upsert(metrics.IPKey, ip))
 
 	go func() {
-		channel := types.NewChannelInfo(ip, out)
+		channel := types.NewChannelInfo(ctx, ip, out)
 		defer close(out)
 		//todo validate the account exit or not
 		addrs, err := w.getValidatedAddress(ctx, channel, policy.SignBytes, walletAccount)
