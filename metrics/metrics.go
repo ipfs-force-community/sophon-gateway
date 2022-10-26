@@ -29,7 +29,6 @@ var (
 	WalletUnregister = stats.Int64("wallet_unregister", "Wallet unregister", stats.UnitDimensionless)
 	WalletNum        = stats.Int64("wallet_num", "Wallet count", stats.UnitDimensionless)
 	WalletAddressNum = stats.Int64("wallet_address_num", "Address owned by wallet", stats.UnitDimensionless)
-	WalletSource     = stats.Int64("wallet_source", "Wallet IP", stats.UnitDimensionless)
 	WalletAddAddr    = stats.Int64("wallet_add_addr", "Wallet add a new address", stats.UnitDimensionless)
 	WalletRemoveAddr = stats.Int64("wallet_remove_addr", "Wallet remove a new address", stats.UnitDimensionless)
 	WalletConnNum    = stats.Int64("wallet_conn_num", "Wallet connection count", stats.UnitDimensionless)
@@ -70,11 +69,6 @@ var (
 		Measure:     WalletAddressNum,
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{WalletAccountKey, WalletAddressKey},
-	}
-	walletSourceView = &view.View{
-		Measure:     WalletSource,
-		Aggregation: view.Count(),
-		TagKeys:     []tag.Key{WalletAccountKey, IPKey},
 	}
 	walletAddAddrView = &view.View{
 		Measure:     WalletAddAddr,
@@ -152,7 +146,6 @@ var views = []*view.View{
 	walletUnregisterView,
 	walletNumView,
 	walletAddressNumView,
-	walletSourceView,
 	walletAddAddrView,
 	walletRemoveAddrView,
 	walletConnNumView,
