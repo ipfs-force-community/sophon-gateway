@@ -219,13 +219,15 @@ func TestWalletAPI(t *testing.T) {
 		go walletEvent.ListenWalletRequest(ctx)
 		walletEvent.WaitReady(ctx)
 
-		has, err := sAPi.WalletHas(ctx, addr1)
+		// Including `walletEventClient.supportAccounts` and token-account of venus-wallet
+		accounts := []string{"defaultLocalToken", "admin"}
+		has, err := sAPi.WalletHas(ctx, addr1, accounts)
 		require.NoError(t, err)
 		require.True(t, has)
 
-		_, err = sAPi.WalletHas(ctx, addr2)
-		require.NotNil(t, err)
-		require.Contains(t, err.Error(), "not exist")
+		has, err = sAPi.WalletHas(ctx, addr2, accounts)
+		require.NoError(t, err)
+		require.False(t, has)
 	})
 
 	t.Run("wallet wallet sign and verify", func(t *testing.T) {
@@ -247,7 +249,7 @@ func TestWalletAPI(t *testing.T) {
 		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
 		go walletEvent.ListenWalletRequest(ctx)
 		walletEvent.WaitReady(ctx)
-		err = walletEvent.SupportAccount(ctx, "123")
+		err = walletEvent.SupportAccount(ctx, "newAccount")
 		require.NoError(t, err)
 
 		for i := 0; i < 5; i++ {
@@ -255,7 +257,7 @@ func TestWalletAPI(t *testing.T) {
 			_, err = rand.Read(msg[:])
 			require.NoError(t, err)
 			// todo 模拟 账户存在
-			sig, err := sAPi.WalletSign(ctx, addr1, msg[:], types2.MsgMeta{})
+			sig, err := sAPi.WalletSign(ctx, addr1, []string{"newAccount"}, msg[:], types2.MsgMeta{})
 			require.NoError(t, err)
 			err = wallet.Verify(ctx, addr1, sig, msg[:])
 			require.NoError(t, err)

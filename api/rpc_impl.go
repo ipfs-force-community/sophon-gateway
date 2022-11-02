@@ -75,12 +75,12 @@ func (g *GatewayAPIImpl) ListMinerConnection(ctx context.Context, addr address.A
 	return g.pe.ListMinerConnection(ctx, addr)
 }
 
-func (g *GatewayAPIImpl) WalletHas(ctx context.Context, addr address.Address) (bool, error) {
-	return g.we.WalletHas(ctx, addr)
+func (g *GatewayAPIImpl) WalletHas(ctx context.Context, addr address.Address, accounts []string) (bool, error) {
+	return g.we.WalletHas(ctx, addr, accounts)
 }
 
-func (g *GatewayAPIImpl) WalletSign(ctx context.Context, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
-	return g.we.WalletSign(ctx, addr, toSign, meta)
+func (g *GatewayAPIImpl) WalletSign(ctx context.Context, addr address.Address, accounts []string, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
+	return g.we.WalletSign(ctx, addr, accounts, toSign, meta)
 }
 
 func (g *GatewayAPIImpl) ListWalletInfo(ctx context.Context) ([]*types.WalletDetail, error) {

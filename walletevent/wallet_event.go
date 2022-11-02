@@ -89,21 +89,23 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 			return
 		}
 
-		// register signer address to venus-auth
-		if err := w.registerSignerAddress(ctx, walletAccount, addrs...); err != nil {
-			log.Errorf("register %v for %s failed: %w", addrs, walletAccount, err)
-			return
-		}
-		log.Infof("register %v for %s success", addrs, walletAccount)
-
 		walletChannelInfo := newWalletChannelInfo(channel, addrs, policy.SignBytes)
 		err = w.walletConnMgr.addNewConn(walletAccount, policy, walletChannelInfo)
 		if err != nil {
 			log.Errorf("validate address error %v", err)
 			return
 		}
-
 		log.Infof("add new connections %s %s", walletAccount, walletChannelInfo.ChannelId)
+
+		// register signer address to venus-auth
+		for _, account := range accounts {
+			if err := w.registerSignerAddress(ctx, account, addrs...); err != nil {
+				log.Errorf("register %v for %s failed: %v", addrs, account, err)
+				continue
+			}
+			log.Infof("register %v for %s success", addrs, account)
+		}
+
 		// todo rescan address to add new address or remove
 
 		stats.Record(ctx, metrics.WalletRegister.M(1))
@@ -198,11 +200,18 @@ func (w *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedT
 	log.Infof("wallet %s add address %v successful!", walletAccount, addrs)
 
 	// register signer address to venus-auth
-	if err := w.registerSignerAddress(ctx, walletAccount, addrs...); err != nil {
-		log.Errorf("register %v for %s failed: %w", addrs, walletAccount, err)
+	walletDetail, err := w.walletConnMgr.listWalletInfoByWallet(ctx, walletAccount)
+	if err != nil {
+		log.Errorf("get wallet %s info failed %v", walletAccount, err)
 		return err
 	}
-	log.Infof("register %v for %s success", addrs, walletAccount)
+	for _, account := range walletDetail.SupportAccounts {
+		if err := w.registerSignerAddress(ctx, account, addrs...); err != nil {
+			log.Errorf("register %v for %s failed: %v", addrs, account, err)
+			continue
+		}
+		log.Infof("register %v for %s success", addrs, account)
+	}
 
 	return nil
 }
@@ -247,30 +256,7 @@ func (w *WalletEventStream) isSignerAddress(addr address.Address) bool {
 	return false
 }
 
-func (w *WalletEventStream) getAccountOfSigner(addr address.Address) ([]string, error) {
-	if !w.isSignerAddress(addr) {
-		return nil, fmt.Errorf("%s is not a signable address", addr.String())
-	}
-
-	users, err := w.authClient.GetUserBySigner(addr.String())
-	if err != nil {
-		return nil, err
-	}
-
-	accounts := make([]string, len(users))
-	for idx, user := range users {
-		accounts[idx] = user.Name
-	}
-
-	return accounts, nil
-}
-
-func (w *WalletEventStream) WalletHas(ctx context.Context, addr address.Address) (bool, error) {
-	accounts, err := w.getAccountOfSigner(addr)
-	if err != nil {
-		return false, err
-	}
-
+func (w *WalletEventStream) WalletHas(ctx context.Context, addr address.Address, accounts []string) (bool, error) {
 	for _, account := range accounts {
 		bHas, err := w.walletConnMgr.hasWalletChannel(account, addr)
 		if err != nil {
@@ -285,21 +271,7 @@ func (w *WalletEventStream) WalletHas(ctx context.Context, addr address.Address)
 	return false, nil
 }
 
-func (w *WalletEventStream) WalletSign(ctx context.Context, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
-	payload, err := json.Marshal(&sharedGatewayTypes.WalletSignRequest{
-		Signer: addr,
-		ToSign: toSign,
-		Meta:   meta,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	accounts, err := w.getAccountOfSigner(addr)
-	if err != nil {
-		return nil, err
-	}
-
+func (w *WalletEventStream) WalletSign(ctx context.Context, addr address.Address, accounts []string, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
 	channels := make([]*types.ChannelInfo, 0)
 	for _, account := range accounts {
 		cs, err := w.walletConnMgr.getChannels(account, addr)
@@ -314,6 +286,14 @@ func (w *WalletEventStream) WalletSign(ctx context.Context, addr address.Address
 
 	start := time.Now()
 	var result crypto.Signature
+	payload, err := json.Marshal(&sharedGatewayTypes.WalletSignRequest{
+		Signer: addr,
+		ToSign: toSign,
+		Meta:   meta,
+	})
+	if err != nil {
+		return nil, err
+	}
 	err = w.SendRequest(ctx, channels, "WalletSign", payload, &result)
 	_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(metrics.WalletAccountKey, fmt.Sprintf("%v", accounts))},
 		metrics.WalletSign.M(metrics.SinceInMilliseconds(start)))

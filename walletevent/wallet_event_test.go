@@ -152,14 +152,14 @@ func TestRemoveNewAddressAndWalletHas(t *testing.T) {
 	accCtx := jwtclient.CtxWithName(ctx, walletAccount)
 	err := client.walletEventClient.AddNewAddress(accCtx, []address.Address{addr1})
 	require.NoError(t, err)
-	has, err := walletEvent.WalletHas(ctx, addr1)
+	has, err := walletEvent.WalletHas(ctx, addr1, []string{walletAccount})
 	require.NoError(t, err)
 	require.True(t, has)
 
 	addr2 := client.newkey()
 	err = client.walletEventClient.AddNewAddress(accCtx, []address.Address{addr2})
 	require.NoError(t, err)
-	has, err = walletEvent.WalletHas(ctx, addr2)
+	has, err = walletEvent.WalletHas(ctx, addr2, []string{walletAccount})
 	require.NoError(t, err)
 	require.True(t, has)
 
@@ -169,7 +169,7 @@ func TestRemoveNewAddressAndWalletHas(t *testing.T) {
 	err = client.walletEventClient.RemoveAddress(accCtx, []address.Address{addr1})
 	require.NoError(t, err)
 
-	has, err = walletEvent.WalletHas(ctx, addr1)
+	has, err = walletEvent.WalletHas(ctx, addr1, []string{walletAccount})
 	require.NoError(t, err)
 	require.False(t, has)
 
@@ -185,7 +185,7 @@ func TestRemoveNewAddressAndWalletHas(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, wallet.ConnectStates[0].Addrs, 1)
 
-	has, err = walletEvent.WalletHas(ctx, addr1)
+	has, err = walletEvent.WalletHas(ctx, addr1, []string{walletAccount})
 	require.NoError(t, err)
 	require.False(t, has)
 }
@@ -204,7 +204,7 @@ func TestWalletSign(t *testing.T) {
 	addrs, err := client.wallet.WalletList(ctx)
 	for _, addr := range addrs {
 		require.NoError(t, err)
-		_, err = walletEvent.WalletSign(ctx, addr, []byte{1, 2, 3}, sharedTypes.MsgMeta{
+		_, err = walletEvent.WalletSign(ctx, addr, []string{walletAccount}, []byte{1, 2, 3}, sharedTypes.MsgMeta{
 			Type:  sharedTypes.MTUnknown,
 			Extra: nil,
 		})
@@ -215,14 +215,14 @@ func TestWalletSign(t *testing.T) {
 		err = client.supportNewAccount(ctx, "admin")
 		require.NoError(t, err)
 
-		_, err = walletEvent.WalletSign(ctx, addr, []byte{1, 2, 3}, sharedTypes.MsgMeta{
+		_, err = walletEvent.WalletSign(ctx, addr, []string{walletAccount}, []byte{1, 2, 3}, sharedTypes.MsgMeta{
 			Type:  sharedTypes.MTUnknown,
 			Extra: nil,
 		})
 		require.NoError(t, err)
 
 		client.wallet.SetFail(ctx, true)
-		_, err = walletEvent.WalletSign(ctx, addr, []byte{1, 2, 3}, sharedTypes.MsgMeta{
+		_, err = walletEvent.WalletSign(ctx, addr, []string{walletAccount}, []byte{1, 2, 3}, sharedTypes.MsgMeta{
 			Type:  sharedTypes.MTUnknown,
 			Extra: nil,
 		})
