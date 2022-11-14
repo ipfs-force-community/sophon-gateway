@@ -1,3 +1,4 @@
+// stm: #unit
 package validator
 
 import (
@@ -33,6 +34,24 @@ var testArgs = map[string]*struct {
 		State:      0,
 		Miners:     []*auth.OutputMiner{{Miner: "f01002", User: "test_02"}},
 	}},
+	// test_03, username is not same as miner
+	"test_03": {false, &auth.OutputUser{
+		Id:         uuid.NewString(),
+		Name:       "test_02",
+		SourceType: 1,
+		Comment:    "test_02",
+		State:      1,
+		Miners:     []*auth.OutputMiner{{Miner: "f01002", User: "test_02"}},
+	}},
+	// username not exists in rpc context
+	"": {false, &auth.OutputUser{
+		Id:         uuid.NewString(),
+		Name:       "test_02",
+		SourceType: 1,
+		Comment:    "test_02",
+		State:      1,
+		Miners:     []*auth.OutputMiner{{Miner: "f01002", User: "test_02"}},
+	}},
 }
 
 func TestAuthMinerValidator_Validate(t *testing.T) {
@@ -42,20 +61,26 @@ func TestAuthMinerValidator_Validate(t *testing.T) {
 	notExistsMiner, err := address.NewIDAddress(10245566778899)
 	require.NoError(t, err)
 
-	for _, arg := range testArgs {
+	for userName, arg := range testArgs {
 		authClient.AddMockUser(arg.user)
-		ctx := jwtclient.CtxWithName(context.TODO(), arg.user.Name)
+		var ctx = context.Background()
+		if userName != "" {
+			ctx = jwtclient.CtxWithName(ctx, userName)
+		}
 		for _, miner := range arg.user.Miners {
 			addr, err := address.NewFromString(miner.Miner)
 			require.NoError(t, err)
 			if arg.validOk {
+				// stm: @VENUSGATEWAY_VALIDATOR_VALIDATE_001
 				require.NoError(t, validator.Validate(ctx, addr))
 			} else {
+				// user is disabled, username is not same as miner return an error, username not exists in context
+				// stm: @VENUSGATEWAY_VALIDATOR_VALIDATE_005, @VENUSGATEWAY_VALIDATOR_VALIDATE_002, @VENUSGATEWAY_VALIDATOR_VALIDATE_003
 				require.Error(t, validator.Validate(ctx, addr))
 			}
 		}
-
+		// miner not exists
+		// stm: @VENUSGATEWAY_VALIDATOR_VALIDATE_004
 		require.Error(t, validator.Validate(ctx, notExistsMiner))
 	}
-
 }

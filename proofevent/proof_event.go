@@ -154,6 +154,7 @@ func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Addre
 		metrics.ComputeProof.M(metrics.SinceInMilliseconds(start)))
 	if err == nil {
 		return result, nil
+
 	}
 	return nil, err
 }

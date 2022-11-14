@@ -1,3 +1,4 @@
+// stm: #integration
 package integrate
 
 import (
@@ -83,6 +84,7 @@ func TestWalletAPI(t *testing.T) {
 		err = walletEvent.AddNewAddress(ctx, []address.Address{toAddAddr1, toAddAddr2})
 		require.NoError(t, err)
 
+		// stm: @VENUSGATEWAY_API_LIST_WALLET_INFO_BY_WALLET_001
 		walletDetail, err := sAPi.ListWalletInfoByWallet(ctx, "defaultLocalToken")
 		require.NoError(t, err)
 		require.Contains(t, walletDetail.ConnectStates[0].Addrs, toAddAddr1)
@@ -184,6 +186,7 @@ func TestWalletAPI(t *testing.T) {
 		go walletEvent2.ListenWalletRequest(ctx)
 		walletEvent2.WaitReady(ctx)
 
+		// stm: @VENUSGATEWAY_API_WALLET_SIGN_001
 		walletInfo, err := sAPi.ListWalletInfo(ctx)
 		require.NoError(t, err)
 		require.Len(t, walletInfo, 1)
@@ -221,6 +224,7 @@ func TestWalletAPI(t *testing.T) {
 		err = walletEvent.SupportAccount(ctx, "123")
 		require.NoError(t, err)
 
+		// stm: @VENUSGATEWAY_API_WALLET_HAS_001
 		has, err := sAPi.WalletHas(ctx, "123", addr1)
 		require.NoError(t, err)
 		require.True(t, has)
@@ -260,6 +264,7 @@ func TestWalletAPI(t *testing.T) {
 			var msg [32]byte
 			_, err = rand.Read(msg[:])
 			require.NoError(t, err)
+			// stm: @VENUSGATEWAY_API_WALLET_SIGN_001
 			sig, err := sAPi.WalletSign(ctx, "123", addr1, msg[:], types2.MsgMeta{})
 			require.NoError(t, err)
 			err = wallet.Verify(ctx, addr1, sig, msg[:])

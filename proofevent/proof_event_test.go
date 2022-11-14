@@ -1,3 +1,4 @@
+// stm: #unit
 package proofevent
 
 import (
@@ -33,6 +34,7 @@ func TestListenProofEvent(t *testing.T) {
 		proof := setupProofEvent(t, []address.Address{addr1})
 		ctx, cancel := context.WithCancel(context.Background())
 		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
+		// stm: @VENUSGATEWAY_PROOF_EVENT_LISTEN_PROOF_EVENT_001
 		requestCh, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
 			MinerAddress: addr1,
 		})
@@ -64,6 +66,7 @@ func TestListenProofEvent(t *testing.T) {
 		proof := setupProofEvent(t, []address.Address{addr1})
 		ctx, cancel := context.WithCancel(context.Background())
 		proofClient := NewProofEvent(proof, addr1, testhelper.NewTimeoutProofHandler(time.Second), log.With())
+		// stm:
 		go proofClient.ListenProofRequest(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"))
 		proofClient.WaitReady(ctx)
 
@@ -99,6 +102,7 @@ func TestListenProofEvent(t *testing.T) {
 		defer cancel()
 		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
 
+		// stm: @VENUSGATEWAY_PROOF_EVENT_LISTEN_PROOF_EVENT_003
 		_, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
 			MinerAddress: addr2,
 		})
@@ -109,6 +113,7 @@ func TestListenProofEvent(t *testing.T) {
 		proof := setupProofEvent(t, []address.Address{addr1})
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
+		// stm: @VENUSGATEWAY_PROOF_EVENT_LISTEN_PROOF_EVENT_002
 		_, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
 			MinerAddress: addr2,
 		})
@@ -146,6 +151,7 @@ func TestComputeProofEvent(t *testing.T) {
 		go proofClient.ListenProofRequest(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"))
 		proofClient.WaitReady(ctx)
 
+		// stm: @VENUSGATEWAY_PROOF_EVENT_COMPUTE_PROOF_001
 		result, err := proof.ComputeProof(ctx, addr, expectInfo, expectRand, expectEpoch, expectVersion)
 		require.NoError(t, err)
 		require.Equal(t, expectProof, result)
@@ -184,6 +190,7 @@ func TestComputeProofEvent(t *testing.T) {
 			channels, err := proof.getChannels(addr)
 			require.NoError(t, err)
 			var result []builtin.PoStProof
+			// stm: @VENUSGATEWAY_PROOF_EVENT_COMPUTE_PROOF_002
 			err = proof.SendRequest(ctx, channels, "ComputeProof", []byte{1, 3, 5, 1, 3}, &result)
 			require.Contains(t, err.Error(), "invalid character")
 		}
@@ -210,13 +217,19 @@ func TestComputeProofEvent(t *testing.T) {
 		go proofClient.ListenProofRequest(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"))
 		proofClient.WaitReady(ctx)
 
+		// stm: @VENUSGATEWAY_PROOF_EVENT_COMPUTE_PROOF_004
 		result, err := proof.ComputeProof(ctx, addr, expectInfo, expectRand, expectEpoch, expectVersion)
 		require.EqualError(t, err, "mock error")
 		require.Nil(t, result)
 
+		// stm: @VENUSGATEWAY_PROOF_EVENT_COMPUTE_PROOF_003
+		addr3 := addrGetter()
+		_, err = proof.ComputeProof(ctx, addr3, expectInfo, expectRand, expectEpoch, expectVersion)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "no connections for this miner")
 	})
 
-	t.Run("uncorrect result  error", func(t *testing.T) {
+	t.Run("incorrect result  error", func(t *testing.T) {
 		proof := setupProofEvent(t, []address.Address{addr})
 		{
 			ctx := jwtclient.CtxWithTokenLocation(context.Background(), "127.1.1.1")
@@ -313,6 +326,8 @@ func TestListMinerConnection(t *testing.T) {
 		proofClient.WaitReady(ctx)
 	}
 
+	// todo: should change 'LISTEN' to 'LIST', it maybe a spell mistake.
+	// stm: @VENUSGATEWAY_PROOF_EVENT_LISTEN_CONNECTED_MINERS_001
 	connetions, err := proof.ListMinerConnection(ctx, addr1)
 	require.NoError(t, err)
 	require.Equal(t, connetions.ConnectionCount, 2)
