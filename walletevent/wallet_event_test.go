@@ -228,7 +228,7 @@ func TestWalletSign(t *testing.T) {
 	go client.listenWalletEvent(ctx)
 	client.walletEventClient.WaitReady(ctx)
 
-	// stm: @ VENUSGATEWAY_WALLET_EVENT_WALLET_SIGN_003
+	// stm: @VENUSGATEWAY_WALLET_EVENT_WALLET_SIGN_003
 	_, err := walletEvent.WalletSign(ctx, "invalid account", address.Undef, []byte{1, 2, 3}, sharedTypes.MsgMeta{
 		Type:  sharedTypes.MTUnknown,
 		Extra: nil,
