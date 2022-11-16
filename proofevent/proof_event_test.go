@@ -47,7 +47,7 @@ func TestListenProofEvent(t *testing.T) {
 		require.Equal(t, len(channel), 1)
 		require.Equal(t, channel[0].ChannelId, initBody.ChannelId)
 
-		//cancel and got a close request channel
+		// cancel and got a close request channel
 		cancel()
 		select {
 		case <-time.After(time.Second * 30):
@@ -179,7 +179,6 @@ func TestComputeProofEvent(t *testing.T) {
 		result, err := proof.ComputeProof(ctx, addr, expectInfo, expectRand, expectEpoch, expectVersion)
 		require.EqualError(t, err, "mock error")
 		require.Nil(t, result)
-
 	})
 
 	t.Run("uncorrect result  error", func(t *testing.T) {

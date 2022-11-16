@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"github.com/filecoin-project/go-address"
+
 	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/core"
 	"github.com/filecoin-project/venus-auth/jwtclient"
-	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
 type AuthMinerValidator struct {
-	authClient types.IAuthClient
+	authClient jwtclient.IAuthClient
 }
 
 type IAuthMinerValidator interface {
@@ -24,7 +24,7 @@ var _ IAuthMinerValidator = (*AuthMinerValidator)(nil)
 func (amv *AuthMinerValidator) Validate(ctx context.Context, miner address.Address) error {
 	account, exist := jwtclient.CtxGetName(ctx)
 	if !exist {
-		return fmt.Errorf("user name not exists in rpc context")
+		return fmt.Errorf("user name not exist in rpc context")
 	}
 	user, err := amv.authClient.GetUserByMiner(&auth.GetUserByMinerRequest{Miner: miner.String()})
 	if err != nil {
@@ -40,6 +40,6 @@ func (amv *AuthMinerValidator) Validate(ctx context.Context, miner address.Addre
 	return nil
 }
 
-func NewMinerValidator(authClient types.IAuthClient) IAuthMinerValidator {
+func NewMinerValidator(authClient jwtclient.IAuthClient) IAuthMinerValidator {
 	return &AuthMinerValidator{authClient: authClient}
 }

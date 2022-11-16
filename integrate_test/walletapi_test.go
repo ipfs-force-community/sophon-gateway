@@ -8,22 +8,18 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/ipfs-force-community/metrics"
-	"github.com/ipfs-force-community/venus-gateway/config"
-	"github.com/ipfs-force-community/venus-gateway/testhelper"
-
-	types2 "github.com/filecoin-project/venus/venus-shared/types"
-
 	"github.com/filecoin-project/go-address"
-
 	"github.com/filecoin-project/go-jsonrpc"
-
-	"github.com/filecoin-project/venus/venus-shared/api"
-
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
-
 	logging "github.com/ipfs/go-log/v2"
 
+	"github.com/filecoin-project/venus/venus-shared/api"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
+	types2 "github.com/filecoin-project/venus/venus-shared/types"
+
+	"github.com/ipfs-force-community/metrics"
+
+	"github.com/ipfs-force-community/venus-gateway/config"
+	"github.com/ipfs-force-community/venus-gateway/testhelper"
 	"github.com/ipfs-force-community/venus-gateway/walletevent"
 
 	"github.com/stretchr/testify/require"
@@ -168,21 +164,25 @@ func TestWalletAPI(t *testing.T) {
 		require.NoError(t, err)
 		defer cCloser()
 
+		ctxClient01, cancelClient01 := context.WithCancel(context.Background())
+		defer cancelClient01()
 		wallet := testhelper.NewMemWallet()
-		addr1, err := wallet.AddKey(ctx)
+		addr1, err := wallet.AddKey(ctxClient01)
 		require.NoError(t, err)
 
-		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
-		go walletEvent.ListenWalletRequest(ctx)
-		walletEvent.WaitReady(ctx)
+		walletEvent := walletevent.NewWalletEventClient(ctxClient01, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
+		go walletEvent.ListenWalletRequest(ctxClient01)
+		walletEvent.WaitReady(ctxClient01)
 
+		ctxClient02, cancelClient02 := context.WithCancel(context.Background())
+		defer cancelClient02()
 		wallet2 := testhelper.NewMemWallet()
-		addr2, err := wallet2.AddKey(ctx)
+		addr2, err := wallet2.AddKey(ctxClient02)
 		require.NoError(t, err)
 
-		walletEvent2 := walletevent.NewWalletEventClient(ctx, wallet2, walletEventClient, logging.Logger("test").With(), []string{"admin"})
-		go walletEvent2.ListenWalletRequest(ctx)
-		walletEvent2.WaitReady(ctx)
+		walletEvent2 := walletevent.NewWalletEventClient(ctxClient02, wallet2, walletEventClient, logging.Logger("test").With(), []string{"admin"})
+		go walletEvent2.ListenWalletRequest(ctxClient02)
+		walletEvent2.WaitReady(ctxClient02)
 
 		walletInfo, err := sAPi.ListWalletInfo(ctx)
 		require.NoError(t, err)
@@ -218,18 +218,14 @@ func TestWalletAPI(t *testing.T) {
 		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
 		go walletEvent.ListenWalletRequest(ctx)
 		walletEvent.WaitReady(ctx)
-		err = walletEvent.SupportAccount(ctx, "123")
-		require.NoError(t, err)
 
-		has, err := sAPi.WalletHas(ctx, "123", addr1)
+		// Including `walletEventClient.supportAccounts` and token-account of venus-wallet
+		accounts := []string{"defaultLocalToken", "admin"}
+		has, err := sAPi.WalletHas(ctx, addr1, accounts)
 		require.NoError(t, err)
 		require.True(t, has)
 
-		has, err = sAPi.WalletHas(ctx, "mmn", addr1)
-		require.NoError(t, err)
-		require.False(t, has)
-
-		has, err = sAPi.WalletHas(ctx, "123", addr2)
+		has, err = sAPi.WalletHas(ctx, addr2, accounts)
 		require.NoError(t, err)
 		require.False(t, has)
 	})
@@ -253,14 +249,15 @@ func TestWalletAPI(t *testing.T) {
 		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
 		go walletEvent.ListenWalletRequest(ctx)
 		walletEvent.WaitReady(ctx)
-		err = walletEvent.SupportAccount(ctx, "123")
+		err = walletEvent.SupportAccount(ctx, "newAccount")
 		require.NoError(t, err)
 
 		for i := 0; i < 5; i++ {
 			var msg [32]byte
 			_, err = rand.Read(msg[:])
 			require.NoError(t, err)
-			sig, err := sAPi.WalletSign(ctx, "123", addr1, msg[:], types2.MsgMeta{})
+			// todo 模拟 账户存在
+			sig, err := sAPi.WalletSign(ctx, addr1, []string{"newAccount"}, msg[:], types2.MsgMeta{})
 			require.NoError(t, err)
 			err = wallet.Verify(ctx, addr1, sig, msg[:])
 			require.NoError(t, err)
@@ -268,16 +265,16 @@ func TestWalletAPI(t *testing.T) {
 	})
 }
 
-func serverWalletAPI(ctx context.Context, url, token string) (gateway.IWalletEvent, jsonrpc.ClientCloser, error) {
+func serverWalletAPI(ctx context.Context, url, token string) (v2API.IWalletEvent, jsonrpc.ClientCloser, error) {
 	headers := http.Header{}
 	headers.Add(api.AuthorizationHeader, "Bearer "+token)
-	return gateway.NewIGatewayRPC(ctx, url, headers)
+	return v2API.NewIGatewayRPC(ctx, url, headers)
 }
 
 func setupDaemon(t *testing.T, ctx context.Context) (string, string) {
 	cfg := &config.Config{
 		API:       &config.APIConfig{ListenAddress: "/ip4/127.0.0.1/tcp/0"},
-		Auth:      &config.AuthConfig{URL: "127.0.0.1:1"},
+		Auth:      &config.AuthConfig{URL: "127.0.0.1:1"}, // nouse
 		Metrics:   config.DefaultConfig().Metrics,
 		Trace:     &metrics.TraceConfig{JaegerTracingEnabled: false},
 		RateLimit: &config.RateLimitCofnig{Redis: ""},
@@ -287,6 +284,6 @@ func setupDaemon(t *testing.T, ctx context.Context) (string, string) {
 	require.NoError(t, err)
 	url, err := url.Parse(addr)
 	require.NoError(t, err)
-	wsUrl := fmt.Sprintf("ws://127.0.0.1:%s/rpc/v0", url.Port())
+	wsUrl := fmt.Sprintf("ws://127.0.0.1:%s/rpc/v2", url.Port())
 	return wsUrl, string(token)
 }

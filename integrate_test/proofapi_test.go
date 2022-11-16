@@ -29,7 +29,7 @@ import (
 
 	"github.com/filecoin-project/venus/venus-shared/api"
 
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 
 	logging "github.com/ipfs/go-log/v2"
 
@@ -107,15 +107,16 @@ func TestProofAPI(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			wg.Add(1)
 			go func() {
+				defer wg.Done()
 				_, err := sAPi.ComputeProof(ctx, mAddr, nil, nil, 0, 0)
 				lk.Lock()
 				defer lk.Unlock()
 				errs = append(errs, err)
 			}()
 		}
-		wg.Done()
+		wg.Wait()
 		for _, err := range errs {
-			require.Contains(t, err, "timer clean this request due to exceed wait time")
+			require.Contains(t, err.Error(), "timer clean this request due to exceed wait time")
 		}
 	})
 
@@ -183,18 +184,17 @@ func TestProofAPI(t *testing.T) {
 	})
 }
 
-type timeoutHandler struct {
-}
+type timeoutHandler struct{}
 
 func (*timeoutHandler) ComputeProof(context.Context, []builtin.ExtendedSectorInfo, abi.PoStRandomness, abi.ChainEpoch, network.Version) ([]builtin.PoStProof, error) {
 	time.Sleep(time.Hour)
 	return nil, nil
 }
 
-func serverProofAPI(ctx context.Context, url, token string) (gateway.IProofEvent, jsonrpc.ClientCloser, error) {
+func serverProofAPI(ctx context.Context, url, token string) (v2API.IProofEvent, jsonrpc.ClientCloser, error) {
 	headers := http.Header{}
 	headers.Add(api.AuthorizationHeader, "Bearer "+token)
-	return gateway.NewIGatewayRPC(ctx, url, headers)
+	return v2API.NewIGatewayRPC(ctx, url, headers)
 }
 
 func setupProofDaemon(t *testing.T, validateMiner []address.Address, ctx context.Context, tCfg testConfig) (string, string) {
@@ -209,6 +209,6 @@ func setupProofDaemon(t *testing.T, validateMiner []address.Address, ctx context
 	require.NoError(t, err)
 	url, err := url.Parse(addr)
 	require.NoError(t, err)
-	wsUrl := fmt.Sprintf("ws://127.0.0.1:%s/rpc/v1", url.Port())
+	wsUrl := fmt.Sprintf("ws://127.0.0.1:%s/rpc/v2", url.Port())
 	return wsUrl, string(token)
 }

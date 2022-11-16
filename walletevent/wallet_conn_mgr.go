@@ -13,7 +13,7 @@ import (
 
 type walletChannelInfo struct {
 	*types.ChannelInfo
-	addrs map[address.Address]struct{}
+	addrs map[address.Address]struct{} // signer address
 	// a slice byte provide by wallet, using to verify address is really exist
 	signBytes []byte
 }
@@ -49,7 +49,7 @@ type IWalletConnMgr interface {
 var _ IWalletConnMgr = (*walletConnMgr)(nil)
 
 type walletConnMgr struct {
-	infoLk      sync.Mutex //todo a big lock here , maybe need a smaller lock
+	infoLk      sync.Mutex // todo a big lock here , maybe need a smaller lock
 	walletInfos map[string]*WalletInfo
 }
 
@@ -81,8 +81,12 @@ func (w *walletConnMgr) addNewConn(walletAccount string, policy *types2.WalletRe
 			connections:     map[sharedTypes.UUID]*walletChannelInfo{channel.ChannelId: channel},
 		}
 
+		// The supported accounts should include the account corresponding to the token, and it would be absurd not to support yourself!
+		walletInfo.supportAccounts[walletAccount] = struct{}{}
 		for _, supportAccount := range policy.SupportAccounts {
-			walletInfo.supportAccounts[supportAccount] = struct{}{}
+			if supportAccount != walletAccount {
+				walletInfo.supportAccounts[supportAccount] = struct{}{}
+			}
 		}
 		w.walletInfos[walletAccount] = walletInfo
 	}
@@ -94,7 +98,6 @@ func (w *walletConnMgr) addNewConn(walletAccount string, policy *types2.WalletRe
 		"signBytes", policy.SignBytes,
 	)
 	return nil
-
 }
 
 func (w *walletConnMgr) getConn(walletAccount string, channelID sharedTypes.UUID) (*walletChannelInfo, error) {

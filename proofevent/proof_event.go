@@ -7,25 +7,29 @@ import (
 	"sync"
 	"time"
 
-	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/go-state-types/abi"
-	"github.com/filecoin-project/go-state-types/network"
-	"github.com/filecoin-project/venus-auth/jwtclient"
-	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
-	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
-	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
-	"github.com/ipfs-force-community/venus-gateway/metrics"
-	"github.com/ipfs-force-community/venus-gateway/types"
-	"github.com/ipfs-force-community/venus-gateway/validator"
 	logging "github.com/ipfs/go-log/v2"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
+
+	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/filecoin-project/go-state-types/network"
+
+	"github.com/ipfs-force-community/venus-gateway/metrics"
+	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/venus-gateway/validator"
+
+	"github.com/filecoin-project/venus-auth/jwtclient"
+
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	sharedGatewayTypes "github.com/filecoin-project/venus/venus-shared/types/gateway"
 )
 
 var log = logging.Logger("proof_stream")
 
-var _ gateway.IProofClient = (*ProofEventStream)(nil)
+var _ v2API.IProofClient = (*ProofEventStream)(nil)
 
 type ProofEventStream struct {
 	connLk           sync.RWMutex
@@ -46,17 +50,19 @@ func NewProofEventStream(ctx context.Context, validator validator.IAuthMinerVali
 	return proofEventStream
 }
 
-func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.ProofRegisterPolicy) (<-chan *types2.RequestEvent, error) {
+func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *sharedGatewayTypes.ProofRegisterPolicy) (<-chan *sharedGatewayTypes.RequestEvent, error) {
 	ip, exist := jwtclient.CtxGetTokenLocation(ctx)
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
 	}
+
+	// Chain services serve those miners should be controlled by themselves,so the user and miner cannot be forcibly bound here.
 	err := e.validator.Validate(ctx, policy.MinerAddress)
 	if err != nil {
 		return nil, fmt.Errorf("verify miner:%s failed:%w", policy.MinerAddress.String(), err)
 	}
 
-	out := make(chan *types2.RequestEvent, e.cfg.RequestQueueSize)
+	out := make(chan *sharedGatewayTypes.RequestEvent, e.cfg.RequestQueueSize)
 	channel := types.NewChannelInfo(ip, out)
 	mAddr := policy.MinerAddress
 	e.connLk.Lock()
@@ -71,7 +77,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.
 	_ = channelStore.addChanel(channel)
 	log.Infof("add new connections %s for miner %s", channel.ChannelId, mAddr)
 	go func() {
-		connectBytes, err := json.Marshal(types2.ConnectedCompleted{
+		connectBytes, err := json.Marshal(sharedGatewayTypes.ConnectedCompleted{
 			ChannelId: channel.ChannelId,
 		})
 		if err != nil {
@@ -85,7 +91,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.
 		stats.Record(ctx, metrics.MinerRegister.M(1))
 		stats.Record(ctx, metrics.MinerSource.M(1))
 
-		out <- &types2.RequestEvent{
+		out <- &sharedGatewayTypes.RequestEvent{
 			ID:         sharedTypes.NewUUID(),
 			Method:     "InitConnect",
 			Payload:    connectBytes,
@@ -109,12 +115,12 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *types2.
 	return out, nil
 }
 
-func (e *ProofEventStream) ResponseProofEvent(ctx context.Context, resp *types2.ResponseEvent) error {
+func (e *ProofEventStream) ResponseProofEvent(ctx context.Context, resp *sharedGatewayTypes.ResponseEvent) error {
 	return e.ResponseEvent(ctx, resp)
 }
 
 func (e *ProofEventStream) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []builtin.ExtendedSectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]builtin.PoStProof, error) {
-	reqBody := types2.ComputeProofRequest{
+	reqBody := sharedGatewayTypes.ComputeProofRequest{
 		SectorInfos: sectorInfos,
 		Rand:        rand,
 		Height:      height,
@@ -169,7 +175,7 @@ func (e *ProofEventStream) ListConnectedMiners(ctx context.Context) ([]address.A
 	return miners, nil
 }
 
-func (e *ProofEventStream) ListMinerConnection(ctx context.Context, addr address.Address) (*types2.MinerState, error) {
+func (e *ProofEventStream) ListMinerConnection(ctx context.Context, addr address.Address) (*sharedGatewayTypes.MinerState, error) {
 	e.connLk.Lock()
 	defer e.connLk.Unlock()
 

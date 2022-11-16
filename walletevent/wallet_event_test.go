@@ -7,41 +7,45 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ipfs-force-community/venus-gateway/testhelper"
-	logging "github.com/ipfs/go-log/v2"
+	"github.com/stretchr/testify/require"
 
 	"github.com/filecoin-project/go-address"
+	logging "github.com/ipfs/go-log/v2"
+
 	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 	_ "github.com/filecoin-project/venus/pkg/crypto/secp"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+
+	"github.com/ipfs-force-community/venus-gateway/testhelper"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/validator/mocks"
-	"github.com/stretchr/testify/require"
 )
 
 func TestListenWalletEvent(t *testing.T) {
 	walletAccount := "walletAccount"
+	supportAccount := []string{"admin"}
 	t.Run("correct", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		walletEvent := setupWalletEvent(t)
-		client := setupClient(t, ctx, walletAccount, []string{"admin"}, walletEvent)
+		walletEvent := setupWalletEvent(t, walletAccount, supportAccount...)
+		client := setupClient(t, ctx, walletAccount, supportAccount, walletEvent)
 		go client.listenWalletEvent(ctx)
 		client.walletEventClient.WaitReady(ctx)
 
 		walletInfo, err := walletEvent.ListWalletInfoByWallet(ctx, walletAccount)
 		require.NoError(t, err)
 		require.Equal(t, walletInfo.Account, walletAccount)
-		require.Equal(t, walletInfo.SupportAccounts, []string{"admin"})
+		require.Contains(t, walletInfo.SupportAccounts, "walletAccount")
+		require.Contains(t, walletInfo.SupportAccounts, "admin")
 	})
 
 	t.Run("multiple listen", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		walletEvent := setupWalletEvent(t)
+		walletEvent := setupWalletEvent(t, walletAccount, supportAccount...)
 		client := setupClient(t, ctx, walletAccount, []string{}, walletEvent)
 		go client.listenWalletEvent(ctx)
 		client.walletEventClient.WaitReady(ctx)
@@ -58,9 +62,9 @@ func TestListenWalletEvent(t *testing.T) {
 	t.Run("wallet account not found", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		walletEvent := setupWalletEvent(t)
-		//register
-		client := setupClient(t, ctx, walletAccount, []string{"admin"}, walletEvent)
+		walletEvent := setupWalletEvent(t, walletAccount, supportAccount...)
+		// register
+		client := setupClient(t, ctx, walletAccount, supportAccount, walletEvent)
 		err := client.walletEventClient.listenWalletRequestOnce(ctx)
 		require.Contains(t, err.Error(), "unable to get account name in method ListenWalletEvent request")
 	})
@@ -68,11 +72,13 @@ func TestListenWalletEvent(t *testing.T) {
 
 func TestSupportNewAccount(t *testing.T) {
 	walletAccount := "walletAccount"
+	supportAccount := []string{"admin"}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	walletEvent := setupWalletEvent(t)
-	client := setupClient(t, ctx, walletAccount, []string{"admin"}, walletEvent)
+	walletEvent := setupWalletEvent(t, walletAccount, supportAccount...)
+	client := setupClient(t, ctx, walletAccount, supportAccount, walletEvent)
 	go client.listenWalletEvent(ctx)
 	client.walletEventClient.WaitReady(ctx)
 
@@ -82,9 +88,10 @@ func TestSupportNewAccount(t *testing.T) {
 	wallets, err := walletEvent.ListWalletInfo(ctx)
 	require.NoError(t, err)
 	require.Len(t, wallets, 1)
-	require.Len(t, wallets[0].SupportAccounts, 2)
+	require.Len(t, wallets[0].SupportAccounts, 3)
 	require.Contains(t, wallets[0].SupportAccounts, "ac1")
 	require.Contains(t, wallets[0].SupportAccounts, "admin")
+	require.Contains(t, wallets[0].SupportAccounts, "walletAccount")
 
 	err = client.walletEventClient.SupportAccount(ctx, "fake_acc")
 	require.EqualError(t, err, "unable to get account name in method SupportNewAccount request")
@@ -96,11 +103,12 @@ func TestSupportNewAccount(t *testing.T) {
 
 func TestAddNewAddress(t *testing.T) {
 	walletAccount := "walletAccount"
+	supportAccount := []string{"admin"}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	walletEvent := setupWalletEvent(t)
-	client := setupClient(t, ctx, walletAccount, []string{"admin"}, walletEvent)
+	walletEvent := setupWalletEvent(t, walletAccount, supportAccount...)
+	client := setupClient(t, ctx, walletAccount, supportAccount, walletEvent)
 	go client.listenWalletEvent(ctx)
 	client.walletEventClient.WaitReady(ctx)
 
@@ -115,7 +123,7 @@ func TestAddNewAddress(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx = jwtclient.CtxWithName(ctx, walletAccount)
-	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1}) //allow dup add
+	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1}) // allow dup add
 	require.NoError(t, err)
 
 	ctx = jwtclient.CtxWithName(ctx, walletAccount)
@@ -130,11 +138,13 @@ func TestAddNewAddress(t *testing.T) {
 
 func TestRemoveNewAddressAndWalletHas(t *testing.T) {
 	walletAccount := "walletAccount"
+	supportAccount := []string{"admin"}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	walletEvent := setupWalletEvent(t)
-	client := setupClient(t, ctx, walletAccount, []string{"admin"}, walletEvent)
+	walletEvent := setupWalletEvent(t, walletAccount, supportAccount...)
+	// The supported account must contain the account corresponding to the API token
+	client := setupClient(t, ctx, walletAccount, supportAccount, walletEvent)
 	go client.listenWalletEvent(ctx)
 	client.walletEventClient.WaitReady(ctx)
 
@@ -142,20 +152,16 @@ func TestRemoveNewAddressAndWalletHas(t *testing.T) {
 	accCtx := jwtclient.CtxWithName(ctx, walletAccount)
 	err := client.walletEventClient.AddNewAddress(accCtx, []address.Address{addr1})
 	require.NoError(t, err)
-	has, err := walletEvent.WalletHas(ctx, "admin", addr1)
+	has, err := walletEvent.WalletHas(ctx, addr1, []string{walletAccount})
 	require.NoError(t, err)
 	require.True(t, has)
 
 	addr2 := client.newkey()
 	err = client.walletEventClient.AddNewAddress(accCtx, []address.Address{addr2})
 	require.NoError(t, err)
-	has, err = walletEvent.WalletHas(ctx, "admin", addr2)
+	has, err = walletEvent.WalletHas(ctx, addr2, []string{walletAccount})
 	require.NoError(t, err)
 	require.True(t, has)
-
-	has, err = walletEvent.WalletHas(ctx, "fak_acc", addr1)
-	require.NoError(t, err)
-	require.False(t, has)
 
 	err = client.walletEventClient.RemoveAddress(ctx, []address.Address{addr1})
 	require.EqualError(t, err, "unable to get account name in method RemoveAddress request")
@@ -163,7 +169,7 @@ func TestRemoveNewAddressAndWalletHas(t *testing.T) {
 	err = client.walletEventClient.RemoveAddress(accCtx, []address.Address{addr1})
 	require.NoError(t, err)
 
-	has, err = walletEvent.WalletHas(ctx, "admin", addr1)
+	has, err = walletEvent.WalletHas(ctx, addr1, []string{walletAccount})
 	require.NoError(t, err)
 	require.False(t, has)
 
@@ -179,18 +185,18 @@ func TestRemoveNewAddressAndWalletHas(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, wallet.ConnectStates[0].Addrs, 1)
 
-	has, err = walletEvent.WalletHas(ctx, "admin", addr1)
+	has, err = walletEvent.WalletHas(ctx, addr1, []string{walletAccount})
 	require.NoError(t, err)
 	require.False(t, has)
 }
 
 func TestWalletSign(t *testing.T) {
 	walletAccount := "walletAccount"
-	//register
+	// register
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	walletEvent := setupWalletEvent(t)
+	walletEvent := setupWalletEvent(t, walletAccount)
 	client := setupClient(t, ctx, walletAccount, []string{}, walletEvent)
 	go client.listenWalletEvent(ctx)
 	client.walletEventClient.WaitReady(ctx)
@@ -198,43 +204,44 @@ func TestWalletSign(t *testing.T) {
 	addrs, err := client.wallet.WalletList(ctx)
 	for _, addr := range addrs {
 		require.NoError(t, err)
-		_, err = walletEvent.WalletSign(ctx, "admin", addr, []byte{1, 2, 3}, sharedTypes.MsgMeta{
+		_, err = walletEvent.WalletSign(ctx, addr, []string{walletAccount}, []byte{1, 2, 3}, sharedTypes.MsgMeta{
 			Type:  sharedTypes.MTUnknown,
 			Extra: nil,
 		})
 
-		require.Error(t, err)
+		// Under the new mechanism, signer and walletAccount are bound to be bound, so it will be successful
+		require.NoError(t, err)
 
 		err = client.supportNewAccount(ctx, "admin")
 		require.NoError(t, err)
 
-		_, err = walletEvent.WalletSign(ctx, "admin", addr, []byte{1, 2, 3}, sharedTypes.MsgMeta{
+		_, err = walletEvent.WalletSign(ctx, addr, []string{walletAccount}, []byte{1, 2, 3}, sharedTypes.MsgMeta{
 			Type:  sharedTypes.MTUnknown,
 			Extra: nil,
 		})
 		require.NoError(t, err)
 
 		client.wallet.SetFail(ctx, true)
-		_, err = walletEvent.WalletSign(ctx, "admin", addr, []byte{1, 2, 3}, sharedTypes.MsgMeta{
+		_, err = walletEvent.WalletSign(ctx, addr, []string{walletAccount}, []byte{1, 2, 3}, sharedTypes.MsgMeta{
 			Type:  sharedTypes.MTUnknown,
 			Extra: nil,
 		})
 		require.EqualError(t, err, "mock error")
 	}
-
 }
 
-func setupWalletEvent(t *testing.T) *WalletEventStream {
-	authClient := mocks.NewMockAuthClient()
-	authClient.AddMockUser(&auth.OutputUser{
-		Id:         "id",
-		Name:       "admin",
-		SourceType: 0,
-		Comment:    "",
-		State:      0,
-		CreateTime: 0,
-		UpdateTime: 0,
+func setupWalletEvent(t *testing.T, walletAccount string, accounts ...string) *WalletEventStream {
+	users := make([]*auth.OutputUser, 0)
+	for _, account := range accounts {
+		users = append(users, &auth.OutputUser{
+			Name: account,
+		})
+	}
+	users = append(users, &auth.OutputUser{
+		Name: walletAccount,
 	})
+	authClient := mocks.NewMockAuthClient()
+	authClient.AddMockUser(users...)
 
 	ctx := context.Background()
 	return NewWalletEventStream(ctx, authClient, types.DefaultConfig(), true)
