@@ -1,3 +1,4 @@
+// stm: #unit
 package walletevent
 
 import (
@@ -28,6 +29,13 @@ func TestListenWalletEvent(t *testing.T) {
 
 		walletEvent := setupWalletEvent(t)
 		client := setupClient(t, ctx, walletAccount, []string{"admin"}, walletEvent)
+		{
+			ctx := jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
+			// stm: @VENUSGATEWAY_WALLET_EVENT_LISTEN_WALLET_EVENT_002
+			err := client.walletEventClient.listenWalletRequestOnce(ctx)
+			require.Error(t, err)
+		}
+		// stm: @VENUSGATEWAY_WALLET_EVENT_LISTEN_WALLET_EVENT_001, @VENUSGATEWAY_WALLET_EVENT_RESPONSE_WALLET_EVENT_001
 		go client.listenWalletEvent(ctx)
 		client.walletEventClient.WaitReady(ctx)
 
@@ -76,6 +84,7 @@ func TestSupportNewAccount(t *testing.T) {
 	go client.listenWalletEvent(ctx)
 	client.walletEventClient.WaitReady(ctx)
 
+	// stm: @VENUSGATEWAY_WALLET_EVENT_SUPPORT_NEW_ACCOUNT_001
 	err := client.supportNewAccount(ctx, "ac1")
 	require.NoError(t, err)
 
@@ -92,6 +101,10 @@ func TestSupportNewAccount(t *testing.T) {
 	ctx = jwtclient.CtxWithName(ctx, "fac_acc")
 	err = client.walletEventClient.SupportAccount(ctx, "__")
 	require.NoError(t, err)
+
+	// wallet account not exists in context
+	// stm: @VENUSGATEWAY_WALLET_EVENT_SUPPORT_NEW_ACCOUNT_002
+	require.Error(t, client.walletEventClient.SupportAccount(context.Background(), "xxx_x"))
 }
 
 func TestAddNewAddress(t *testing.T) {
@@ -107,10 +120,28 @@ func TestAddNewAddress(t *testing.T) {
 	addr1 := client.newkey()
 	addr2 := client.newkey()
 
+	// wallet account not exists in context
+	// stm: @VENUSGATEWAY_WALLET_EVENT_ADD_NEW_ADDRESS_002
 	err := client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1})
 	require.EqualError(t, err, "unable to get account name in method AddNewAddress request")
 
+	ctx = jwtclient.CtxWithName(ctx, "incorrect wallet account")
+	// wallet connection info not found
+	// stm: @VENUSGATEWAY_WALLET_EVENT_ADD_NEW_ADDRESS_003
+	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1})
+	require.Error(t, err)
+
 	ctx = jwtclient.CtxWithName(ctx, walletAccount)
+	// stm: @VENUSGATEWAY_WALLET_EVENT_ADD_NEW_ADDRESS_004
+	client.wallet.SetFail(ctx, true)
+	walletEvent.disableVerifyWalletAddrs = false
+	// verify address failed
+	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1})
+	require.Contains(t, err.Error(), "verify address")
+	client.wallet.SetFail(ctx, false)
+	walletEvent.disableVerifyWalletAddrs = true
+
+	// stm: @VENUSGATEWAY_WALLET_EVENT_ADD_NEW_ADDRESS_001
 	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1})
 	require.NoError(t, err)
 
@@ -157,9 +188,11 @@ func TestRemoveNewAddressAndWalletHas(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, has)
 
+	// stm: @VENUSGATEWAY_WALLET_EVENT_REMOVE_ADDRESS_002
 	err = client.walletEventClient.RemoveAddress(ctx, []address.Address{addr1})
 	require.EqualError(t, err, "unable to get account name in method RemoveAddress request")
 
+	// stm: @VENUSGATEWAY_WALLET_EVENT_REMOVE_ADDRESS_001
 	err = client.walletEventClient.RemoveAddress(accCtx, []address.Address{addr1})
 	require.NoError(t, err)
 
@@ -195,9 +228,17 @@ func TestWalletSign(t *testing.T) {
 	go client.listenWalletEvent(ctx)
 	client.walletEventClient.WaitReady(ctx)
 
+	// stm: @VENUSGATEWAY_WALLET_EVENT_WALLET_SIGN_003
+	_, err := walletEvent.WalletSign(ctx, "invalid account", address.Undef, []byte{1, 2, 3}, sharedTypes.MsgMeta{
+		Type:  sharedTypes.MTUnknown,
+		Extra: nil,
+	})
+	require.Error(t, err)
+
 	addrs, err := client.wallet.WalletList(ctx)
 	for _, addr := range addrs {
 		require.NoError(t, err)
+		// stm: @VENUSGATEWAY_WALLET_EVENT_WALLET_SIGN_001
 		_, err = walletEvent.WalletSign(ctx, "admin", addr, []byte{1, 2, 3}, sharedTypes.MsgMeta{
 			Type:  sharedTypes.MTUnknown,
 			Extra: nil,

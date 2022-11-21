@@ -1,3 +1,4 @@
+// stm: #unit
 package types
 
 import (
@@ -32,6 +33,7 @@ func TestSendRequest(t *testing.T) {
 
 		var clients []*mockClient
 		client := setupClient(t, eventSteam, "127.1.1.1")
+		// stm: @VENUSGATEWAY_TYPES_RESPONSE_EVENT_001
 		go client.start(ctx)
 		clients = append(clients, client)
 		var getConns = func() []*ChannelInfo {
@@ -41,8 +43,14 @@ func TestSendRequest(t *testing.T) {
 			}
 			return channels
 		}
+
+		// stm: @VENUSGATEWAY_TYPES_SEND_REQUEST_001
 		err = eventSteam.SendRequest(ctx, getConns(), "mock_method", parms, result)
 		require.NoError(t, err)
+
+		// stm: @VENUSGATEWAY_TYPES_SEND_REQUEST_002
+		err = eventSteam.SendRequest(ctx, nil, "mock_method", parms, result)
+		require.Error(t, err)
 	})
 
 	//test for bug https://github.com/filecoin-project/venus/issues/4992
@@ -244,6 +252,11 @@ func TestSendRequest(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		eventSteam := NewBaseEventStream(ctx, DefaultConfig())
+
+		// expect id not exists error
+		// stm: @VENUSGATEWAY_TYPES_RESPONSE_EVENT_002
+		err := eventSteam.ResponseEvent(ctx, &types.ResponseEvent{ID: sharedTypes.NewUUID()})
+		require.Error(t, err)
 
 		parms, err := json.Marshal(mockParams{A: "mock arg"})
 		require.NoError(t, err)
