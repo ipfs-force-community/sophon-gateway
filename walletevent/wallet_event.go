@@ -100,13 +100,14 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 		// register signer address to venus-auth
 		for _, account := range accounts {
 			if err := w.registerSignerAddress(ctx, account, addrs...); err != nil {
-				log.Errorf("register %v for %s failed: %v", addrs, account, err)
+				walletLog.Errorf("register %v for %s failed: %v", addrs, account, err)
 				continue
 			}
-			log.Infof("register %v for %s success", addrs, account)
+			walletLog.Infof("register %v for %s success", addrs, account)
 		}
 
-		// todo rescan address to add new address or remove
+		walletLog.Infof("add new connections %s", walletChannelInfo.ChannelId)
+		//todo rescan address to add new address or remove
 
 		stats.Record(ctx, metrics.WalletRegister.M(1))
 
