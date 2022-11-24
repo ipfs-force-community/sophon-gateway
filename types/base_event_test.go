@@ -1,3 +1,4 @@
+// stm: #unit
 package types
 
 import (
@@ -32,6 +33,7 @@ func TestSendRequest(t *testing.T) {
 
 		var clients []*mockClient
 		client := setupClient(t, eventSteam, "127.1.1.1")
+		// stm: @VENUSGATEWAY_TYPES_RESPONSE_EVENT_001
 		go client.start(ctx)
 		clients = append(clients, client)
 		getConns := func() []*ChannelInfo {
@@ -41,8 +43,14 @@ func TestSendRequest(t *testing.T) {
 			}
 			return channels
 		}
+
+		// stm: @VENUSGATEWAY_TYPES_SEND_REQUEST_001
 		err = eventSteam.SendRequest(ctx, getConns(), "mock_method", parms, result)
 		require.NoError(t, err)
+
+		// stm: @VENUSGATEWAY_TYPES_SEND_REQUEST_002
+		err = eventSteam.SendRequest(ctx, nil, "mock_method", parms, result)
+		require.Error(t, err)
 	})
 
 	// test for bug https://github.com/filecoin-project/venus/issues/4992
@@ -239,6 +247,43 @@ func TestSendRequest(t *testing.T) {
 		}
 		eventSteam.reqLk.Unlock()
 	})
+
+	t.Run("all request failed", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		eventSteam := NewBaseEventStream(ctx, DefaultConfig())
+
+		// expect id not exists error
+		// stm: @VENUSGATEWAY_TYPES_RESPONSE_EVENT_002
+		err := eventSteam.ResponseEvent(ctx, &types.ResponseEvent{ID: sharedTypes.NewUUID()})
+		require.Error(t, err)
+
+		parms, err := json.Marshal(mockParams{A: "mock arg"})
+		require.NoError(t, err)
+		result := &mockResult{}
+
+		var clients []*mockClient
+		client := setupClient(t, eventSteam, "127.1.1.1")
+		go client.start(ctx)
+		clients = append(clients, client)
+
+		client2 := setupClient(t, eventSteam, "127.1.1.2")
+		go client2.start(ctx)
+		clients = append(clients, client2)
+
+		var getConns = func() []*ChannelInfo {
+			var channels []*ChannelInfo
+			for _, client := range clients {
+				channels = append(channels, client.channel)
+			}
+			return channels
+		}
+		client.close()
+		client2.close()
+		err = eventSteam.SendRequest(ctx, getConns(), "mock_method", parms, result)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "all request failed:")
+	})
 }
 
 func TestIstimeOutError(t *testing.T) {
@@ -255,22 +300,27 @@ type mockClient struct {
 
 	closeCh   chan struct{}
 	waitClose chan struct{}
+
+	cancel context.CancelFunc
 }
 
 func setupClient(t *testing.T, event *BaseEventStream, ip string) *mockClient {
 	requestCh := make(chan *types.RequestEvent)
+	ctx, cancel := context.WithCancel(context.Background())
 
 	return &mockClient{
 		t:         t,
 		requestCh: requestCh,
 		event:     event,
-		channel:   NewChannelInfo(ip, requestCh),
+		channel:   NewChannelInfo(ctx, ip, requestCh),
 		closeCh:   make(chan struct{}),
 		waitClose: make(chan struct{}),
+		cancel:    cancel,
 	}
 }
 
 func (m *mockClient) close() {
+	m.cancel()
 	close(m.requestCh)
 	m.closeCh <- struct{}{}
 	<-m.waitClose

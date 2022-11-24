@@ -1,3 +1,4 @@
+// stm: #unit
 package marketevent
 
 import (
@@ -42,6 +43,7 @@ func TestListenMarketEvent(t *testing.T) {
 
 		marketEvent := setupMarketEvent(t, supportAccount, minerAddr)
 		client := NewMarketEventClient(marketEvent, addrGetter(), nil, log.With())
+		// stm: @VENUSGATEWAY_MARKET_EVENT_LISTEN_MARKET_EVENT_002
 		err := client.listenMarketRequestOnce(jwtclient.CtxWithName(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"), supportAccount))
 		require.Contains(t, err.Error(), "not exist")
 	})
@@ -54,6 +56,7 @@ func TestListenMarketEvent(t *testing.T) {
 		// register
 		marketEvent := setupMarketEvent(t, supportAccount, minerAddr)
 		client := NewMarketEventClient(marketEvent, minerAddr, nil, log.With())
+		// stm: @VENUSGATEWAY_MARKET_EVENT_LISTEN_MARKET_EVENT_003
 		err := client.listenMarketRequestOnce(jwtclient.CtxWithName(ctx, supportAccount))
 		require.Contains(t, err.Error(), "ip not exist")
 	})
@@ -70,6 +73,7 @@ func TestIsUnsealed(t *testing.T) {
 		marketEvent := setupMarketEvent(t, supportAccount, minerAddr)
 		handler := testhelper.NewMarketHandler(t)
 		client := NewMarketEventClient(marketEvent, minerAddr, handler, log.With())
+		// stm: @VENUSGATEWAY_MARKET_EVENT_RESPONSE_MARKET_EVENT_001
 		go client.ListenMarketRequest(jwtclient.CtxWithName(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"), supportAccount))
 		client.WaitReady(ctx)
 
@@ -83,6 +87,7 @@ func TestIsUnsealed(t *testing.T) {
 		size := abi.PaddedPieceSize(100)
 		offset := sharedTypes.PaddedByteIndex(100)
 		handler.SetCheckIsUnsealExpect(sectorRef, offset, size, false)
+		// stm: @VENUSGATEWAY_MARKET_EVENT_IS_UNSEALED_001
 		isUnsealed, err := marketEvent.IsUnsealed(ctx, minerAddr, cid.Undef, sectorRef, offset, size)
 		require.NoError(t, err)
 		require.True(t, isUnsealed)
@@ -107,6 +112,7 @@ func TestIsUnsealed(t *testing.T) {
 		size := abi.PaddedPieceSize(100)
 		offset := sharedTypes.PaddedByteIndex(100)
 		handler.SetCheckIsUnsealExpect(sectorRef, offset, size, false)
+		// stm: @VENUSGATEWAY_MARKET_EVENT_IS_UNSEALED_003
 		_, err := marketEvent.IsUnsealed(ctx, addrGetter(), cid.Undef, sectorRef, offset, size)
 		require.Contains(t, err.Error(), "no connections for this miner")
 	})
@@ -162,6 +168,7 @@ func TestUnsealed(t *testing.T) {
 		pieceCid, err := cid.Decode("bafy2bzaced2kktxdkqw5pey5of3wtahz5imm7ta4ymegah466dsc5fonj73u2")
 		require.NoError(t, err)
 		handler.SetSectorsUnsealPieceExpect(pieceCid, sectorRef, offset, size, dest, false)
+		// stm: @VENUSGATEWAY_MARKET_EVENT_SECTORS_UNSEAL_PIECE_001
 		err = marketEvent.SectorsUnsealPiece(ctx, minerAddr, pieceCid, sectorRef, offset, size, dest)
 		require.NoError(t, err)
 	})
@@ -188,6 +195,7 @@ func TestUnsealed(t *testing.T) {
 		pieceCid, err := cid.Decode("bafy2bzaced2kktxdkqw5pey5of3wtahz5imm7ta4ymegah466dsc5fonj73u2")
 		require.NoError(t, err)
 		handler.SetSectorsUnsealPieceExpect(pieceCid, sectorRef, offset, size, dest, false)
+		// stm: @VENUSGATEWAY_MARKET_EVENT_SECTORS_UNSEAL_PIECE_003
 		err = marketEvent.SectorsUnsealPiece(ctx, addrGetter(), pieceCid, sectorRef, offset, size, dest)
 		require.Contains(t, err.Error(), "no connections for this miner")
 	})
@@ -231,6 +239,7 @@ func TestListMarketConnectionsState(t *testing.T) {
 	go client.ListenMarketRequest(jwtclient.CtxWithName(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"), walletAccount))
 	client.WaitReady(ctx)
 
+	// stm: @VENUSGATEWAY_MARKET_EVENT_LIST_MARKET_CONNECTIONS_STATE_001
 	marketState, err := marketEvent.ListMarketConnectionsState(ctx)
 	require.NoError(t, err)
 	require.Len(t, marketState, 1)
