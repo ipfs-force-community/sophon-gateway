@@ -69,7 +69,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 
 	ip, _ := jwtclient.CtxGetTokenLocation(ctx) // todo sure exit?
 	out := make(chan *sharedGatewayTypes.RequestEvent, w.cfg.RequestQueueSize)
-
+	walletLog := log.With("account", walletAccount).With("ip", ip)
 	ctx, _ = tag.New(ctx, tag.Upsert(metrics.WalletAccountKey, walletAccount), tag.Upsert(metrics.IPKey, ip))
 
 	// Verify account: must exist in venus-auth
@@ -81,21 +81,21 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 	}
 
 	go func() {
-		channel := types.NewChannelInfo(ip, out)
+		channel := types.NewChannelInfo(ctx, ip, out)
 		defer close(out)
 		addrs, err := w.getValidatedAddress(ctx, channel, policy.SignBytes, walletAccount)
 		if err != nil {
-			log.Error(err)
+			walletLog.Errorf("unable to value address %v", err)
 			return
 		}
 
 		walletChannelInfo := newWalletChannelInfo(channel, addrs, policy.SignBytes)
 		err = w.walletConnMgr.addNewConn(walletAccount, policy, walletChannelInfo)
 		if err != nil {
-			log.Errorf("validate address error %v", err)
+			walletLog.Errorf("validate address error %v", err)
 			return
 		}
-		log.Infof("add new connections %s %s", walletAccount, walletChannelInfo.ChannelId)
+		walletLog.Infof("add new connections %s", walletChannelInfo.ChannelId)
 
 		// register signer address to venus-auth
 		for _, account := range accounts {
@@ -109,13 +109,12 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 		// todo rescan address to add new address or remove
 
 		stats.Record(ctx, metrics.WalletRegister.M(1))
-		stats.Record(ctx, metrics.WalletSource.M(1))
 
 		connectBytes, err := json.Marshal(sharedGatewayTypes.ConnectedCompleted{
 			ChannelId: walletChannelInfo.ChannelId,
 		})
 		if err != nil {
-			log.Errorf("marshal failed %v", err)
+			walletLog.Errorf("marshal failed %v", err)
 			return
 		}
 
@@ -130,7 +129,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 		<-ctx.Done()
 		stats.Record(ctx, metrics.WalletUnregister.M(1))
 		if err = w.walletConnMgr.removeConn(walletAccount, walletChannelInfo); err != nil {
-			log.Errorf("remove Conn error %v", err)
+			walletLog.Errorf("remove connect error %v", err)
 		} else { // nolint
 			// The records bound to the system will not have a lot of records, and there will be no additional effects.
 			// There are expenses and other potential risks for each disconnection of betting sales.

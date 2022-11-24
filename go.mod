@@ -1,6 +1,6 @@
 module github.com/ipfs-force-community/venus-gateway
 
-go 1.17
+go 1.18
 
 require (
 	github.com/filecoin-project/go-address v1.0.0

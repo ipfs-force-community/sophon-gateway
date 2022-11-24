@@ -1,3 +1,4 @@
+// stm: #integration
 package integrate
 
 import (
@@ -74,6 +75,7 @@ func TestProofAPI(t *testing.T) {
 		go proofEvent.ListenProofRequest(ctx)
 		proofEvent.WaitReady(ctx)
 
+		// stm: @VENUSGATEWAY_API_COMPUTE_PROOF_001
 		proof, err := sAPi.ComputeProof(ctx, mAddr, expectInfo, expectRand, expectEpoch, expectVersion)
 		require.NoError(t, err)
 		require.Equal(t, expectProof, proof)
@@ -97,7 +99,7 @@ func TestProofAPI(t *testing.T) {
 		require.NoError(t, err)
 		defer cCloser()
 
-		proofEvent := proofevent.NewProofEvent(walletEventClient, mAddr, &timeoutHandler{}, logging.Logger("test").With())
+		proofEvent := proofevent.NewProofEvent(walletEventClient, mAddr, testhelper.NewTimeoutProofHandler(time.Hour), logging.Logger("test").With())
 		go proofEvent.ListenProofRequest(ctx)
 		proofEvent.WaitReady(ctx)
 
@@ -168,10 +170,12 @@ func TestProofAPI(t *testing.T) {
 		go proofEvent3.ListenProofRequest(ctx)
 		proofEvent3.WaitReady(ctx)
 
+		// stm: @VENUSGATEWAY_API_LIST_CONNECTED_MINERS_001
 		miners, err := sAPi.ListConnectedMiners(ctx)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(miners))
 
+		// stm: @VENUSGATEWAY_API_LIST_MINER_CONNECTION_001
 		minerConnections, err := sAPi.ListMinerConnection(ctx, mAddr)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(minerConnections.Connections))
@@ -182,13 +186,6 @@ func TestProofAPI(t *testing.T) {
 		require.Equal(t, 1, len(minerConnections2.Connections))
 		require.Equal(t, 1, minerConnections2.ConnectionCount)
 	})
-}
-
-type timeoutHandler struct{}
-
-func (*timeoutHandler) ComputeProof(context.Context, []builtin.ExtendedSectorInfo, abi.PoStRandomness, abi.ChainEpoch, network.Version) ([]builtin.PoStProof, error) {
-	time.Sleep(time.Hour)
-	return nil, nil
 }
 
 func serverProofAPI(ctx context.Context, url, token string) (v2API.IProofEvent, jsonrpc.ClientCloser, error) {

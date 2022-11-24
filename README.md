@@ -1,4 +1,12 @@
-# venus-gateway
+<h1 align="center">Venus Gateway</h1>
+
+<p align="center">
+ <a href="https://github.com/ipfs-force-community/venus-gateway/actions"><img src="https://github.com/ipfs-force-community/venus-gateway/actions/workflows/build_upload.yml/badge.svg"/></a>
+ <a href="https://codecov.io/gh/ipfs-force-community/venus-gateway"><img src="https://codecov.io/gh/ipfs-force-community/venus-gateway/branch/master/graph/badge.svg?token=J5QWYWkgHT"/></a>
+ <a href="https://goreportcard.com/report/github.com/ipfs-force-community/venus-gateway"><img src="https://goreportcard.com/badge/github.com/ipfs-force-community/venus-gateway"/></a>
+ <a href="https://github.com/ipfs-force-community/venus-gateway/tags"><img src="https://img.shields.io/github/v/tag/ipfs-force-community/venus-gateway"/></a>
+  <br>
+</p>
 
 venus-gateway used to simplify deployment and reduce the complexity of miner access. Increase the security of miner access
               
