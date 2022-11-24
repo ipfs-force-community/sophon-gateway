@@ -57,11 +57,11 @@ func (e *BaseEventStream) SendRequest(ctx context.Context, channels []*ChannelIn
 		return processResp(resp)
 	}
 
-	if ctx.Err() != nil || len(channels) == 1 || isTimeoutError(err) { //if ctx have done before, not to try others
+	if ctx.Err() != nil || len(channels) == 1 || isTimeoutError(err) { // if ctx have done before, not to try others
 		return err
 	}
 
-	//code below unable to work as expect , because there no way to detect network issue in gateway,
+	// code below unable to work as expect , because there no way to detect network issue in gateway,
 	log.Warnf("the first channel is fail, try to other channel")
 
 	var lk sync.Mutex
@@ -124,8 +124,8 @@ func (e *BaseEventStream) sendOnce(ctx context.Context, channel *ChannelInfo, me
 		log.Debug("send request %s to %s", method, channel.Ip)
 	}
 
-	//wait for result
-	//timeout here
+	// wait for result
+	// timeout here
 	select {
 	case <-channel.Ctx.Done():
 		return nil, ErrCloseChannel
@@ -145,7 +145,7 @@ func (e *BaseEventStream) cleanRequests(ctx context.Context) {
 			for id, request := range e.idRequest {
 				if time.Since(request.CreateTime) > e.cfg.RequestTimeout {
 					delete(e.idRequest, id)
-					//avoid block this channel, maybe client request come as request timeout by chance
+					// avoid block this channel, maybe client request come as request timeout by chance
 					select {
 					case request.Result <- &types.ResponseEvent{
 						ID:      id,

@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ipfs-force-community/venus-gateway/metrics"
-	"github.com/ipfs-force-community/venus-gateway/validator"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
@@ -21,15 +19,18 @@ import (
 
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
+
+	"github.com/ipfs-force-community/venus-gateway/metrics"
 	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/venus-gateway/validator"
 )
 
 var log = logging.Logger("market_stream")
 
-var _ gateway.IMarketClient = (*MarketEventStream)(nil)
+var _ v2API.IMarketClient = (*MarketEventStream)(nil)
 
 type MarketEventStream struct {
 	connLk           sync.RWMutex
@@ -55,6 +56,8 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
 	}
+
+	// Chain services serve those miners should be controlled by themselves,so the user and miner cannot be forcibly bound here.
 	err := m.validator.Validate(ctx, policy.Miner)
 	if err != nil {
 		return nil, fmt.Errorf("verify miner:%s failed:%w", policy.Miner.String(), err)
@@ -98,12 +101,11 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 		} // no response
 		<-ctx.Done()
 		m.connLk.Lock()
-		defer m.connLk.Unlock() //connection read and remove should in one lock
+		defer m.connLk.Unlock() // connection read and remove should in one lock
 		channelStore := m.minerConnections[mAddr]
 		_ = channelStore.removeChanel(channel)
 		if channelStore.empty() {
 			delete(m.minerConnections, mAddr)
-
 		}
 		log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
 	}()

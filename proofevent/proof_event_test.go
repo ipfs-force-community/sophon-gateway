@@ -50,7 +50,7 @@ func TestListenProofEvent(t *testing.T) {
 		require.Equal(t, len(channel), 1)
 		require.Equal(t, channel[0].ChannelId, initBody.ChannelId)
 
-		//cancel and got a close request channel
+		// cancel and got a close request channel
 		cancel()
 		select {
 		case <-time.After(time.Second * 30):

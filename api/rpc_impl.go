@@ -12,11 +12,10 @@ import (
 	"github.com/filecoin-project/specs-storage/storage"
 
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
-
-	"github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
-
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
+
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
 	"github.com/ipfs-force-community/venus-gateway/version"
@@ -24,28 +23,30 @@ import (
 )
 
 type IGatewayPushAPI interface {
-	gateway.IProofClient
-	gateway.IWalletClient
+	v2API.IProofClient
+	v2API.IWalletClient
 }
 
 type IGatewayAPI interface {
 	IGatewayPushAPI
 
-	gateway.IProofServiceProvider
-	gateway.IWalletServiceProvider
+	v2API.IProofServiceProvider
+	v2API.IWalletServiceProvider
 }
 
-var _ gateway.IGateway = (*GatewayAPIImpl)(nil)
-var _ IGatewayAPI = (*GatewayAPIImpl)(nil)
+var (
+	_ v2API.IGateway = (*GatewayAPIImpl)(nil)
+	_ IGatewayAPI    = (*GatewayAPIImpl)(nil)
+)
 
 type GatewayAPIImpl struct {
-	gateway.IProofServiceProvider
+	v2API.IProofServiceProvider
 	pe *proofevent.ProofEventStream
 
-	gateway.IWalletServiceProvider
+	v2API.IWalletServiceProvider
 	we *walletevent.WalletEventStream
 
-	gateway.IMarketServiceProvider
+	v2API.IMarketServiceProvider
 
 	me *marketevent.MarketEventStream
 }
@@ -74,12 +75,12 @@ func (g *GatewayAPIImpl) ListMinerConnection(ctx context.Context, addr address.A
 	return g.pe.ListMinerConnection(ctx, addr)
 }
 
-func (g *GatewayAPIImpl) WalletHas(ctx context.Context, supportAccount string, addr address.Address) (bool, error) {
-	return g.we.WalletHas(ctx, supportAccount, addr)
+func (g *GatewayAPIImpl) WalletHas(ctx context.Context, addr address.Address, accounts []string) (bool, error) {
+	return g.we.WalletHas(ctx, addr, accounts)
 }
 
-func (g *GatewayAPIImpl) WalletSign(ctx context.Context, account string, addr address.Address, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
-	return g.we.WalletSign(ctx, account, addr, toSign, meta)
+func (g *GatewayAPIImpl) WalletSign(ctx context.Context, addr address.Address, accounts []string, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
+	return g.we.WalletSign(ctx, addr, accounts, toSign, meta)
 }
 
 func (g *GatewayAPIImpl) ListWalletInfo(ctx context.Context) ([]*types.WalletDetail, error) {

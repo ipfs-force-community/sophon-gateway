@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/filecoin-project/go-address"
-	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
+
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 )
 
-func recordMetricsLoop(ctx context.Context, api v1API.IGateway) {
+func recordMetricsLoop(ctx context.Context, api v2API.IGateway) {
 	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
 
@@ -27,7 +28,7 @@ func recordMetricsLoop(ctx context.Context, api v1API.IGateway) {
 	}
 }
 
-func recordWalletConnectionInfo(ctx context.Context, api v1API.IGateway) {
+func recordWalletConnectionInfo(ctx context.Context, api v2API.IGateway) {
 	walletDetails, err := api.ListWalletInfo(ctx)
 	if err != nil {
 		log.Warnf("failed to list wallet info %v", err)
@@ -54,7 +55,7 @@ func recordWalletConnectionInfo(ctx context.Context, api v1API.IGateway) {
 	}
 }
 
-func recordMarketConnectionInfo(ctx context.Context, api v1API.IGateway) {
+func recordMarketConnectionInfo(ctx context.Context, api v2API.IGateway) {
 	connsState, err := api.ListMarketConnectionsState(ctx)
 	if err != nil {
 		log.Warnf("failed to get market connections state %v", err)
@@ -70,7 +71,7 @@ func recordMarketConnectionInfo(ctx context.Context, api v1API.IGateway) {
 	}
 }
 
-func recordMinerConnectionInfo(ctx context.Context, api v1API.IGateway) {
+func recordMinerConnectionInfo(ctx context.Context, api v2API.IGateway) {
 	miners, err := api.ListConnectedMiners(ctx)
 	if err != nil {
 		log.Warnf("faield to list connected miners %v", err)

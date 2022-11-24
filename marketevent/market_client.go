@@ -7,40 +7,39 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ipfs-force-community/venus-gateway/types"
-
 	"go.uber.org/zap"
 
 	"github.com/filecoin-project/go-jsonrpc"
-	"github.com/filecoin-project/venus/venus-shared/api"
-	v1API "github.com/filecoin-project/venus/venus-shared/api/gateway/v1"
 
-	gateway2 "github.com/filecoin-project/venus/venus-shared/api/gateway/v0"
-	types3 "github.com/filecoin-project/venus/venus-shared/types"
+	"github.com/ipfs-force-community/venus-gateway/types"
+
+	"github.com/filecoin-project/venus/venus-shared/api"
+	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/filecoin-project/venus/venus-shared/types/gateway"
 
 	"github.com/filecoin-project/go-address"
 )
 
 type MarketEvent struct {
-	client        gateway2.IMarketServiceProvider
+	client        v2API.IMarketServiceProvider
 	mAddr         address.Address
 	marketHandler types.MarketHandler
 	log           *zap.SugaredLogger
 	readyCh       chan struct{}
 }
 
-func NewMarketRegisterClient(ctx context.Context, url, token string) (gateway2.IMarketServiceProvider, jsonrpc.ClientCloser, error) {
+func NewMarketRegisterClient(ctx context.Context, url, token string) (v2API.IMarketServiceProvider, jsonrpc.ClientCloser, error) {
 	headers := http.Header{}
 	headers.Add(api.AuthorizationHeader, "Bearer "+token)
-	client, closer, err := v1API.NewIGatewayRPC(ctx, url, headers)
+	client, closer, err := v2API.NewIGatewayRPC(ctx, url, headers)
 	if err != nil {
 		return nil, nil, err
 	}
 	return client, closer, nil
 }
 
-func NewMarketEventClient(client gateway2.IMarketServiceProvider, mAddr address.Address, marketHandler types.MarketHandler, log *zap.SugaredLogger) *MarketEvent {
+func NewMarketEventClient(client v2API.IMarketServiceProvider, mAddr address.Address, marketHandler types.MarketHandler, log *zap.SugaredLogger) *MarketEvent {
 	return &MarketEvent{
 		client:        client,
 		mAddr:         mAddr,
@@ -73,7 +72,7 @@ func (e *MarketEvent) ListenMarketRequest(ctx context.Context) {
 		}
 
 		e.log.Info("restarting listen market event ")
-		//try clear ready channel
+		// try clear ready channel
 		select {
 		case <-e.readyCh:
 		default:
@@ -137,7 +136,7 @@ func (e *MarketEvent) listenMarketRequestOnce(ctx context.Context) error {
 	return nil
 }
 
-func (e *MarketEvent) value(ctx context.Context, id types3.UUID, val interface{}) {
+func (e *MarketEvent) value(ctx context.Context, id sharedTypes.UUID, val interface{}) {
 	respBytes, err := json.Marshal(val)
 	if err != nil {
 		e.log.Errorf("marshal address list error %s", err)
@@ -154,7 +153,7 @@ func (e *MarketEvent) value(ctx context.Context, id types3.UUID, val interface{}
 	}
 }
 
-func (e *MarketEvent) error(ctx context.Context, id types3.UUID, err error) {
+func (e *MarketEvent) error(ctx context.Context, id sharedTypes.UUID, err error) {
 	err = e.client.ResponseMarketEvent(ctx, &gateway.ResponseEvent{
 		ID:      id,
 		Payload: nil,

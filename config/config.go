@@ -72,5 +72,5 @@ func WriteConfig(filePath string, cfg *Config) error {
 		return err
 	}
 
-	return ioutil.WriteFile(filePath, data, 0644)
+	return ioutil.WriteFile(filePath, data, 0o644)
 }
