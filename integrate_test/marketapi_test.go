@@ -1,3 +1,4 @@
+// stm: #integration
 package integrate
 
 import (
@@ -46,6 +47,7 @@ func TestMarketAPI(t *testing.T) {
 
 		handler := testhelper.NewMarketHandler(t)
 		proofEvent := marketevent.NewMarketEventClient(walletEventClient, mAddr, handler, logging.Logger("test").With())
+		// stm: @VENUSGATEWAY_MARKET_EVENT_LISTEN_MARKET_EVENT_001
 		go proofEvent.ListenMarketRequest(ctx)
 		proofEvent.WaitReady(ctx)
 
@@ -59,6 +61,7 @@ func TestMarketAPI(t *testing.T) {
 		size := abi.PaddedPieceSize(100)
 		offset := sharedTypes.PaddedByteIndex(100)
 		handler.SetCheckIsUnsealExpect(sectorRef, offset, size, false)
+		// stm: @VENUSGATEWAY_API_IS_UNSEALED_001, @VENUSGATEWAY_MARKET_EVENT_IS_UNSEALED_001
 		isUnseal, err := sAPi.IsUnsealed(ctx, mAddr, cid.Undef, sectorRef, offset, size)
 		require.NoError(t, err)
 		require.True(t, isUnseal)
@@ -101,6 +104,7 @@ func TestMarketAPI(t *testing.T) {
 		pieceCid, err := cid.Decode("bafy2bzaced2kktxdkqw5pey5of3wtahz5imm7ta4ymegah466dsc5fonj73u2")
 		require.NoError(t, err)
 		handler.SetSectorsUnsealPieceExpect(pieceCid, sectorRef, offset, size, dest, false)
+		// stm: @VENUSGATEWAY_API_SECTOR_UNSEAL_PRICE_001
 		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sectorRef, offset, size, dest)
 		require.NoError(t, err)
 
@@ -131,6 +135,7 @@ func TestMarketAPI(t *testing.T) {
 		go marketEventClient.ListenMarketRequest(ctx)
 		marketEventClient.WaitReady(ctx)
 
+		// stm: @VENUSGATEWAY_API_LIST_MARKET_CONNECTIONS_STATE_001
 		connectsState, err := sAPi.ListMarketConnectionsState(ctx)
 		require.NoError(t, err)
 		require.Len(t, connectsState, 1)
