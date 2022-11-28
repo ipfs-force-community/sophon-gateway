@@ -3,6 +3,7 @@ package metrics
 import (
 	"time"
 
+	"github.com/filecoin-project/go-jsonrpc/metrics"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
@@ -141,7 +142,7 @@ var (
 	}
 )
 
-var views = []*view.View{
+var views = append([]*view.View{
 	walletRegisterView,
 	walletUnregisterView,
 	walletNumView,
@@ -161,7 +162,7 @@ var views = []*view.View{
 	computeProofView,
 	isUnsealedView,
 	sectorsUnsealPieceView,
-}
+}, metrics.DefaultViews...)
 
 // SinceInMilliseconds returns the duration of time since the provide time as a float64.
 func SinceInMilliseconds(startTime time.Time) float64 {
