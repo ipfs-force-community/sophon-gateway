@@ -163,6 +163,46 @@ func (m *AuthClient) Verify(ctx context.Context, token string) ([]rpcAuth.Permis
 	panic("Don't call me")
 }
 
+func (m *AuthClient) HasUser(req *auth.HasUserRequest) (bool, error) {
+	panic("Don't call me")
+}
+
+func (m *AuthClient) ListUsers(req *auth.ListUsersRequest) (auth.ListUsersResponse, error) {
+	panic("Don't call me")
+}
+
+func (m *AuthClient) ListUsersWithMiners(req *auth.ListUsersRequest) (auth.ListUsersResponse, error) {
+	panic("Don't call me")
+}
+
+func (m *AuthClient) GetUserRateLimit(name, id string) (auth.GetUserRateLimitResponse, error) {
+	panic("Don't call me")
+}
+
+func (m *AuthClient) MinerExistInUser(user, miner string) (bool, error) {
+	panic("Don't call me")
+}
+
+func (m *AuthClient) SignerExistInUser(user, signer string) (bool, error) {
+	panic("Don't call me")
+}
+
+func (m *AuthClient) HasMiner(req *auth.HasMinerRequest) (bool, error) {
+	panic("Don't call me")
+}
+
+func (m *AuthClient) ListMiners(user string) (auth.ListMinerResp, error) {
+	panic("Don't call me")
+}
+
+func (m *AuthClient) HasSigner(signer string) (bool, error) {
+	panic("Don't call me")
+}
+
+func (m *AuthClient) ListSigners(user string) (auth.ListSignerResp, error) {
+	panic("Don't call me")
+}
+
 func NewMockAuthClient() *AuthClient {
 	return &AuthClient{
 		users:   make(map[string]*auth.OutputUser),
