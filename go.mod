@@ -7,8 +7,8 @@ require (
 	github.com/filecoin-project/go-jsonrpc v0.1.5
 	github.com/filecoin-project/go-state-types v0.9.8
 	github.com/filecoin-project/specs-storage v0.4.1
-	github.com/filecoin-project/venus v1.8.1-0.20221124060352-6507f0f062aa
-	github.com/filecoin-project/venus-auth v1.8.1-0.20221124050656-73734ff50be5
+	github.com/filecoin-project/venus v1.9.0-rc1
+	github.com/filecoin-project/venus-auth v1.9.0-rc1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v1.0.1-0.20220719063006-2c54bb379466
@@ -112,7 +112,7 @@ require (
 	github.com/ipfs/go-ipld-format v0.4.0 // indirect
 	github.com/ipfs/go-ipld-legacy v0.1.1 // indirect
 	github.com/ipfs/go-log v1.0.5 // indirect
-	github.com/ipfs/go-merkledag v0.8.0 // indirect
+	github.com/ipfs/go-merkledag v0.8.1 // indirect
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
 	github.com/ipfs/go-verifcid v0.0.1 // indirect
 	github.com/ipld/go-car v0.4.0 // indirect
