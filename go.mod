@@ -8,7 +8,7 @@ require (
 	github.com/filecoin-project/go-state-types v0.9.8
 	github.com/filecoin-project/specs-storage v0.4.1
 	github.com/filecoin-project/venus v1.9.0-rc1
-	github.com/filecoin-project/venus-auth v1.9.0-rc1
+	github.com/filecoin-project/venus-auth v1.8.1-0.20221215075718-407554802309
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v1.0.1-0.20220719063006-2c54bb379466
@@ -30,6 +30,7 @@ require (
 	github.com/gbrlsnchs/jwt/v3 v3.0.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/golang/mock v1.6.0 // indirect
 	github.com/libp2p/go-libp2p v0.22.0 // indirect
 	github.com/libp2p/go-libp2p-pubsub v0.8.0 // indirect
 	github.com/libp2p/go-msgio v0.2.0 // indirect

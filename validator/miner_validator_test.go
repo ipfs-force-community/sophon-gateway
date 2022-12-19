@@ -16,6 +16,14 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/validator/mocks"
 )
 
+func newAddr(ss string) address.Address {
+	addr, err := address.NewFromString(ss)
+	if err != nil {
+		panic(err)
+	}
+	return addr
+}
+
 var testArgs = map[string]*struct {
 	validOk bool
 	user    *auth.OutputUser
@@ -25,7 +33,7 @@ var testArgs = map[string]*struct {
 		Name:    "test_01",
 		Comment: "test_01",
 		State:   1,
-		Miners:  []*auth.OutputMiner{{Miner: "f01001", User: "test_01"}},
+		Miners:  []*auth.OutputMiner{{Miner: newAddr("f01001"), User: "test_01"}},
 	}},
 	// test_02, State is disabled, so it should be invalid.
 	"test_02": {false, &auth.OutputUser{
@@ -33,7 +41,7 @@ var testArgs = map[string]*struct {
 		Name:    "test_02",
 		Comment: "test_02",
 		State:   0,
-		Miners:  []*auth.OutputMiner{{Miner: "f01002", User: "test_02"}},
+		Miners:  []*auth.OutputMiner{{Miner: newAddr("f01002"), User: "test_02"}},
 	}},
 	// test_03, username is not same as miner
 	"test_03": {false, &auth.OutputUser{
@@ -41,7 +49,7 @@ var testArgs = map[string]*struct {
 		Name:    "test_02",
 		Comment: "test_02",
 		State:   1,
-		Miners:  []*auth.OutputMiner{{Miner: "f01002", User: "test_02"}},
+		Miners:  []*auth.OutputMiner{{Miner: newAddr("f01002"), User: "test_02"}},
 	}},
 	// username not exists in rpc context
 	"": {false, &auth.OutputUser{
@@ -49,7 +57,7 @@ var testArgs = map[string]*struct {
 		Name:    "test_02",
 		Comment: "test_02",
 		State:   1,
-		Miners:  []*auth.OutputMiner{{Miner: "f01002", User: "test_02"}},
+		Miners:  []*auth.OutputMiner{{Miner: newAddr("f01002"), User: "test_02"}},
 	}},
 }
 
@@ -68,15 +76,13 @@ func TestAuthMinerValidator_Validate(t *testing.T) {
 			ctx = jwtclient.CtxWithName(ctx, userName)
 		}
 		for _, miner := range arg.user.Miners {
-			addr, err := address.NewFromString(miner.Miner)
-			require.NoError(t, err)
 			if arg.validOk {
 				// stm: @VENUSGATEWAY_VALIDATOR_VALIDATE_001
-				require.NoError(t, validator.Validate(ctx, addr))
+				require.NoError(t, validator.Validate(ctx, miner.Miner))
 			} else {
 				// user is disabled, username is not same as miner return an error, username not exists in context
 				// stm: @VENUSGATEWAY_VALIDATOR_VALIDATE_005, @VENUSGATEWAY_VALIDATOR_VALIDATE_002, @VENUSGATEWAY_VALIDATOR_VALIDATE_003
-				require.Error(t, validator.Validate(ctx, addr))
+				require.Error(t, validator.Validate(ctx, miner.Miner))
 			}
 		}
 		// miner not exists

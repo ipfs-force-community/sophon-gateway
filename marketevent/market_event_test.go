@@ -259,7 +259,7 @@ func setupMarketEvent(t *testing.T, userName string, miners ...address.Address) 
 	}
 	for _, m := range miners {
 		user.Miners = append(user.Miners, &auth.OutputMiner{
-			Miner:     m.String(),
+			Miner:     m,
 			User:      userName,
 			CreatedAt: time.Time{},
 			UpdatedAt: time.Time{},

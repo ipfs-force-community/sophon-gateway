@@ -75,7 +75,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 	// Verify account: must exist in venus-auth
 	accounts := policy.SupportAccounts
 	accounts = append(accounts, walletAccount)
-	err := w.authClient.VerifyUsers(accounts)
+	err := w.authClient.VerifyUsers(ctx, accounts)
 	if err != nil {
 		return nil, fmt.Errorf("verify user %v failed: %w", accounts, err)
 	}
@@ -367,32 +367,32 @@ func (w *WalletEventStream) verifyAddress(ctx context.Context, addr address.Addr
 }
 
 func (w *WalletEventStream) registerSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) error {
-	signers := make([]string, 0)
+	signers := make([]address.Address, 0)
 	for _, addr := range addrs {
 		if !w.isSignerAddress(addr) {
 			log.Warnf("%s is not a signable address", addr.String())
 			continue
 		}
 
-		signers = append(signers, addr.String())
+		signers = append(signers, addr)
 	}
 
-	return w.authClient.RegisterSigners(walletAccount, signers)
+	return w.authClient.RegisterSigners(ctx, walletAccount, signers)
 }
 
 // nolint: unused
 func (w *WalletEventStream) unregisterSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) error {
-	signers := make([]string, 0)
+	signers := make([]address.Address, 0)
 	for _, addr := range addrs {
 		if !w.isSignerAddress(addr) {
 			log.Warnf("%s is not a signable address", addr.String())
 			continue
 		}
 
-		signers = append(signers, addr.String())
+		signers = append(signers, addr)
 	}
 
-	return w.authClient.UnregisterSigners(walletAccount, signers)
+	return w.authClient.UnregisterSigners(ctx, walletAccount, signers)
 }
 
 func GetSignData(datas ...[]byte) []byte {
