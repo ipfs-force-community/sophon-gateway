@@ -82,6 +82,7 @@ var runCmd = &cli.Command{
 	Usage: "start venus-gateway daemon",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "auth-url", Usage: "venus auth url"},
+		&cli.StringFlag{Name: "auth-token", Usage: "venus auth token"},
 		&cli.StringFlag{Name: "jaeger-proxy", EnvVars: []string{"VENUS_GATEWAY_JAEGER_PROXY"}},
 		&cli.Float64Flag{Name: "trace-sampler", EnvVars: []string{"VENUS_GATEWAY_TRACE_SAMPLER"}, Value: 1.0},
 		&cli.StringFlag{Name: "trace-node-name", Value: "venus-gateway"},
@@ -143,6 +144,9 @@ func parseFlag(cctx *cli.Context, cfg *config.Config) {
 	if cctx.IsSet("auth-url") {
 		cfg.Auth.URL = cctx.String("auth-url")
 	}
+	if cctx.IsSet("auth-token") {
+		cfg.Auth.Token = cctx.String("auth-token")
+	}
 	if cctx.IsSet("jaeger-proxy") {
 		cfg.Trace.JaegerEndpoint = strings.TrimSpace(cctx.String("jaeger-proxy"))
 		cfg.Trace.JaegerTracingEnabled = true
@@ -163,7 +167,7 @@ func parseFlag(cctx *cli.Context, cfg *config.Config) {
 func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	requestCfg := types.DefaultConfig()
 
-	remoteJwtCli, err := jwtclient.NewAuthClient(cfg.Auth.URL)
+	remoteJwtCli, err := jwtclient.NewAuthClient(cfg.Auth.URL, cfg.Auth.Token)
 	if err != nil {
 		return err
 	}
