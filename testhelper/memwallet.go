@@ -12,6 +12,7 @@ import (
 	"github.com/filecoin-project/go-state-types/crypto"
 	vcrypto "github.com/filecoin-project/venus/pkg/crypto"
 	_ "github.com/filecoin-project/venus/pkg/crypto/secp"
+	"github.com/filecoin-project/venus/pkg/wallet/key"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 )
 
@@ -19,14 +20,14 @@ var _ types.IWalletHandler = (*MemWallet)(nil)
 
 type MemWallet struct {
 	lk   sync.Mutex
-	keys map[address.Address]vcrypto.KeyInfo
+	keys map[address.Address]key.KeyInfo
 	fail bool
 }
 
 func NewMemWallet() *MemWallet {
 	return &MemWallet{
 		lk:   sync.Mutex{},
-		keys: make(map[address.Address]vcrypto.KeyInfo),
+		keys: make(map[address.Address]key.KeyInfo),
 	}
 }
 
@@ -34,20 +35,20 @@ func (m *MemWallet) SetFail(ctx context.Context, fail bool) {
 	m.fail = fail
 }
 
-func (m *MemWallet) GetKey(ctx context.Context, addr address.Address) (vcrypto.KeyInfo, error) {
+func (m *MemWallet) GetKey(ctx context.Context, addr address.Address) (key.KeyInfo, error) {
 	m.lk.Lock()
 	defer m.lk.Unlock()
 	keyInfo, ok := m.keys[addr]
 	if ok {
 		return keyInfo, nil
 	}
-	return vcrypto.KeyInfo{}, fmt.Errorf("key not found")
+	return key.KeyInfo{}, fmt.Errorf("key not found")
 }
 
 func (m *MemWallet) AddKey(ctx context.Context) (address.Address, error) {
 	m.lk.Lock()
 	defer m.lk.Unlock()
-	keyInfo, err := vcrypto.NewSecpKeyFromSeed(rand.Reader)
+	keyInfo, err := key.NewSecpKeyFromSeed(rand.Reader)
 	if err != nil {
 		return address.Undef, err
 	}
