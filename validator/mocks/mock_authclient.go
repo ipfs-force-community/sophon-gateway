@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"sync"
 
-	rpcAuth "github.com/filecoin-project/go-jsonrpc/auth"
+	"github.com/filecoin-project/go-address"
 
 	"github.com/filecoin-project/venus-auth/auth"
+	"github.com/filecoin-project/venus-auth/core"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
 	"github.com/ipfs-force-community/metrics/ratelimit"
@@ -24,24 +25,24 @@ type AuthClient struct {
 	lkSigner sync.RWMutex
 }
 
-func (m *AuthClient) GetUser(req *auth.GetUserRequest) (*auth.OutputUser, error) {
+func (m *AuthClient) GetUser(ctx context.Context, name string) (*auth.OutputUser, error) {
 	m.lkUser.Lock()
 	defer m.lkUser.Unlock()
 
-	if user, ok := m.users[req.Name]; ok {
+	if user, ok := m.users[name]; ok {
 		return user, nil
 	}
 
 	return nil, errors.New("not exist")
 }
 
-func (m *AuthClient) GetUserByMiner(req *auth.GetUserByMinerRequest) (*auth.OutputUser, error) {
+func (m *AuthClient) GetUserByMiner(ctx context.Context, targetMiner address.Address) (*auth.OutputUser, error) {
 	m.lkUser.Lock()
 	defer m.lkUser.Unlock()
 
 	for _, user := range m.users {
 		for _, miner := range user.Miners {
-			if req.Miner == miner.Miner {
+			if targetMiner == miner.Miner {
 				return user, nil
 			}
 		}
@@ -50,9 +51,9 @@ func (m *AuthClient) GetUserByMiner(req *auth.GetUserByMinerRequest) (*auth.Outp
 	return nil, errors.New("not exist")
 }
 
-func (m *AuthClient) GetUserBySigner(signer string) (auth.ListUsersResponse, error) {
+func (m *AuthClient) GetUserBySigner(ctx context.Context, signer address.Address) (auth.ListUsersResponse, error) {
 	m.lkSigner.Lock()
-	names, ok := m.signers[signer]
+	names, ok := m.signers[signer.String()]
 	m.lkSigner.Unlock()
 	if !ok {
 		return nil, errors.New("not exist")
@@ -70,8 +71,8 @@ func (m *AuthClient) GetUserBySigner(signer string) (auth.ListUsersResponse, err
 	return users, nil
 }
 
-func (m *AuthClient) RegisterSigners(userName string, signers []string) error {
-	_, err := m.GetUser(&auth.GetUserRequest{Name: userName})
+func (m *AuthClient) RegisterSigners(ctx context.Context, userName string, signers []address.Address) error {
+	_, err := m.GetUser(ctx, userName)
 	if err != nil {
 		return err
 	}
@@ -79,9 +80,9 @@ func (m *AuthClient) RegisterSigners(userName string, signers []string) error {
 	m.lkSigner.Lock()
 	defer m.lkSigner.Unlock()
 	for _, signer := range signers {
-		names, ok := m.signers[signer]
+		names, ok := m.signers[signer.String()]
 		if !ok {
-			m.signers[signer] = []string{userName}
+			m.signers[signer.String()] = []string{userName}
 		} else {
 			bCreate := true
 			for _, name := range names {
@@ -93,7 +94,7 @@ func (m *AuthClient) RegisterSigners(userName string, signers []string) error {
 
 			if bCreate {
 				names = append(names, userName)
-				m.signers[signer] = names
+				m.signers[signer.String()] = names
 			}
 		}
 	}
@@ -101,8 +102,8 @@ func (m *AuthClient) RegisterSigners(userName string, signers []string) error {
 	return nil
 }
 
-func (m *AuthClient) UnregisterSigners(userName string, signers []string) error {
-	_, err := m.GetUser(&auth.GetUserRequest{Name: userName})
+func (m *AuthClient) UnregisterSigners(ctx context.Context, userName string, signers []address.Address) error {
+	_, err := m.GetUser(ctx, userName)
 	if err != nil {
 		return err
 	}
@@ -110,7 +111,7 @@ func (m *AuthClient) UnregisterSigners(userName string, signers []string) error 
 	m.lkSigner.Lock()
 	defer m.lkSigner.Unlock()
 	for _, signer := range signers {
-		names, ok := m.signers[signer]
+		names, ok := m.signers[signer.String()]
 		if ok {
 			idx := 0
 			for _, name := range names {
@@ -119,14 +120,14 @@ func (m *AuthClient) UnregisterSigners(userName string, signers []string) error 
 					idx++
 				}
 			}
-			m.signers[signer] = names[:idx]
+			m.signers[signer.String()] = names[:idx]
 		}
 	}
 
 	return nil
 }
 
-func (m *AuthClient) VerifyUsers(names []string) error {
+func (m *AuthClient) VerifyUsers(ctx context.Context, names []string) error {
 	m.lkUser.Lock()
 	defer m.lkUser.Unlock()
 
@@ -139,7 +140,7 @@ func (m *AuthClient) VerifyUsers(names []string) error {
 	return nil
 }
 
-func (m *AuthClient) AddMockUser(users ...*auth.OutputUser) {
+func (m *AuthClient) AddMockUser(ctx context.Context, users ...*auth.OutputUser) {
 	m.lkUser.Lock()
 	defer m.lkUser.Unlock()
 
@@ -159,47 +160,51 @@ func (m *AuthClient) GetUserLimit(username, service, api string) (*ratelimit.Lim
 	return &ratelimit.Limit{Account: username}, nil
 }
 
-func (m *AuthClient) Verify(ctx context.Context, token string) ([]rpcAuth.Permission, error) {
+func (m *AuthClient) Verify(ctx context.Context, token string) (*auth.VerifyResponse, error) {
 	panic("Don't call me")
 }
 
-func (m *AuthClient) HasUser(req *auth.HasUserRequest) (bool, error) {
+func (m *AuthClient) HasUser(ctx context.Context, name string) (bool, error) {
 	panic("Don't call me")
 }
 
-func (m *AuthClient) ListUsers(req *auth.ListUsersRequest) (auth.ListUsersResponse, error) {
+func (m *AuthClient) ListUsers(ctx context.Context, skip int64, limit int64, state core.UserState) (auth.ListUsersResponse, error) {
 	panic("Don't call me")
 }
 
-func (m *AuthClient) ListUsersWithMiners(req *auth.ListUsersRequest) (auth.ListUsersResponse, error) {
+func (m *AuthClient) ListUsersWithMiners(ctx context.Context, skip int64, limit int64, state core.UserState) (auth.ListUsersResponse, error) {
 	panic("Don't call me")
 }
 
-func (m *AuthClient) GetUserRateLimit(name, id string) (auth.GetUserRateLimitResponse, error) {
+func (m *AuthClient) GetUserRateLimit(ctx context.Context, name, id string) (auth.GetUserRateLimitResponse, error) {
 	panic("Don't call me")
 }
 
-func (m *AuthClient) MinerExistInUser(user, miner string) (bool, error) {
+func (m *AuthClient) MinerExistInUser(ctx context.Context, user string, miner address.Address) (bool, error) {
 	panic("Don't call me")
 }
 
-func (m *AuthClient) SignerExistInUser(user, signer string) (bool, error) {
+func (m *AuthClient) SignerExistInUser(ctx context.Context, user string, signer address.Address) (bool, error) {
 	panic("Don't call me")
 }
 
-func (m *AuthClient) HasMiner(req *auth.HasMinerRequest) (bool, error) {
+func (m *AuthClient) HasMiner(ctx context.Context, mienr address.Address) (bool, error) {
 	panic("Don't call me")
 }
 
-func (m *AuthClient) ListMiners(user string) (auth.ListMinerResp, error) {
+func (m *AuthClient) ListMiners(ctx context.Context, user string) (auth.ListMinerResp, error) {
 	panic("Don't call me")
 }
 
-func (m *AuthClient) HasSigner(signer string) (bool, error) {
+func (m *AuthClient) HasSigner(ctx context.Context, signer address.Address) (bool, error) {
 	panic("Don't call me")
 }
 
-func (m *AuthClient) ListSigners(user string) (auth.ListSignerResp, error) {
+func (m *AuthClient) ListSigners(ctx context.Context, user string) (auth.ListSignerResp, error) {
+	panic("Don't call me")
+}
+
+func (m *AuthClient) UpsertMiner(ctx context.Context, user, miner string, openMining bool) (bool, error) {
 	panic("Don't call me")
 }
 
@@ -211,7 +216,6 @@ func NewMockAuthClient() *AuthClient {
 }
 
 var (
-	_ jwtclient.IAuthClient    = (*AuthClient)(nil)
-	_ ratelimit.ILimitFinder   = (*AuthClient)(nil)
-	_ jwtclient.IJwtAuthClient = (*AuthClient)(nil)
+	_ jwtclient.IAuthClient  = (*AuthClient)(nil)
+	_ ratelimit.ILimitFinder = (*AuthClient)(nil)
 )

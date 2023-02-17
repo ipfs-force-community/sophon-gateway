@@ -247,6 +247,7 @@ func TestListMarketConnectionsState(t *testing.T) {
 }
 
 func setupMarketEvent(t *testing.T, userName string, miners ...address.Address) *MarketEventStream {
+	ctx := context.Background()
 	authClient := mocks.NewMockAuthClient()
 	user := &auth.OutputUser{
 		Id:         "id",
@@ -259,14 +260,14 @@ func setupMarketEvent(t *testing.T, userName string, miners ...address.Address) 
 	}
 	for _, m := range miners {
 		user.Miners = append(user.Miners, &auth.OutputMiner{
-			Miner:     m.String(),
+			Miner:     m,
 			User:      userName,
 			CreatedAt: time.Time{},
 			UpdatedAt: time.Time{},
 		},
 		)
 	}
-	authClient.AddMockUser(user)
-	ctx := context.Background()
+	authClient.AddMockUser(ctx, user)
+
 	return NewMarketEventStream(ctx, validator.NewMinerValidator(authClient), types.DefaultConfig())
 }
