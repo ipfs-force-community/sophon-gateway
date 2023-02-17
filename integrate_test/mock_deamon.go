@@ -69,7 +69,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 		},
 	}
 	authClient := mocks.NewMockAuthClient()
-	authClient.AddMockUser(user...)
+	authClient.AddMockUser(ctx, user...)
 	walletStream := walletevent.NewWalletEventStream(ctx, authClient, requestCfg, true)
 
 	proofStream := proofevent.NewProofEventStream(ctx, minerValidator, requestCfg)
@@ -126,7 +126,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 		return "", nil, fmt.Errorf("failed to generate local jwt client: %v", err)
 	}
 
-	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, authClient, mux))
+	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(authClient), mux))
 
 	if err := metrics2.SetupMetrics(ctx, cfg.Metrics, gatewayAPIImpl); err != nil {
 		return "", nil, err

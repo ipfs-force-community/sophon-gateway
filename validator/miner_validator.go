@@ -6,7 +6,6 @@ import (
 
 	"github.com/filecoin-project/go-address"
 
-	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/core"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 )
@@ -26,7 +25,7 @@ func (amv *AuthMinerValidator) Validate(ctx context.Context, miner address.Addre
 	if !exist {
 		return fmt.Errorf("user name not exist in rpc context")
 	}
-	user, err := amv.authClient.GetUserByMiner(&auth.GetUserByMinerRequest{Miner: miner.String()})
+	user, err := amv.authClient.GetUserByMiner(ctx, miner)
 	if err != nil {
 		return fmt.Errorf("get user by miner(%s), failed:%w", miner.String(), err)
 	}
