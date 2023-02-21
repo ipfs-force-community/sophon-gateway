@@ -14,6 +14,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/etherlabsio/healthcheck/v2"
+
 	"github.com/gorilla/mux"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/mitchellh/go-homedir"
@@ -204,6 +206,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	}
 
 	mux := mux.NewRouter()
+
 	// v2api(newest api)
 	rpcServerV2 := jsonrpc.NewServer()
 	rpcServerV2.Register("Gateway", gatewayAPI)
@@ -226,22 +229,27 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		return fmt.Errorf("failed to save local token to token file: %w", err)
 	}
 
-	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(remoteJwtCli), mux))
+	authMux := jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(remoteJwtCli), mux)
+	authMux.TrustHandle("/debug/pprof/", http.DefaultServeMux)
+	authMux.TrustHandle("/healthcheck", healthcheck.Handler())
 
 	if err := metrics2.SetupMetrics(ctx, cfg.Metrics, gatewayAPIImpl); err != nil {
 		return err
 	}
+	handler := (http.Handler)(authMux)
+	if cfg.Trace.JaegerTracingEnabled {
+		log.Infof("trace config %+v", cfg.Trace)
+		reporter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
+		if err != nil {
+			return fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
+		}
 
-	log.Infof("trace config %+v", cfg.Trace)
-	repoter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
-	if err != nil {
-		return fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
-	}
-	if repoter != nil {
-		log.Info("register jaeger exporter success!")
+		if reporter != nil {
+			log.Info("register jaeger exporter success!")
 
-		defer metrics.UnregisterJaeger(repoter)
-		handler = &ochttp.Handler{Handler: handler}
+			defer metrics.UnregisterJaeger(reporter)
+			handler = &ochttp.Handler{Handler: handler}
+		}
 	}
 
 	httptest.NewServer(handler)
