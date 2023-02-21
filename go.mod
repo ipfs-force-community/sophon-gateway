@@ -3,6 +3,7 @@ module github.com/ipfs-force-community/venus-gateway
 go 1.18
 
 require (
+	github.com/etherlabsio/healthcheck/v2 v2.0.0
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-jsonrpc v0.1.5
 	github.com/filecoin-project/go-state-types v0.10.0-rc3
