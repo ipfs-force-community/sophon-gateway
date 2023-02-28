@@ -276,6 +276,7 @@ func TestWalletSign(t *testing.T) {
 }
 
 func setupWalletEvent(t *testing.T, walletAccount string, accounts ...string) *WalletEventStream {
+	ctx := context.Background()
 	users := make([]*auth.OutputUser, 0)
 	for _, account := range accounts {
 		users = append(users, &auth.OutputUser{
@@ -286,9 +287,8 @@ func setupWalletEvent(t *testing.T, walletAccount string, accounts ...string) *W
 		Name: walletAccount,
 	})
 	authClient := mocks.NewMockAuthClient()
-	authClient.AddMockUser(users...)
+	authClient.AddMockUser(ctx, users...)
 
-	ctx := context.Background()
 	return NewWalletEventStream(ctx, authClient, types.DefaultConfig(), true)
 }
 

@@ -25,6 +25,7 @@ import (
 	"github.com/filecoin-project/venus/venus-shared/api/permission"
 
 	"github.com/ipfs-force-community/venus-gateway/api"
+	"github.com/ipfs-force-community/venus-gateway/api/v1api"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	metrics2 "github.com/ipfs-force-community/venus-gateway/metrics"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
@@ -68,7 +69,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 		},
 	}
 	authClient := mocks.NewMockAuthClient()
-	authClient.AddMockUser(user...)
+	authClient.AddMockUser(ctx, user...)
 	walletStream := walletevent.NewWalletEventStream(ctx, authClient, requestCfg, true)
 
 	proofStream := proofevent.NewProofEventStream(ctx, minerValidator, requestCfg)
@@ -108,7 +109,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	mux.Handle("/rpc/v2", rpcServerV2)
 
 	// v1api
-	lowerFullNode := api.WrapperV2Full{IGateway: gatewayAPI}
+	lowerFullNode := v1api.WrapperV2Full{IGateway: gatewayAPI}
 	rpcServerV1 := jsonrpc.NewServer()
 	rpcServerV1.Register("Gateway", lowerFullNode)
 	mux.Handle("/rpc/v1", rpcServerV1)
@@ -125,7 +126,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 		return "", nil, fmt.Errorf("failed to generate local jwt client: %v", err)
 	}
 
-	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, authClient, mux))
+	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(authClient), mux))
 
 	if err := metrics2.SetupMetrics(ctx, cfg.Metrics, gatewayAPIImpl); err != nil {
 		return "", nil, err

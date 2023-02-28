@@ -14,6 +14,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/etherlabsio/healthcheck/v2"
+
 	"github.com/gorilla/mux"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/mitchellh/go-homedir"
@@ -35,6 +37,7 @@ import (
 	"github.com/ipfs-force-community/metrics/ratelimit"
 
 	"github.com/ipfs-force-community/venus-gateway/api"
+	"github.com/ipfs-force-community/venus-gateway/api/v1api"
 	"github.com/ipfs-force-community/venus-gateway/cmds"
 	"github.com/ipfs-force-community/venus-gateway/config"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
@@ -207,12 +210,13 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	}
 
 	mux := mux.NewRouter()
+
 	// v2api(newest api)
 	rpcServerV2 := jsonrpc.NewServer()
 	rpcServerV2.Register("Gateway", gatewayAPI)
 	mux.Handle("/rpc/v2", rpcServerV2)
 
-	lowerFullNode := api.WrapperV2Full{IGateway: gatewayAPI}
+	lowerFullNode := v1api.WrapperV2Full{IGateway: gatewayAPI}
 	rpcServerV1 := jsonrpc.NewServer()
 	rpcServerV1.Register("Gateway", lowerFullNode)
 	mux.Handle("/rpc/v1", rpcServerV1)
@@ -229,22 +233,27 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		return fmt.Errorf("failed to save local token to token file: %w", err)
 	}
 
-	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(remoteJwtCli), mux))
+	authMux := jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(remoteJwtCli), mux)
+	authMux.TrustHandle("/debug/pprof/", http.DefaultServeMux)
+	authMux.TrustHandle("/healthcheck", healthcheck.Handler())
 
 	if err := metrics2.SetupMetrics(ctx, cfg.Metrics, gatewayAPIImpl); err != nil {
 		return err
 	}
+	handler := (http.Handler)(authMux)
+	if cfg.Trace.JaegerTracingEnabled {
+		log.Infof("trace config %+v", cfg.Trace)
+		reporter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
+		if err != nil {
+			return fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
+		}
 
-	log.Infof("trace config %+v", cfg.Trace)
-	repoter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
-	if err != nil {
-		return fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
-	}
-	if repoter != nil {
-		log.Info("register jaeger exporter success!")
+		if reporter != nil {
+			log.Info("register jaeger exporter success!")
 
-		defer metrics.UnregisterJaeger(repoter)
-		handler = &ochttp.Handler{Handler: handler}
+			defer metrics.UnregisterJaeger(reporter)
+			handler = &ochttp.Handler{Handler: handler}
+		}
 	}
 
 	httptest.NewServer(handler)
