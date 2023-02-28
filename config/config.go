@@ -27,7 +27,8 @@ type APIConfig struct {
 }
 
 type AuthConfig struct {
-	URL string
+	URL   string
+	Token string
 }
 
 type RateLimitCofnig struct {

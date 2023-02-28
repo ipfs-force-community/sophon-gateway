@@ -9,7 +9,7 @@ require (
 	github.com/filecoin-project/go-state-types v0.10.0-rc3
 	github.com/filecoin-project/specs-storage v0.4.1
 	github.com/filecoin-project/venus v1.10.0-rc2
-	github.com/filecoin-project/venus-auth v1.10.0-rc2
+	github.com/filecoin-project/venus-auth v1.10.0-rc2.0.20230228032348-a2418f5a8838
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v1.0.1-0.20220719063006-2c54bb379466
