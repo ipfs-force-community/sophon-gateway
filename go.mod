@@ -5,10 +5,10 @@ go 1.18
 require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-jsonrpc v0.1.5
-	github.com/filecoin-project/go-state-types v0.10.0-rc3
+	github.com/filecoin-project/go-state-types v0.10.0
 	github.com/filecoin-project/specs-storage v0.4.1
-	github.com/filecoin-project/venus v1.10.0-rc2
-	github.com/filecoin-project/venus-auth v1.10.0-rc2
+	github.com/filecoin-project/venus v1.10.0
+	github.com/filecoin-project/venus-auth v1.10.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v1.0.1-0.20220719063006-2c54bb379466
@@ -32,6 +32,7 @@ require (
 	github.com/gbrlsnchs/jwt/v3 v3.0.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/ipfs/go-libipfs v0.4.1 // indirect
 	github.com/libp2p/go-libp2p v0.23.4 // indirect
 	github.com/libp2p/go-libp2p-pubsub v0.8.2 // indirect
 	github.com/libp2p/go-msgio v0.2.0 // indirect
@@ -102,7 +103,7 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.2.2 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
-	github.com/ipfs/go-block-format v0.0.3 // indirect
+	github.com/ipfs/go-block-format v0.1.1 // indirect
 	github.com/ipfs/go-blockservice v0.4.0 // indirect
 	github.com/ipfs/go-datastore v0.6.0 // indirect
 	github.com/ipfs/go-ipfs-blockstore v1.2.0 // indirect
@@ -188,4 +189,4 @@ require (
 
 replace github.com/filecoin-project/filecoin-ffi => ./extern/filecoin-ffi
 
-replace github.com/filecoin-project/go-jsonrpc => github.com/ipfs-force-community/go-jsonrpc v0.1.7-0.20230214070559-dbe74781184a
+replace github.com/filecoin-project/go-jsonrpc => github.com/ipfs-force-community/go-jsonrpc v0.1.7
