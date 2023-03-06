@@ -61,6 +61,23 @@ func (m *MemWallet) AddKey(ctx context.Context) (address.Address, error) {
 	return addr, nil
 }
 
+func (m *MemWallet) AddDelegatedKey(ctx context.Context) (address.Address, error) {
+	m.lk.Lock()
+	defer m.lk.Unlock()
+
+	keyInfo, err := key.NewDelegatedKeyFromSeed(rand.Reader)
+	if err != nil {
+		return address.Undef, err
+	}
+	addr, err := keyInfo.Address()
+	if err != nil {
+		return addr, err
+	}
+
+	m.keys[addr] = keyInfo
+	return addr, nil
+}
+
 func (m *MemWallet) Verify(ctx context.Context, addr address.Address, sig *crypto.Signature, msg []byte) error {
 	return vcrypto.Verify(sig, addr, msg)
 }

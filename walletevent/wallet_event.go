@@ -19,6 +19,7 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
 
+	"github.com/filecoin-project/venus-auth/auth"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
 	wcrypto "github.com/filecoin-project/venus/pkg/crypto"
@@ -246,15 +247,6 @@ func (w *WalletEventStream) RemoveAddress(ctx context.Context, channelId sharedT
 	return nil
 }
 
-func (w *WalletEventStream) isSignerAddress(addr address.Address) bool {
-	protocol := addr.Protocol()
-	if protocol == address.SECP256K1 || protocol == address.BLS {
-		return true
-	}
-
-	return false
-}
-
 func (w *WalletEventStream) WalletHas(ctx context.Context, addr address.Address, accounts []string) (bool, error) {
 	for _, account := range accounts {
 		bHas, err := w.walletConnMgr.hasWalletChannel(account, addr)
@@ -369,7 +361,7 @@ func (w *WalletEventStream) verifyAddress(ctx context.Context, addr address.Addr
 func (w *WalletEventStream) registerSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) error {
 	signers := make([]address.Address, 0, len(addrs))
 	for _, addr := range addrs {
-		if !w.isSignerAddress(addr) {
+		if !auth.IsSignerAddress(addr) {
 			log.Warnf("%s is not a signable address", addr.String())
 			continue
 		}
@@ -384,7 +376,7 @@ func (w *WalletEventStream) registerSignerAddress(ctx context.Context, walletAcc
 func (w *WalletEventStream) unregisterSignerAddress(ctx context.Context, walletAccount string, addrs ...address.Address) error {
 	signers := make([]address.Address, 0, len(addrs))
 	for _, addr := range addrs {
-		if !w.isSignerAddress(addr) {
+		if !auth.IsSignerAddress(addr) {
 			log.Warnf("%s is not a signable address", addr.String())
 			continue
 		}
