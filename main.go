@@ -27,6 +27,7 @@ import (
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
 	_ "github.com/filecoin-project/venus/pkg/crypto/bls"
+	_ "github.com/filecoin-project/venus/pkg/crypto/delegated"
 	_ "github.com/filecoin-project/venus/pkg/crypto/secp"
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	"github.com/filecoin-project/venus/venus-shared/api/permission"
