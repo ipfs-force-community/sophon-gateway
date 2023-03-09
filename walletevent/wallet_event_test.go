@@ -212,7 +212,7 @@ func TestRemoveNewAddressAndWalletHas(t *testing.T) {
 
 	wallet, err := walletEvent.ListWalletInfoByWallet(ctx, walletAccount)
 	require.NoError(t, err)
-	require.Len(t, wallet.ConnectStates[0].Addrs, 2)
+	require.Len(t, wallet.ConnectStates[0].Addrs, 3)
 	require.Contains(t, wallet.ConnectStates[0].Addrs, addr2)
 	require.NotContains(t, wallet.ConnectStates[0].Addrs, addr1)
 
@@ -220,7 +220,7 @@ func TestRemoveNewAddressAndWalletHas(t *testing.T) {
 	require.NoError(t, err)
 	wallet, err = walletEvent.ListWalletInfoByWallet(ctx, walletAccount)
 	require.NoError(t, err)
-	require.Len(t, wallet.ConnectStates[0].Addrs, 1)
+	require.Len(t, wallet.ConnectStates[0].Addrs, 2)
 
 	has, err = walletEvent.WalletHas(ctx, addr1, []string{walletAccount})
 	require.NoError(t, err)
@@ -246,8 +246,8 @@ func TestWalletSign(t *testing.T) {
 	require.Error(t, err)
 
 	addrs, err := client.wallet.WalletList(ctx)
+	require.NoError(t, err)
 	for _, addr := range addrs {
-		require.NoError(t, err)
 		// stm: @VENUSGATEWAY_WALLET_EVENT_WALLET_SIGN_001
 		_, err = walletEvent.WalletSign(ctx, addr, []string{walletAccount}, []byte{1, 2, 3}, sharedTypes.MsgMeta{
 			Type:  sharedTypes.MTUnknown,
@@ -259,12 +259,18 @@ func TestWalletSign(t *testing.T) {
 
 		err = client.supportNewAccount(ctx, "admin")
 		require.NoError(t, err)
-
-		_, err = walletEvent.WalletSign(ctx, addr, []string{walletAccount}, []byte{1, 2, 3}, sharedTypes.MsgMeta{
+		_, err = walletEvent.WalletSign(ctx, addr, []string{"admin"}, []byte{1, 2, 3}, sharedTypes.MsgMeta{
 			Type:  sharedTypes.MTUnknown,
 			Extra: nil,
 		})
 		require.NoError(t, err)
+
+		// account not exist
+		_, err = walletEvent.WalletSign(ctx, addr, []string{"admin2"}, []byte{1, 2, 3}, sharedTypes.MsgMeta{
+			Type:  sharedTypes.MTUnknown,
+			Extra: nil,
+		})
+		require.Error(t, err)
 
 		client.wallet.SetFail(ctx, true)
 		_, err = walletEvent.WalletSign(ctx, addr, []string{walletAccount}, []byte{1, 2, 3}, sharedTypes.MsgMeta{
@@ -272,6 +278,9 @@ func TestWalletSign(t *testing.T) {
 			Extra: nil,
 		})
 		require.EqualError(t, err, "mock error")
+
+		// reset fail
+		client.wallet.SetFail(ctx, false)
 	}
 }
 
@@ -294,7 +303,9 @@ func setupWalletEvent(t *testing.T, walletAccount string, accounts ...string) *W
 
 func setupClient(t *testing.T, ctx context.Context, walletAccount string, supportAccounts []string, event *WalletEventStream) *mockClient {
 	wallet := testhelper.NewMemWallet()
-	_, err := wallet.AddKey(context.Background())
+	_, err := wallet.AddKey(ctx)
+	require.NoError(t, err)
+	_, err = wallet.AddDelegatedKey(ctx)
 	require.NoError(t, err)
 	walletEventClient := NewWalletEventClient(ctx, wallet, event, logging.Logger("test").With(), supportAccounts)
 	return &mockClient{
