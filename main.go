@@ -14,6 +14,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/etherlabsio/healthcheck/v2"
+
 	"github.com/gorilla/mux"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/mitchellh/go-homedir"
@@ -84,6 +86,7 @@ var runCmd = &cli.Command{
 	Usage: "start venus-gateway daemon",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "auth-url", Usage: "venus auth url"},
+		&cli.StringFlag{Name: "auth-token", Usage: "venus auth token"},
 		&cli.StringFlag{Name: "jaeger-proxy", EnvVars: []string{"VENUS_GATEWAY_JAEGER_PROXY"}},
 		&cli.Float64Flag{Name: "trace-sampler", EnvVars: []string{"VENUS_GATEWAY_TRACE_SAMPLER"}, Value: 1.0},
 		&cli.StringFlag{Name: "trace-node-name", Value: "venus-gateway"},
@@ -145,6 +148,9 @@ func parseFlag(cctx *cli.Context, cfg *config.Config) {
 	if cctx.IsSet("auth-url") {
 		cfg.Auth.URL = cctx.String("auth-url")
 	}
+	if cctx.IsSet("auth-token") {
+		cfg.Auth.Token = cctx.String("auth-token")
+	}
 	if cctx.IsSet("jaeger-proxy") {
 		cfg.Trace.JaegerEndpoint = strings.TrimSpace(cctx.String("jaeger-proxy"))
 		cfg.Trace.JaegerTracingEnabled = true
@@ -165,7 +171,7 @@ func parseFlag(cctx *cli.Context, cfg *config.Config) {
 func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	requestCfg := types.DefaultConfig()
 
-	remoteJwtCli, err := jwtclient.NewAuthClient(cfg.Auth.URL)
+	remoteJwtCli, err := jwtclient.NewAuthClient(cfg.Auth.URL, cfg.Auth.Token)
 	if err != nil {
 		return err
 	}
@@ -205,6 +211,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	}
 
 	mux := mux.NewRouter()
+
 	// v2api(newest api)
 	rpcServerV2 := jsonrpc.NewServer()
 	rpcServerV2.Register("Gateway", gatewayAPI)
@@ -227,22 +234,27 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		return fmt.Errorf("failed to save local token to token file: %w", err)
 	}
 
-	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(remoteJwtCli), mux))
+	authMux := jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(remoteJwtCli), mux)
+	authMux.TrustHandle("/debug/pprof/", http.DefaultServeMux)
+	authMux.TrustHandle("/healthcheck", healthcheck.Handler())
 
 	if err := metrics2.SetupMetrics(ctx, cfg.Metrics, gatewayAPIImpl); err != nil {
 		return err
 	}
+	handler := (http.Handler)(authMux)
+	if cfg.Trace.JaegerTracingEnabled {
+		log.Infof("trace config %+v", cfg.Trace)
+		reporter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
+		if err != nil {
+			return fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
+		}
 
-	log.Infof("trace config %+v", cfg.Trace)
-	repoter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
-	if err != nil {
-		return fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
-	}
-	if repoter != nil {
-		log.Info("register jaeger exporter success!")
+		if reporter != nil {
+			log.Info("register jaeger exporter success!")
 
-		defer metrics.UnregisterJaeger(repoter)
-		handler = &ochttp.Handler{Handler: handler}
+			defer metrics.UnregisterJaeger(reporter)
+			handler = &ochttp.Handler{Handler: handler}
+		}
 	}
 
 	httptest.NewServer(handler)
