@@ -9,12 +9,12 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/filecoin-project/go-state-types/network"
-	"github.com/filecoin-project/specs-storage/storage"
 
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
+	mktypes "github.com/filecoin-project/venus/venus-shared/types/market"
 
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
@@ -91,18 +91,18 @@ func (g *GatewayAPIImpl) ListWalletInfoByWallet(ctx context.Context, wallet stri
 	return g.we.ListWalletInfoByWallet(ctx, wallet)
 }
 
-func (g *GatewayAPIImpl) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
-	return g.me.IsUnsealed(ctx, miner, pieceCid, sector, offset, size)
+func (g *GatewayAPIImpl) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
+	return g.me.IsUnsealed(ctx, miner, pieceCid, sid, offset, size)
 }
 
-func (g *GatewayAPIImpl) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
-	return g.me.SectorsUnsealPiece(ctx, miner, pieceCid, sector, offset, size, dest)
+func (g *GatewayAPIImpl) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, transfer *mktypes.Transfer) error {
+	return g.me.SectorsUnsealPiece(ctx, miner, pieceCid, sid, offset, size, transfer)
 }
 
 func (g *GatewayAPIImpl) ListMarketConnectionsState(ctx context.Context) ([]types.MarketConnectionState, error) {
 	return g.me.ListMarketConnectionsState(ctx)
 }
 
-func (g *GatewayAPIImpl) Version(ctx context.Context) (sharedTypes.Version, error) {
+func (g *GatewayAPIImpl) Version(context.Context) (sharedTypes.Version, error) {
 	return sharedTypes.Version{Version: version.UserVersion}, nil
 }

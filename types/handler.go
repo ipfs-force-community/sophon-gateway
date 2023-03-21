@@ -3,14 +3,16 @@ package types
 import (
 	"context"
 
+	"github.com/ipfs/go-cid"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/filecoin-project/go-state-types/network"
-	"github.com/filecoin-project/specs-storage/storage"
+
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	"github.com/filecoin-project/venus/venus-shared/types"
-	"github.com/ipfs/go-cid"
+	mktypes "github.com/filecoin-project/venus/venus-shared/types/market"
 )
 
 type ProofHandler interface {
@@ -18,8 +20,8 @@ type ProofHandler interface {
 }
 
 type MarketHandler interface {
-	CheckIsUnsealed(ctx context.Context, s storage.SectorRef, offset types.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error)
-	SectorsUnsealPiece(ctx context.Context, pieceCid cid.Cid, sector storage.SectorRef, offset types.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error
+	CheckIsUnsealed(ctx context.Context, miner address.Address, sid abi.SectorNumber, offset types.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error)
+	SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset types.PaddedByteIndex, size abi.PaddedPieceSize, transfer *mktypes.Transfer) error
 }
 
 type IWalletHandler interface {

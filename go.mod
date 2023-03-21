@@ -7,8 +7,7 @@ require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-jsonrpc v0.1.5
 	github.com/filecoin-project/go-state-types v0.10.0
-	github.com/filecoin-project/specs-storage v0.4.1
-	github.com/filecoin-project/venus v1.10.2-0.20230309014040-73746cec80e4
+	github.com/filecoin-project/venus v1.10.2-0.20230320061738-c105ca752826
 	github.com/filecoin-project/venus-auth v1.10.2-0.20230308100319-913815325d5e
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
@@ -32,11 +31,19 @@ require (
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
+	github.com/filecoin-project/go-cbor-util v0.0.1 // indirect
+	github.com/filecoin-project/go-data-transfer v1.15.2 // indirect
+	github.com/filecoin-project/go-fil-markets v1.25.2 // indirect
+	github.com/filecoin-project/go-padreader v0.0.1 // indirect
 	github.com/gbrlsnchs/jwt/v3 v3.0.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/hannahhoward/cbor-gen-for v0.0.0-20200817222906-ea96cece81f1 // indirect
+	github.com/hannahhoward/go-pubsub v0.0.0-20200423002714-8d62886cc36e // indirect
 	github.com/ipfs/go-libipfs v0.4.1 // indirect
+	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/libp2p/go-libp2p v0.23.4 // indirect
+	github.com/libp2p/go-libp2p-core v0.20.1 // indirect
 	github.com/libp2p/go-libp2p-pubsub v0.8.2 // indirect
 	github.com/libp2p/go-msgio v0.2.0 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
@@ -47,6 +54,8 @@ require (
 	go.opentelemetry.io/otel v1.10.0 // indirect
 	go.opentelemetry.io/otel/trace v1.10.0 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
+	golang.org/x/tools v0.1.12 // indirect
 )
 
 require (

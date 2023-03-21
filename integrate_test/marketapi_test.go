@@ -4,6 +4,7 @@ package integrate
 import (
 	"context"
 	"fmt"
+
 	"net/http"
 	"net/url"
 	"testing"
@@ -13,16 +14,16 @@ import (
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
 
+	"github.com/ipfs-force-community/metrics"
+
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/filecoin-project/go-state-types/abi"
-	"github.com/filecoin-project/specs-storage/storage"
 
 	"github.com/filecoin-project/venus/venus-shared/api"
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
-
-	"github.com/ipfs-force-community/metrics"
+	mktypes "github.com/filecoin-project/venus/venus-shared/types/market"
 
 	"github.com/ipfs-force-community/venus-gateway/config"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
@@ -51,23 +52,18 @@ func TestMarketAPI(t *testing.T) {
 		go proofEvent.ListenMarketRequest(ctx)
 		proofEvent.WaitReady(ctx)
 
-		sectorRef := storage.SectorRef{
-			ID: abi.SectorID{
-				Miner:  abi.ActorID(5),
-				Number: 10,
-			},
-			ProofType: abi.RegisteredSealProof_StackedDrg2KiBV1_1,
-		}
+		sid := abi.SectorNumber(10)
 		size := abi.PaddedPieceSize(100)
 		offset := sharedTypes.PaddedByteIndex(100)
-		handler.SetCheckIsUnsealExpect(sectorRef, offset, size, false)
+		handler.SetCheckIsUnsealExpect(mAddr, sid, offset, size, false)
 		// stm: @VENUSGATEWAY_API_IS_UNSEALED_001, @VENUSGATEWAY_MARKET_EVENT_IS_UNSEALED_001
-		isUnseal, err := sAPi.IsUnsealed(ctx, mAddr, cid.Undef, sectorRef, offset, size)
+		isUnseal, err := sAPi.IsUnsealed(ctx, mAddr, cid.Undef, sid, offset, size)
 		require.NoError(t, err)
 		require.True(t, isUnseal)
 
-		handler.SetCheckIsUnsealExpect(sectorRef, offset, size, true)
-		_, err = sAPi.IsUnsealed(ctx, mAddr, cid.Undef, sectorRef, offset, size)
+		handler.SetCheckIsUnsealExpect(mAddr, sid, offset, size, true)
+		// stm: @VENUSGATEWAY_API_IS_UNSEALED_002, @VENUSGATEWAY_MARKET_EVENT_IS_UNSEALED_002
+		_, err = sAPi.IsUnsealed(ctx, mAddr, cid.Undef, sid, offset, size)
 		require.EqualError(t, err, "mock error")
 	})
 
@@ -91,25 +87,20 @@ func TestMarketAPI(t *testing.T) {
 		go proofEvent.ListenMarketRequest(ctx)
 		proofEvent.WaitReady(ctx)
 
-		sectorRef := storage.SectorRef{
-			ID: abi.SectorID{
-				Miner:  abi.ActorID(5),
-				Number: 10,
-			},
-			ProofType: abi.RegisteredSealProof_StackedDrg2KiBV1_1,
-		}
+		sid := abi.SectorNumber(10)
 		size := abi.PaddedPieceSize(100)
 		offset := sharedTypes.PaddedByteIndex(100)
-		dest := "mock dest path"
+		transfer := mktypes.Transfer{}
 		pieceCid, err := cid.Decode("bafy2bzaced2kktxdkqw5pey5of3wtahz5imm7ta4ymegah466dsc5fonj73u2")
 		require.NoError(t, err)
-		handler.SetSectorsUnsealPieceExpect(pieceCid, sectorRef, offset, size, dest, false)
+		handler.SetSectorsUnsealPieceExpect(pieceCid, mAddr, sid, offset, size, transfer, false)
 		// stm: @VENUSGATEWAY_API_SECTOR_UNSEAL_PRICE_001
-		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sectorRef, offset, size, dest)
+		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, &transfer)
 		require.NoError(t, err)
 
-		handler.SetSectorsUnsealPieceExpect(pieceCid, sectorRef, offset, size, dest, true)
-		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sectorRef, offset, size, dest)
+		handler.SetSectorsUnsealPieceExpect(pieceCid, mAddr, sid, offset, size, transfer, true)
+		// stm: @VENUSGATEWAY_API_SECTOR_UNSEAL_PRICE_002
+		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, &transfer)
 		require.EqualError(t, err, "mock error")
 	})
 

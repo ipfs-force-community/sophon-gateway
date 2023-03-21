@@ -9,16 +9,15 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-jsonrpc"
-
-	"github.com/ipfs-force-community/venus-gateway/types"
 
 	"github.com/filecoin-project/venus/venus-shared/api"
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/filecoin-project/venus/venus-shared/types/gateway"
 
-	"github.com/filecoin-project/go-address"
+	"github.com/ipfs-force-community/venus-gateway/types"
 )
 
 type MarketEvent struct {
@@ -109,7 +108,7 @@ func (e *MarketEvent) listenMarketRequestOnce(ctx context.Context) error {
 				e.error(ctx, marketEvent.ID, err)
 				continue
 			}
-			isUnseal, err := e.marketHandler.CheckIsUnsealed(ctx, req.Sector, req.Offset, req.Size)
+			isUnseal, err := e.marketHandler.CheckIsUnsealed(ctx, req.Miner, req.Sid, req.Offset, req.Size)
 			if err != nil {
 				e.error(ctx, marketEvent.ID, err)
 				continue
@@ -122,7 +121,7 @@ func (e *MarketEvent) listenMarketRequestOnce(ctx context.Context) error {
 				e.error(ctx, marketEvent.ID, err)
 				continue
 			}
-			err = e.marketHandler.SectorsUnsealPiece(ctx, req.PieceCid, req.Sector, req.Offset, req.Size, req.Dest)
+			err = e.marketHandler.SectorsUnsealPiece(ctx, req.Miner, req.PieceCid, req.Sid, req.Offset, req.Size, &req.Transfer)
 			if err != nil {
 				e.error(ctx, marketEvent.ID, err)
 				continue

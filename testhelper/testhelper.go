@@ -6,15 +6,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/filecoin-project/specs-storage/storage"
-	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/ipfs/go-cid"
 
-	"github.com/ipfs-force-community/venus-gateway/types"
-
+	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/network"
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
+	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	mktypes "github.com/filecoin-project/venus/venus-shared/types/market"
+
+	"github.com/ipfs-force-community/venus-gateway/types"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -49,7 +51,7 @@ func NewProofHander(t *testing.T,
 	}
 }
 
-func (p *proofhandler) ComputeProof(ctx context.Context, infos []builtin.ExtendedSectorInfo, randomness abi.PoStRandomness, epoch abi.ChainEpoch, version network.Version) ([]builtin.PoStProof, error) {
+func (p *proofhandler) ComputeProof(_ context.Context, infos []builtin.ExtendedSectorInfo, randomness abi.PoStRandomness, epoch abi.ChainEpoch, version network.Version) ([]builtin.PoStProof, error) {
 	require.Equal(p.t, p.expectInfos, infos)
 	require.Equal(p.t, p.expectRandomness, randomness)
 	require.Equal(p.t, p.expectEpoch, epoch)
@@ -67,13 +69,14 @@ func (p *proofhandler) ValidateProof(proof []builtin.PoStProof) {
 var _ types.MarketHandler = (*MarketHandler)(nil)
 
 type MarketHandler struct {
-	t               *testing.T
-	expectSectorRef storage.SectorRef
-	expectOffset    sharedTypes.PaddedByteIndex
-	expectSize      abi.PaddedPieceSize
+	t                  *testing.T
+	expectMiner        address.Address
+	expectSectorNumber abi.SectorNumber
+	expectOffset       sharedTypes.PaddedByteIndex
+	expectSize         abi.PaddedPieceSize
 
 	expectPieceCid cid.Cid
-	expectDest     string
+	expectTransfer mktypes.Transfer
 	fail           bool
 }
 
@@ -81,15 +84,17 @@ func NewMarketHandler(t *testing.T) *MarketHandler {
 	return &MarketHandler{t: t}
 }
 
-func (p *MarketHandler) SetCheckIsUnsealExpect(s storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, fail bool) {
-	p.expectSectorRef = s
+func (p *MarketHandler) SetCheckIsUnsealExpect(miner address.Address, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, fail bool) {
+	p.expectMiner = miner
+	p.expectSectorNumber = sid
 	p.expectOffset = offset
 	p.expectSize = size
 	p.fail = fail
 }
 
-func (p *MarketHandler) CheckIsUnsealed(ctx context.Context, s storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
-	require.Equal(p.t, p.expectSectorRef, s)
+func (p *MarketHandler) CheckIsUnsealed(_ context.Context, miner address.Address, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
+	require.Equal(p.t, p.expectMiner, miner)
+	require.Equal(p.t, p.expectSectorNumber, sid)
 	require.Equal(p.t, p.expectOffset, offset)
 	require.Equal(p.t, p.expectSize, size)
 	if p.fail {
@@ -98,21 +103,24 @@ func (p *MarketHandler) CheckIsUnsealed(ctx context.Context, s storage.SectorRef
 	return true, nil
 }
 
-func (p *MarketHandler) SetSectorsUnsealPieceExpect(pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string, fail bool) {
+func (p *MarketHandler) SetSectorsUnsealPieceExpect(pieceCid cid.Cid, miner address.Address, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, transfer mktypes.Transfer, fail bool) {
 	p.expectPieceCid = pieceCid
-	p.expectSectorRef = sector
+	p.expectMiner = miner
+	p.expectSectorNumber = sid
 	p.expectOffset = offset
 	p.expectSize = size
-	p.expectDest = dest
+	p.expectTransfer = transfer
 	p.fail = fail
 }
 
-func (p *MarketHandler) SectorsUnsealPiece(ctx context.Context, pieceCid cid.Cid, sector storage.SectorRef, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
+func (p *MarketHandler) SectorsUnsealPiece(_ context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, transfer *mktypes.Transfer) error {
 	require.Equal(p.t, p.expectPieceCid, pieceCid)
-	require.Equal(p.t, p.expectSectorRef, sector)
+	require.Equal(p.t, p.expectMiner, miner)
+	require.Equal(p.t, p.expectSectorNumber, sid)
 	require.Equal(p.t, p.expectOffset, offset)
 	require.Equal(p.t, p.expectSize, size)
-	require.Equal(p.t, p.expectDest, dest)
+	require.Equal(p.t, p.expectTransfer.Type, transfer.Type)
+	require.Equal(p.t, p.expectTransfer.Params, transfer.Params)
 	if p.fail {
 		return fmt.Errorf("mock error")
 	}
