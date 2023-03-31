@@ -101,19 +101,6 @@ func (e *MarketEvent) listenMarketRequestOnce(ctx context.Context) error {
 			}
 			e.readyCh <- struct{}{}
 			e.log.Infof("success to connect with market %s", req.ChannelId)
-		case "IsUnsealed":
-			req := gateway.IsUnsealRequest{}
-			err := json.Unmarshal(marketEvent.Payload, &req)
-			if err != nil {
-				e.error(ctx, marketEvent.ID, err)
-				continue
-			}
-			isUnseal, err := e.marketHandler.CheckIsUnsealed(ctx, req.Miner, req.Sid, req.Offset, req.Size)
-			if err != nil {
-				e.error(ctx, marketEvent.ID, err)
-				continue
-			}
-			e.value(ctx, marketEvent.ID, isUnseal)
 		case "SectorsUnsealPiece":
 			req := gateway.UnsealRequest{}
 			err := json.Unmarshal(marketEvent.Payload, &req)
@@ -121,7 +108,7 @@ func (e *MarketEvent) listenMarketRequestOnce(ctx context.Context) error {
 				e.error(ctx, marketEvent.ID, err)
 				continue
 			}
-			err = e.marketHandler.SectorsUnsealPiece(ctx, req.Miner, req.PieceCid, req.Sid, req.Offset, req.Size, &req.Transfer)
+			err = e.marketHandler.SectorsUnsealPiece(ctx, req.Miner, req.PieceCid, req.Sid, req.Offset, req.Size, req.Dest)
 			if err != nil {
 				e.error(ctx, marketEvent.ID, err)
 				continue

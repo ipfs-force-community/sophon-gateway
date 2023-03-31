@@ -117,8 +117,6 @@ WalletSign         = stats.Float64("wallet_sign", "Call WalletSign spent time", 
 WalletList         = stats.Float64("wallet_list", "Call WalletList spent time", stats.UnitMilliseconds)
 # 计算 winnerpost 耗时（毫秒）
 ComputeProof       = stats.Float64("compute_proof", "Call ComputeProof spent time", stats.UnitMilliseconds)
-# 调用 IsUnsealed 耗时（毫秒）
-IsUnsealed         = stats.Float64("is_unsealed", "Call IsUnsealed spent time", stats.UnitMilliseconds)
 # 调用 SectorsUnsealPiece（毫秒）
 SectorsUnsealPiece = stats.Float64("sectors_unseal_piece", "Call SectorsUnsealPiece spent time", stats.UnitMilliseconds)
 ```

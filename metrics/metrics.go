@@ -45,7 +45,6 @@ var (
 	WalletSign         = stats.Float64("wallet_sign", "Call WalletSign spent time", stats.UnitMilliseconds)
 	WalletList         = stats.Float64("wallet_list", "Call WalletList spent time", stats.UnitMilliseconds)
 	ComputeProof       = stats.Float64("compute_proof", "Call ComputeProof spent time", stats.UnitMilliseconds)
-	IsUnsealed         = stats.Float64("is_unsealed", "Call IsUnsealed spent time", stats.UnitMilliseconds)
 	SectorsUnsealPiece = stats.Float64("sectors_unseal_piece", "Call SectorsUnsealPiece spent time", stats.UnitMilliseconds)
 )
 
@@ -130,11 +129,6 @@ var (
 		Aggregation: defaultMillisecondsDistribution,
 		TagKeys:     []tag.Key{MinerAddressKey},
 	}
-	isUnsealedView = &view.View{
-		Measure:     IsUnsealed,
-		Aggregation: defaultMillisecondsDistribution,
-		TagKeys:     []tag.Key{MinerAddressKey},
-	}
 	sectorsUnsealPieceView = &view.View{
 		Measure:     SectorsUnsealPiece,
 		Aggregation: defaultMillisecondsDistribution,
@@ -160,7 +154,6 @@ var views = append([]*view.View{
 	walletSignView,
 	walletListView,
 	computeProofView,
-	isUnsealedView,
 	sectorsUnsealPieceView,
 }, metrics.DefaultViews...)
 

@@ -7,7 +7,7 @@ require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-jsonrpc v0.1.5
 	github.com/filecoin-project/go-state-types v0.10.0
-	github.com/filecoin-project/venus v1.10.2-0.20230320061738-c105ca752826
+	github.com/filecoin-project/venus v1.10.2-0.20230330090548-2e3f39feceb1
 	github.com/filecoin-project/venus-auth v1.10.2-0.20230308100319-913815325d5e
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0

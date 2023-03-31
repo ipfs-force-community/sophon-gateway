@@ -13,7 +13,6 @@ import (
 	"github.com/filecoin-project/go-state-types/network"
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
-	mktypes "github.com/filecoin-project/venus/venus-shared/types/market"
 
 	"github.com/ipfs-force-community/venus-gateway/types"
 
@@ -76,7 +75,7 @@ type MarketHandler struct {
 	expectSize         abi.PaddedPieceSize
 
 	expectPieceCid cid.Cid
-	expectTransfer mktypes.Transfer
+	expectDest     string
 	fail           bool
 }
 
@@ -84,43 +83,23 @@ func NewMarketHandler(t *testing.T) *MarketHandler {
 	return &MarketHandler{t: t}
 }
 
-func (p *MarketHandler) SetCheckIsUnsealExpect(miner address.Address, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, fail bool) {
-	p.expectMiner = miner
-	p.expectSectorNumber = sid
-	p.expectOffset = offset
-	p.expectSize = size
-	p.fail = fail
-}
-
-func (p *MarketHandler) CheckIsUnsealed(_ context.Context, miner address.Address, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
-	require.Equal(p.t, p.expectMiner, miner)
-	require.Equal(p.t, p.expectSectorNumber, sid)
-	require.Equal(p.t, p.expectOffset, offset)
-	require.Equal(p.t, p.expectSize, size)
-	if p.fail {
-		return false, fmt.Errorf("mock error")
-	}
-	return true, nil
-}
-
-func (p *MarketHandler) SetSectorsUnsealPieceExpect(pieceCid cid.Cid, miner address.Address, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, transfer mktypes.Transfer, fail bool) {
+func (p *MarketHandler) SetSectorsUnsealPieceExpect(pieceCid cid.Cid, miner address.Address, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string, fail bool) {
 	p.expectPieceCid = pieceCid
 	p.expectMiner = miner
 	p.expectSectorNumber = sid
 	p.expectOffset = offset
 	p.expectSize = size
-	p.expectTransfer = transfer
+	p.expectDest = dest
 	p.fail = fail
 }
 
-func (p *MarketHandler) SectorsUnsealPiece(_ context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, transfer *mktypes.Transfer) error {
+func (p *MarketHandler) SectorsUnsealPiece(_ context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
 	require.Equal(p.t, p.expectPieceCid, pieceCid)
 	require.Equal(p.t, p.expectMiner, miner)
 	require.Equal(p.t, p.expectSectorNumber, sid)
 	require.Equal(p.t, p.expectOffset, offset)
 	require.Equal(p.t, p.expectSize, size)
-	require.Equal(p.t, p.expectTransfer.Type, transfer.Type)
-	require.Equal(p.t, p.expectTransfer.Params, transfer.Params)
+	require.Equal(p.t, p.expectDest, dest)
 	if p.fail {
 		return fmt.Errorf("mock error")
 	}
