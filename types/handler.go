@@ -12,7 +12,6 @@ import (
 
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	"github.com/filecoin-project/venus/venus-shared/types"
-	mktypes "github.com/filecoin-project/venus/venus-shared/types/market"
 )
 
 type ProofHandler interface {
@@ -20,8 +19,7 @@ type ProofHandler interface {
 }
 
 type MarketHandler interface {
-	CheckIsUnsealed(ctx context.Context, miner address.Address, sid abi.SectorNumber, offset types.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error)
-	SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset types.PaddedByteIndex, size abi.PaddedPieceSize, transfer *mktypes.Transfer) error
+	SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset types.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error
 }
 
 type IWalletHandler interface {

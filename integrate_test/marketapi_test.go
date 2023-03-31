@@ -23,7 +23,6 @@ import (
 	"github.com/filecoin-project/venus/venus-shared/api"
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
-	mktypes "github.com/filecoin-project/venus/venus-shared/types/market"
 
 	"github.com/ipfs-force-community/venus-gateway/config"
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
@@ -31,41 +30,6 @@ import (
 )
 
 func TestMarketAPI(t *testing.T) {
-	t.Run("check is unseal", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		mAddr, err := address.NewIDAddress(10)
-		require.NoError(t, err)
-
-		wsUrl, token := setupMarketDaemon(t, []address.Address{mAddr}, ctx)
-		sAPi, sCloser, err := serverMarketAPI(ctx, wsUrl, token)
-		require.NoError(t, err)
-		defer sCloser()
-
-		walletEventClient, cCloser, err := marketevent.NewMarketRegisterClient(ctx, wsUrl, token)
-		require.NoError(t, err)
-		defer cCloser()
-
-		handler := testhelper.NewMarketHandler(t)
-		proofEvent := marketevent.NewMarketEventClient(walletEventClient, mAddr, handler, logging.Logger("test").With())
-		// stm: @VENUSGATEWAY_MARKET_EVENT_LISTEN_MARKET_EVENT_001
-		go proofEvent.ListenMarketRequest(ctx)
-		proofEvent.WaitReady(ctx)
-
-		sid := abi.SectorNumber(10)
-		size := abi.PaddedPieceSize(100)
-		offset := sharedTypes.PaddedByteIndex(100)
-		handler.SetCheckIsUnsealExpect(mAddr, sid, offset, size, false)
-		// stm: @VENUSGATEWAY_API_IS_UNSEALED_001, @VENUSGATEWAY_MARKET_EVENT_IS_UNSEALED_001
-		isUnseal, err := sAPi.IsUnsealed(ctx, mAddr, cid.Undef, sid, offset, size)
-		require.NoError(t, err)
-		require.True(t, isUnseal)
-
-		handler.SetCheckIsUnsealExpect(mAddr, sid, offset, size, true)
-		// stm: @VENUSGATEWAY_API_IS_UNSEALED_002, @VENUSGATEWAY_MARKET_EVENT_IS_UNSEALED_002
-		_, err = sAPi.IsUnsealed(ctx, mAddr, cid.Undef, sid, offset, size)
-		require.EqualError(t, err, "mock error")
-	})
 
 	t.Run("unseal api", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -90,17 +54,17 @@ func TestMarketAPI(t *testing.T) {
 		sid := abi.SectorNumber(10)
 		size := abi.PaddedPieceSize(100)
 		offset := sharedTypes.PaddedByteIndex(100)
-		transfer := mktypes.Transfer{}
+		dest := ""
 		pieceCid, err := cid.Decode("bafy2bzaced2kktxdkqw5pey5of3wtahz5imm7ta4ymegah466dsc5fonj73u2")
 		require.NoError(t, err)
-		handler.SetSectorsUnsealPieceExpect(pieceCid, mAddr, sid, offset, size, transfer, false)
+		handler.SetSectorsUnsealPieceExpect(pieceCid, mAddr, sid, offset, size, dest, false)
 		// stm: @VENUSGATEWAY_API_SECTOR_UNSEAL_PRICE_001
-		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, &transfer)
+		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, dest)
 		require.NoError(t, err)
 
-		handler.SetSectorsUnsealPieceExpect(pieceCid, mAddr, sid, offset, size, transfer, true)
+		handler.SetSectorsUnsealPieceExpect(pieceCid, mAddr, sid, offset, size, dest, true)
 		// stm: @VENUSGATEWAY_API_SECTOR_UNSEAL_PRICE_002
-		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, &transfer)
+		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, dest)
 		require.EqualError(t, err, "mock error")
 	})
 

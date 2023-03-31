@@ -21,7 +21,6 @@ import (
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
-	mktypes "github.com/filecoin-project/venus/venus-shared/types/market"
 
 	"github.com/ipfs-force-community/venus-gateway/metrics"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -127,44 +126,14 @@ func (m *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]t
 	return result, nil
 }
 
-func (m *MarketEventStream) IsUnsealed(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize) (bool, error) {
-	reqBody := types2.IsUnsealRequest{
-		PieceCid: pieceCid,
-		Miner:    miner,
-		Sid:      sid,
-		Offset:   offset,
-		Size:     size,
-	}
-
-	payload, err := json.Marshal(reqBody)
-	if err != nil {
-		return false, err
-	}
-
-	channels, err := m.getChannels(miner)
-	if err != nil {
-		return false, err
-	}
-
-	start := time.Now()
-	var result bool
-	err = m.SendRequest(ctx, channels, "IsUnsealed", payload, &result)
-	_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(metrics.MinerAddressKey, miner.String())},
-		metrics.IsUnsealed.M(metrics.SinceInMilliseconds(start)))
-	if err == nil {
-		return result, nil
-	}
-	return false, err
-}
-
-func (m *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, transfer *mktypes.Transfer) error {
+func (m *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
 	reqBody := types2.UnsealRequest{
 		PieceCid: pieceCid,
 		Miner:    miner,
 		Sid:      sid,
 		Offset:   offset,
 		Size:     size,
-		Transfer: mktypes.Transfer{Type: transfer.Type, Params: transfer.Params},
+		Dest:     dest,
 	}
 
 	payload, err := json.Marshal(reqBody)
