@@ -142,12 +142,10 @@ func TestAddNewAddress(t *testing.T) {
 	ctx = jwtclient.CtxWithName(ctx, walletAccount)
 	// stm: @VENUSGATEWAY_WALLET_EVENT_ADD_NEW_ADDRESS_004
 	client.wallet.SetFail(ctx, true)
-	walletEvent.disableVerifyWalletAddrs = false
 	// verify address failed
 	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1})
 	require.Contains(t, err.Error(), "verify address")
 	client.wallet.SetFail(ctx, false)
-	walletEvent.disableVerifyWalletAddrs = true
 
 	// stm: @VENUSGATEWAY_WALLET_EVENT_ADD_NEW_ADDRESS_001
 	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1})
@@ -298,7 +296,7 @@ func setupWalletEvent(t *testing.T, walletAccount string, accounts ...string) *W
 	authClient := mocks.NewMockAuthClient()
 	authClient.AddMockUser(ctx, users...)
 
-	return NewWalletEventStream(ctx, authClient, types.DefaultConfig(), true)
+	return NewWalletEventStream(ctx, authClient, types.DefaultConfig())
 }
 
 func setupClient(t *testing.T, ctx context.Context, walletAccount string, supportAccounts []string, event *WalletEventStream) *mockClient {
