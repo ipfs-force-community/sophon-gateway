@@ -91,7 +91,6 @@ var runCmd = &cli.Command{
 		&cli.Float64Flag{Name: "trace-sampler", EnvVars: []string{"VENUS_GATEWAY_TRACE_SAMPLER"}, Value: 1.0},
 		&cli.StringFlag{Name: "trace-node-name", Value: "venus-gateway"},
 		&cli.StringFlag{Name: "rate-limit-redis", Hidden: true},
-		&cli.BoolFlag{Name: "disable-address-verify", Usage: "disable wallet address veirfication"},
 	},
 	Action: func(cctx *cli.Context) error {
 		cfg := config.DefaultConfig()
@@ -164,8 +163,6 @@ func parseFlag(cctx *cli.Context, cfg *config.Config) {
 	if cctx.IsSet("rate-limit-redis") {
 		cfg.RateLimit.Redis = cctx.String("rate-limit-redis")
 	}
-
-	cfg.DisableAddressVeirfication = cctx.Bool("disable-address-verify")
 }
 
 func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
@@ -178,7 +175,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 
 	minerValidator := validator.NewMinerValidator(remoteJwtCli)
 
-	walletStream := walletevent.NewWalletEventStream(ctx, remoteJwtCli, requestCfg, cfg.DisableAddressVeirfication)
+	walletStream := walletevent.NewWalletEventStream(ctx, remoteJwtCli, requestCfg)
 
 	proofStream := proofevent.NewProofEventStream(ctx, minerValidator, requestCfg)
 	marketStream := marketevent.NewMarketEventStream(ctx, minerValidator, &types.RequestConfig{

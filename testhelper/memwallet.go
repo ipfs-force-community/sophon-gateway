@@ -111,5 +111,6 @@ func (m *MemWallet) WalletSign(ctx context.Context, signer address.Address, toSi
 	if !ok {
 		return nil, fmt.Errorf("address %s not found", signer)
 	}
-	return vcrypto.Sign(toSign, keyInfo.Key(), vcrypto.SigTypeSecp256k1)
+
+	return vcrypto.Sign(toSign, keyInfo.Key(), sharedTypes.AddressProtocol2SignType(signer.Protocol()))
 }
