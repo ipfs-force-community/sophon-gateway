@@ -6,9 +6,9 @@ require (
 	github.com/etherlabsio/healthcheck/v2 v2.0.0
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-jsonrpc v0.1.5
-	github.com/filecoin-project/go-state-types v0.11.0-rc2
-	github.com/filecoin-project/venus v1.11.0-rc1
-	github.com/filecoin-project/venus-auth v1.11.0-rc1
+	github.com/filecoin-project/go-state-types v0.11.1
+	github.com/filecoin-project/venus v1.11.0
+	github.com/filecoin-project/venus-auth v1.11.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v1.0.1-0.20220719063006-2c54bb379466
