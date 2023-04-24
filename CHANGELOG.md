@@ -1,5 +1,8 @@
 # venus-gateway changelog
 
+## v1.11.1
+
+* bump up ffi
 ## v1.11.0
 
 * bump up version to v1.11.0
