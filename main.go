@@ -26,6 +26,7 @@ import (
 
 	"github.com/filecoin-project/go-jsonrpc"
 
+	"github.com/filecoin-project/venus-auth/core"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
 	_ "github.com/filecoin-project/venus/pkg/crypto/bls"
@@ -195,7 +196,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 
 	if len(cfg.RateLimit.Redis) > 0 {
 		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimit.Redis, nil,
-			&jwtclient.ValueFromCtx{},
+			&core.ValueFromCtx{},
 			jwtclient.WarpLimitFinder(remoteJwtCli),
 			logging.Logger("rate-limit"))
 		_ = logging.SetLogLevel("rate-limit", "info")

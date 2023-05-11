@@ -20,6 +20,7 @@ import (
 	"github.com/filecoin-project/go-state-types/crypto"
 
 	"github.com/filecoin-project/venus-auth/auth"
+	"github.com/filecoin-project/venus-auth/core"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
 	wcrypto "github.com/filecoin-project/venus/pkg/crypto"
@@ -60,12 +61,12 @@ func NewWalletEventStream(ctx context.Context, authClient jwtclient.IAuthClient,
 }
 
 func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *sharedGatewayTypes.WalletRegisterPolicy) (<-chan *sharedGatewayTypes.RequestEvent, error) {
-	walletAccount, exit := jwtclient.CtxGetName(ctx)
+	walletAccount, exit := core.CtxGetName(ctx)
 	if !exit {
 		return nil, errors.New("unable to get account name in method ListenWalletEvent request")
 	}
 
-	ip, _ := jwtclient.CtxGetTokenLocation(ctx) // todo sure exit?
+	ip, _ := core.CtxGetTokenLocation(ctx) // todo sure exit?
 	out := make(chan *sharedGatewayTypes.RequestEvent, w.cfg.RequestQueueSize)
 	walletLog := log.With("account", walletAccount).With("ip", ip)
 	ctx, _ = tag.New(ctx, tag.Upsert(metrics.WalletAccountKey, walletAccount), tag.Upsert(metrics.IPKey, ip))
@@ -155,7 +156,7 @@ func (w *WalletEventStream) ResponseWalletEvent(ctx context.Context, resp *share
 }
 
 func (w *WalletEventStream) SupportNewAccount(ctx context.Context, channelId sharedTypes.UUID, account string) error {
-	walletAccount, exit := jwtclient.CtxGetName(ctx)
+	walletAccount, exit := core.CtxGetName(ctx)
 	if !exit {
 		return errors.New("unable to get account name in method SupportNewAccount request")
 	}
@@ -171,7 +172,7 @@ func (w *WalletEventStream) SupportNewAccount(ctx context.Context, channelId sha
 }
 
 func (w *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedTypes.UUID, addrs []address.Address) error {
-	walletAccount, exit := jwtclient.CtxGetName(ctx)
+	walletAccount, exit := core.CtxGetName(ctx)
 	if !exit {
 		return errors.New("unable to get account name in method AddNewAddress request")
 	}
@@ -214,7 +215,7 @@ func (w *WalletEventStream) AddNewAddress(ctx context.Context, channelId sharedT
 }
 
 func (w *WalletEventStream) RemoveAddress(ctx context.Context, channelId sharedTypes.UUID, addrs []address.Address) error {
-	walletAccount, exit := jwtclient.CtxGetName(ctx)
+	walletAccount, exit := core.CtxGetName(ctx)
 	if !exit {
 		return errors.New("unable to get account name in method RemoveAddress request")
 	}

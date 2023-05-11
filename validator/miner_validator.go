@@ -21,7 +21,7 @@ type IAuthMinerValidator interface {
 var _ IAuthMinerValidator = (*AuthMinerValidator)(nil)
 
 func (amv *AuthMinerValidator) Validate(ctx context.Context, miner address.Address) error {
-	account, exist := jwtclient.CtxGetName(ctx)
+	account, exist := core.CtxGetName(ctx)
 	if !exist {
 		return fmt.Errorf("user name not exist in rpc context")
 	}

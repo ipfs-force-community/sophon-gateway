@@ -19,6 +19,7 @@ import (
 	"github.com/ipfs-force-community/venus-gateway/config"
 
 	"github.com/filecoin-project/venus-auth/auth"
+	"github.com/filecoin-project/venus-auth/core"
 	"github.com/filecoin-project/venus-auth/jwtclient"
 
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
@@ -90,7 +91,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 
 	if len(cfg.RateLimit.Redis) > 0 {
 		limiter, err := ratelimit.NewRateLimitHandler(cfg.RateLimit.Redis, nil,
-			&jwtclient.ValueFromCtx{},
+			&core.ValueFromCtx{},
 			authClient,
 			logging.Logger("rate-limit"))
 		_ = logging.SetLogLevel("rate-limit", "info")

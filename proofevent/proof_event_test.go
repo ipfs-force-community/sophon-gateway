@@ -15,7 +15,7 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/network"
-	"github.com/filecoin-project/venus-auth/jwtclient"
+	"github.com/filecoin-project/venus-auth/core"
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	types2 "github.com/filecoin-project/venus/venus-shared/types"
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
@@ -33,7 +33,7 @@ func TestListenProofEvent(t *testing.T) {
 	t.Run("init connect", func(t *testing.T) {
 		proof := setupProofEvent(t, []address.Address{addr1})
 		ctx, cancel := context.WithCancel(context.Background())
-		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
+		ctx = core.CtxWithTokenLocation(ctx, "127.1.1.1")
 		// stm: @VENUSGATEWAY_PROOF_EVENT_LISTEN_PROOF_EVENT_001
 		requestCh, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
 			MinerAddress: addr1,
@@ -67,7 +67,7 @@ func TestListenProofEvent(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		proofClient := NewProofEvent(proof, addr1, testhelper.NewTimeoutProofHandler(time.Second), log.With())
 		// stm:
-		go proofClient.ListenProofRequest(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"))
+		go proofClient.ListenProofRequest(core.CtxWithTokenLocation(ctx, "127.1.1.1"))
 		proofClient.WaitReady(ctx)
 
 		// fill request
@@ -100,7 +100,7 @@ func TestListenProofEvent(t *testing.T) {
 		proof := setupProofEvent(t, []address.Address{addr1})
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
+		ctx = core.CtxWithTokenLocation(ctx, "127.1.1.1")
 
 		// stm: @VENUSGATEWAY_PROOF_EVENT_LISTEN_PROOF_EVENT_003
 		_, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
@@ -148,7 +148,7 @@ func TestComputeProofEvent(t *testing.T) {
 		handler := testhelper.NewProofHander(t, expectInfo, expectRand, expectEpoch, expectVersion, expectProof, false)
 		proofClient := NewProofEvent(proof, addr, handler, log.With())
 
-		go proofClient.ListenProofRequest(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"))
+		go proofClient.ListenProofRequest(core.CtxWithTokenLocation(ctx, "127.1.1.1"))
 		proofClient.WaitReady(ctx)
 
 		// stm: @VENUSGATEWAY_PROOF_EVENT_COMPUTE_PROOF_001
@@ -181,7 +181,7 @@ func TestComputeProofEvent(t *testing.T) {
 		handler := testhelper.NewProofHander(t, expectInfo, expectRand, expectEpoch, expectVersion, expectProof, false)
 		proofClient := NewProofEvent(proof, addr, handler, log.With())
 
-		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
+		ctx = core.CtxWithTokenLocation(ctx, "127.1.1.1")
 		go proofClient.ListenProofRequest(ctx)
 		proofClient.WaitReady(ctx)
 
@@ -214,7 +214,7 @@ func TestComputeProofEvent(t *testing.T) {
 		handler := testhelper.NewProofHander(t, expectInfo, expectRand, expectEpoch, expectVersion, nil, true)
 		proofClient := NewProofEvent(proof, addr, handler, log.With())
 
-		go proofClient.ListenProofRequest(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"))
+		go proofClient.ListenProofRequest(core.CtxWithTokenLocation(ctx, "127.1.1.1"))
 		proofClient.WaitReady(ctx)
 
 		// stm: @VENUSGATEWAY_PROOF_EVENT_COMPUTE_PROOF_004
@@ -232,7 +232,7 @@ func TestComputeProofEvent(t *testing.T) {
 	t.Run("incorrect result  error", func(t *testing.T) {
 		proof := setupProofEvent(t, []address.Address{addr})
 		{
-			ctx := jwtclient.CtxWithTokenLocation(context.Background(), "127.1.1.1")
+			ctx := core.CtxWithTokenLocation(context.Background(), "127.1.1.1")
 			requestCh, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
 				MinerAddress: addr,
 			})
@@ -264,7 +264,7 @@ func TestComputeProofEvent(t *testing.T) {
 
 	t.Run("mistake request id error", func(t *testing.T) {
 		proof := setupProofEvent(t, []address.Address{addr})
-		ctx := jwtclient.CtxWithTokenLocation(context.Background(), "127.1.1.1")
+		ctx := core.CtxWithTokenLocation(context.Background(), "127.1.1.1")
 		_, err := proof.ListenProofEvent(ctx, &types.ProofRegisterPolicy{
 			MinerAddress: addr,
 		})
@@ -289,14 +289,14 @@ func TestListConnectedMiners(t *testing.T) {
 	defer cancel()
 	{
 		proofClient := NewProofEvent(proof, addr1, nil, log.With())
-		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
+		ctx = core.CtxWithTokenLocation(ctx, "127.1.1.1")
 		go proofClient.ListenProofRequest(ctx)
 		proofClient.WaitReady(ctx)
 	}
 
 	{
 		proofClient := NewProofEvent(proof, addr2, nil, log.With())
-		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
+		ctx = core.CtxWithTokenLocation(ctx, "127.1.1.1")
 		go proofClient.ListenProofRequest(ctx)
 		proofClient.WaitReady(ctx)
 	}
@@ -314,14 +314,14 @@ func TestListMinerConnection(t *testing.T) {
 
 	{
 		proofClient := NewProofEvent(proof, addr1, nil, log.With())
-		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
+		ctx = core.CtxWithTokenLocation(ctx, "127.1.1.1")
 		go proofClient.ListenProofRequest(ctx)
 		proofClient.WaitReady(ctx)
 	}
 
 	{
 		proofClient := NewProofEvent(proof, addr1, nil, log.With())
-		ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.2")
+		ctx = core.CtxWithTokenLocation(ctx, "127.1.1.2")
 		go proofClient.ListenProofRequest(ctx)
 		proofClient.WaitReady(ctx)
 	}
