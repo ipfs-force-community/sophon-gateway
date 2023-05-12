@@ -15,8 +15,7 @@ import (
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
-
-	"github.com/filecoin-project/venus-auth/jwtclient"
+	"github.com/filecoin-project/venus-auth/core"
 
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
@@ -51,7 +50,7 @@ func NewMarketEventStream(ctx context.Context, validator validator.IAuthMinerVal
 }
 
 func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types2.MarketRegisterPolicy) (<-chan *types2.RequestEvent, error) {
-	ip, exist := jwtclient.CtxGetTokenLocation(ctx)
+	ip, exist := core.CtxGetTokenLocation(ctx)
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
 	}

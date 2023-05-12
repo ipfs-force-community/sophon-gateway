@@ -12,7 +12,7 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 
 	"github.com/filecoin-project/venus-auth/auth"
-	"github.com/filecoin-project/venus-auth/jwtclient"
+	"github.com/filecoin-project/venus-auth/core"
 
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 
@@ -34,7 +34,7 @@ func TestListenMarketEvent(t *testing.T) {
 		marketEvent := setupMarketEvent(t, supportAccount, minerAddr)
 
 		client := NewMarketEventClient(marketEvent, minerAddr, nil, log.With())
-		go client.ListenMarketRequest(jwtclient.CtxWithName(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"), supportAccount))
+		go client.ListenMarketRequest(core.CtxWithName(core.CtxWithTokenLocation(ctx, "127.1.1.1"), supportAccount))
 		client.WaitReady(ctx)
 	})
 
@@ -47,7 +47,7 @@ func TestListenMarketEvent(t *testing.T) {
 		marketEvent := setupMarketEvent(t, supportAccount, minerAddr)
 		client := NewMarketEventClient(marketEvent, addrGetter(), nil, log.With())
 		// stm: @VENUSGATEWAY_MARKET_EVENT_LISTEN_MARKET_EVENT_002
-		err := client.listenMarketRequestOnce(jwtclient.CtxWithName(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"), supportAccount))
+		err := client.listenMarketRequestOnce(core.CtxWithName(core.CtxWithTokenLocation(ctx, "127.1.1.1"), supportAccount))
 		require.Contains(t, err.Error(), "not exist")
 	})
 
@@ -60,7 +60,7 @@ func TestListenMarketEvent(t *testing.T) {
 		marketEvent := setupMarketEvent(t, supportAccount, minerAddr)
 		client := NewMarketEventClient(marketEvent, minerAddr, nil, log.With())
 		// stm: @VENUSGATEWAY_MARKET_EVENT_LISTEN_MARKET_EVENT_003
-		err := client.listenMarketRequestOnce(jwtclient.CtxWithName(ctx, supportAccount))
+		err := client.listenMarketRequestOnce(core.CtxWithName(ctx, supportAccount))
 		require.Contains(t, err.Error(), "ip not exist")
 	})
 }
@@ -76,7 +76,7 @@ func TestUnsealed(t *testing.T) {
 		marketEvent := setupMarketEvent(t, walletAccount, minerAddr)
 		handler := testhelper.NewMarketHandler(t)
 		client := NewMarketEventClient(marketEvent, minerAddr, handler, log.With())
-		go client.ListenMarketRequest(jwtclient.CtxWithName(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"), walletAccount))
+		go client.ListenMarketRequest(core.CtxWithName(core.CtxWithTokenLocation(ctx, "127.1.1.1"), walletAccount))
 		client.WaitReady(ctx)
 
 		sid := abi.SectorNumber(10)
@@ -97,7 +97,7 @@ func TestUnsealed(t *testing.T) {
 		marketEvent := setupMarketEvent(t, walletAccount, minerAddr)
 		handler := testhelper.NewMarketHandler(t)
 		client := NewMarketEventClient(marketEvent, minerAddr, handler, log.With())
-		go client.ListenMarketRequest(jwtclient.CtxWithName(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"), walletAccount))
+		go client.ListenMarketRequest(core.CtxWithName(core.CtxWithTokenLocation(ctx, "127.1.1.1"), walletAccount))
 		client.WaitReady(ctx)
 
 		sid := abi.SectorNumber(10)
@@ -118,7 +118,7 @@ func TestUnsealed(t *testing.T) {
 		marketEvent := setupMarketEvent(t, walletAccount, minerAddr)
 		handler := testhelper.NewMarketHandler(t)
 		client := NewMarketEventClient(marketEvent, minerAddr, handler, log.With())
-		go client.ListenMarketRequest(jwtclient.CtxWithName(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"), walletAccount))
+		go client.ListenMarketRequest(core.CtxWithName(core.CtxWithTokenLocation(ctx, "127.1.1.1"), walletAccount))
 		client.WaitReady(ctx)
 
 		sid := abi.SectorNumber(10)
@@ -143,7 +143,7 @@ func TestListMarketConnectionsState(t *testing.T) {
 	marketEvent := setupMarketEvent(t, walletAccount, minerAddr)
 	handler := testhelper.NewMarketHandler(t)
 	client := NewMarketEventClient(marketEvent, minerAddr, handler, log.With())
-	go client.ListenMarketRequest(jwtclient.CtxWithName(jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1"), walletAccount))
+	go client.ListenMarketRequest(core.CtxWithName(core.CtxWithTokenLocation(ctx, "127.1.1.1"), walletAccount))
 	client.WaitReady(ctx)
 
 	// stm: @VENUSGATEWAY_MARKET_EVENT_LIST_MARKET_CONNECTIONS_STATE_001

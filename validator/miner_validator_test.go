@@ -12,7 +12,7 @@ import (
 	"github.com/filecoin-project/venus/venus-shared/types"
 
 	"github.com/filecoin-project/venus-auth/auth"
-	"github.com/filecoin-project/venus-auth/jwtclient"
+	"github.com/filecoin-project/venus-auth/core"
 
 	"github.com/ipfs-force-community/venus-gateway/validator/mocks"
 )
@@ -72,7 +72,7 @@ func TestAuthMinerValidator_Validate(t *testing.T) {
 		authClient.AddMockUser(ctx, arg.user)
 		var ctx = context.Background()
 		if userName != "" {
-			ctx = jwtclient.CtxWithName(ctx, userName)
+			ctx = core.CtxWithName(ctx, userName)
 		}
 
 		// miner not exists

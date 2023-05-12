@@ -14,7 +14,7 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 
 	"github.com/filecoin-project/venus-auth/auth"
-	"github.com/filecoin-project/venus-auth/jwtclient"
+	"github.com/filecoin-project/venus-auth/core"
 	_ "github.com/filecoin-project/venus/pkg/crypto/secp"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 
@@ -33,7 +33,7 @@ func TestListenWalletEvent(t *testing.T) {
 		walletEvent := setupWalletEvent(t, walletAccount, supportAccount...)
 		client := setupClient(t, ctx, walletAccount, supportAccount, walletEvent)
 		{
-			ctx := jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
+			ctx := core.CtxWithTokenLocation(ctx, "127.1.1.1")
 			// stm: @VENUSGATEWAY_WALLET_EVENT_LISTEN_WALLET_EVENT_002
 			err := client.walletEventClient.listenWalletRequestOnce(ctx)
 			require.Error(t, err)
@@ -105,7 +105,7 @@ func TestSupportNewAccount(t *testing.T) {
 	err = client.walletEventClient.SupportAccount(ctx, "fake_acc")
 	require.EqualError(t, err, "unable to get account name in method SupportNewAccount request")
 
-	ctx = jwtclient.CtxWithName(ctx, "fac_acc")
+	ctx = core.CtxWithName(ctx, "fac_acc")
 	err = client.walletEventClient.SupportAccount(ctx, "__")
 	require.NoError(t, err)
 
@@ -133,13 +133,13 @@ func TestAddNewAddress(t *testing.T) {
 	err := client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1})
 	require.EqualError(t, err, "unable to get account name in method AddNewAddress request")
 
-	ctx = jwtclient.CtxWithName(ctx, "incorrect wallet account")
+	ctx = core.CtxWithName(ctx, "incorrect wallet account")
 	// wallet connection info not found
 	// stm: @VENUSGATEWAY_WALLET_EVENT_ADD_NEW_ADDRESS_003
 	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1})
 	require.Error(t, err)
 
-	ctx = jwtclient.CtxWithName(ctx, walletAccount)
+	ctx = core.CtxWithName(ctx, walletAccount)
 	// stm: @VENUSGATEWAY_WALLET_EVENT_ADD_NEW_ADDRESS_004
 	client.wallet.SetFail(ctx, true)
 	// verify address failed
@@ -151,11 +151,11 @@ func TestAddNewAddress(t *testing.T) {
 	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1})
 	require.NoError(t, err)
 
-	ctx = jwtclient.CtxWithName(ctx, walletAccount)
+	ctx = core.CtxWithName(ctx, walletAccount)
 	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1}) // allow dup add
 	require.NoError(t, err)
 
-	ctx = jwtclient.CtxWithName(ctx, walletAccount)
+	ctx = core.CtxWithName(ctx, walletAccount)
 	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1, addr1, addr2})
 	require.NoError(t, err)
 
@@ -178,7 +178,7 @@ func TestRemoveNewAddressAndWalletHas(t *testing.T) {
 	client.walletEventClient.WaitReady(ctx)
 
 	addr1 := client.newkey()
-	accCtx := jwtclient.CtxWithName(ctx, walletAccount)
+	accCtx := core.CtxWithName(ctx, walletAccount)
 	err := client.walletEventClient.AddNewAddress(accCtx, []address.Address{addr1})
 	require.NoError(t, err)
 	has, err := walletEvent.WalletHas(ctx, addr1, []string{walletAccount})
@@ -328,14 +328,14 @@ func (m *mockClient) newkey() address.Address {
 }
 
 func (m *mockClient) listenWalletEvent(ctx context.Context) {
-	ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
-	ctx = jwtclient.CtxWithName(ctx, m.walletAccount)
+	ctx = core.CtxWithTokenLocation(ctx, "127.1.1.1")
+	ctx = core.CtxWithName(ctx, m.walletAccount)
 	m.walletEventClient.ListenWalletRequest(ctx)
 }
 
 func (m *mockClient) supportNewAccount(ctx context.Context, account string) error {
-	ctx = jwtclient.CtxWithTokenLocation(ctx, "127.1.1.1")
-	ctx = jwtclient.CtxWithName(ctx, m.walletAccount)
+	ctx = core.CtxWithTokenLocation(ctx, "127.1.1.1")
+	ctx = core.CtxWithName(ctx, m.walletAccount)
 	return m.walletEventClient.SupportAccount(ctx, account)
 }
 

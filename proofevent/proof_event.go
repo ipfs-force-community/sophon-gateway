@@ -14,12 +14,11 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/network"
+	"github.com/filecoin-project/venus-auth/core"
 
 	"github.com/ipfs-force-community/venus-gateway/metrics"
 	"github.com/ipfs-force-community/venus-gateway/types"
 	"github.com/ipfs-force-community/venus-gateway/validator"
-
-	"github.com/filecoin-project/venus-auth/jwtclient"
 
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
@@ -51,7 +50,7 @@ func NewProofEventStream(ctx context.Context, validator validator.IAuthMinerVali
 }
 
 func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *sharedGatewayTypes.ProofRegisterPolicy) (<-chan *sharedGatewayTypes.RequestEvent, error) {
-	ip, exist := jwtclient.CtxGetTokenLocation(ctx)
+	ip, exist := core.CtxGetTokenLocation(ctx)
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
 	}
