@@ -19,7 +19,7 @@ type ProofHandler interface {
 }
 
 type MarketHandler interface {
-	SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset types.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error
+	SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset types.UnpaddedByteIndex, size abi.UnpaddedPieceSize, dest string) error
 }
 
 type IWalletHandler interface {

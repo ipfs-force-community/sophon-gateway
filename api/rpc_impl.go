@@ -90,7 +90,7 @@ func (g *GatewayAPIImpl) ListWalletInfoByWallet(ctx context.Context, wallet stri
 	return g.we.ListWalletInfoByWallet(ctx, wallet)
 }
 
-func (g *GatewayAPIImpl) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) (gtypes.UnsealState, error) {
+func (g *GatewayAPIImpl) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.UnpaddedByteIndex, size abi.UnpaddedPieceSize, dest string) (gtypes.UnsealState, error) {
 	return g.me.SectorsUnsealPiece(ctx, miner, pieceCid, sid, offset, size, dest)
 }
 

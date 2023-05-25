@@ -52,8 +52,8 @@ func TestMarketAPI(t *testing.T) {
 		proofEvent.WaitReady(ctx)
 
 		sid := abi.SectorNumber(10)
-		size := abi.PaddedPieceSize(100)
-		offset := sharedTypes.PaddedByteIndex(100)
+		size := abi.UnpaddedPieceSize(100)
+		offset := sharedTypes.UnpaddedByteIndex(100)
 		dest := ""
 		pieceCid, err := cid.Decode("bafy2bzaced2kktxdkqw5pey5of3wtahz5imm7ta4ymegah466dsc5fonj73u2")
 		require.NoError(t, err)

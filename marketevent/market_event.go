@@ -125,7 +125,7 @@ func (m *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]g
 	return result, nil
 }
 
-func (m *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) (gtypes.UnsealState, error) {
+func (m *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.UnpaddedByteIndex, size abi.UnpaddedPieceSize, dest string) (gtypes.UnsealState, error) {
 	reqBody := gtypes.UnsealRequest{
 		PieceCid: pieceCid,
 		Miner:    miner,
