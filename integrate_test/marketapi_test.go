@@ -59,12 +59,12 @@ func TestMarketAPI(t *testing.T) {
 		require.NoError(t, err)
 		handler.SetSectorsUnsealPieceExpect(pieceCid, mAddr, sid, offset, size, dest, false)
 		// stm: @VENUSGATEWAY_API_SECTOR_UNSEAL_PRICE_001
-		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, dest)
+		_, err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, dest)
 		require.NoError(t, err)
 
 		handler.SetSectorsUnsealPieceExpect(pieceCid, mAddr, sid, offset, size, dest, true)
 		// stm: @VENUSGATEWAY_API_SECTOR_UNSEAL_PRICE_002
-		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, dest)
+		_, err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, dest)
 		require.EqualError(t, err, "mock error")
 	})
 

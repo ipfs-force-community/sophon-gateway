@@ -19,7 +19,7 @@ import (
 
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
-	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
+	gtypes "github.com/filecoin-project/venus/venus-shared/types/gateway"
 
 	"github.com/ipfs-force-community/venus-gateway/metrics"
 	"github.com/ipfs-force-community/venus-gateway/types"
@@ -49,7 +49,7 @@ func NewMarketEventStream(ctx context.Context, validator validator.IAuthMinerVal
 	return marketEventStream
 }
 
-func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types2.MarketRegisterPolicy) (<-chan *types2.RequestEvent, error) {
+func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *gtypes.MarketRegisterPolicy) (<-chan *gtypes.RequestEvent, error) {
 	ip, exist := core.CtxGetTokenLocation(ctx)
 	if !exist {
 		return nil, fmt.Errorf("ip not exist")
@@ -61,7 +61,7 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 		return nil, fmt.Errorf("verify miner:%s failed:%w", policy.Miner.String(), err)
 	}
 
-	out := make(chan *types2.RequestEvent, m.cfg.RequestQueueSize)
+	out := make(chan *gtypes.RequestEvent, m.cfg.RequestQueueSize)
 	channel := types.NewChannelInfo(ctx, ip, out)
 	mAddr := policy.Miner
 	m.connLk.Lock()
@@ -76,7 +76,7 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 	_ = channelStore.addChanel(channel)
 	log.Infof("add new connections %s for miner %s", channel.ChannelId, mAddr)
 	go func() {
-		connectBytes, err := json.Marshal(types2.ConnectedCompleted{
+		connectBytes, err := json.Marshal(gtypes.ConnectedCompleted{
 			ChannelId: channel.ChannelId,
 		})
 		defer close(out)
@@ -90,7 +90,7 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 		stats.Record(ctx, metrics.MinerRegister.M(1))
 		stats.Record(ctx, metrics.MinerSource.M(1))
 
-		out <- &types2.RequestEvent{
+		out <- &gtypes.RequestEvent{
 			ID:         sharedTypes.NewUUID(),
 			Method:     "InitConnect",
 			Payload:    connectBytes,
@@ -110,14 +110,14 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *types
 	return out, nil
 }
 
-func (m *MarketEventStream) ResponseMarketEvent(ctx context.Context, resp *types2.ResponseEvent) error {
+func (m *MarketEventStream) ResponseMarketEvent(ctx context.Context, resp *gtypes.ResponseEvent) error {
 	return m.ResponseEvent(ctx, resp)
 }
 
-func (m *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]types2.MarketConnectionState, error) {
-	var result []types2.MarketConnectionState
+func (m *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]gtypes.MarketConnectionState, error) {
+	var result []gtypes.MarketConnectionState
 	for addr, conn := range m.minerConnections {
-		result = append(result, types2.MarketConnectionState{
+		result = append(result, gtypes.MarketConnectionState{
 			Addr: addr,
 			Conn: *conn.getChannelState(),
 		})
@@ -125,8 +125,8 @@ func (m *MarketEventStream) ListMarketConnectionsState(ctx context.Context) ([]t
 	return result, nil
 }
 
-func (m *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
-	reqBody := types2.UnsealRequest{
+func (m *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) (gtypes.UnsealState, error) {
+	reqBody := gtypes.UnsealRequest{
 		PieceCid: pieceCid,
 		Miner:    miner,
 		Sid:      sid,
@@ -137,20 +137,21 @@ func (m *MarketEventStream) SectorsUnsealPiece(ctx context.Context, miner addres
 
 	payload, err := json.Marshal(reqBody)
 	if err != nil {
-		return err
+		return gtypes.UnsealStateFailed, err
 	}
 
 	channels, err := m.getChannels(miner)
 	if err != nil {
-		return err
+		return gtypes.UnsealStateFailed, err
 	}
 
 	start := time.Now()
-	err = m.SendRequest(ctx, channels, "SectorsUnsealPiece", payload, nil)
+	var state gtypes.UnsealState
+	err = m.SendRequest(ctx, channels, "SectorsUnsealPiece", payload, &state)
 	_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(metrics.MinerAddressKey, miner.String())},
 		metrics.SectorsUnsealPiece.M(metrics.SinceInMilliseconds(start)))
 
-	return err
+	return state, err
 }
 
 func (m *MarketEventStream) getChannels(mAddr address.Address) ([]*types.ChannelInfo, error) {
