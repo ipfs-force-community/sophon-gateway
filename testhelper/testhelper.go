@@ -71,8 +71,8 @@ type MarketHandler struct {
 	t                  *testing.T
 	expectMiner        address.Address
 	expectSectorNumber abi.SectorNumber
-	expectOffset       sharedTypes.PaddedByteIndex
-	expectSize         abi.PaddedPieceSize
+	expectOffset       sharedTypes.UnpaddedByteIndex
+	expectSize         abi.UnpaddedPieceSize
 
 	expectPieceCid cid.Cid
 	expectDest     string
@@ -83,7 +83,7 @@ func NewMarketHandler(t *testing.T) *MarketHandler {
 	return &MarketHandler{t: t}
 }
 
-func (p *MarketHandler) SetSectorsUnsealPieceExpect(pieceCid cid.Cid, miner address.Address, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string, fail bool) {
+func (p *MarketHandler) SetSectorsUnsealPieceExpect(pieceCid cid.Cid, miner address.Address, sid abi.SectorNumber, offset sharedTypes.UnpaddedByteIndex, size abi.UnpaddedPieceSize, dest string, fail bool) {
 	p.expectPieceCid = pieceCid
 	p.expectMiner = miner
 	p.expectSectorNumber = sid
@@ -93,7 +93,7 @@ func (p *MarketHandler) SetSectorsUnsealPieceExpect(pieceCid cid.Cid, miner addr
 	p.fail = fail
 }
 
-func (p *MarketHandler) SectorsUnsealPiece(_ context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
+func (p *MarketHandler) SectorsUnsealPiece(_ context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.UnpaddedByteIndex, size abi.UnpaddedPieceSize, dest string) error {
 	require.Equal(p.t, p.expectPieceCid, pieceCid)
 	require.Equal(p.t, p.expectMiner, miner)
 	require.Equal(p.t, p.expectSectorNumber, sid)

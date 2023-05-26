@@ -60,6 +60,9 @@ build: $(BUILD_DEPS)
 	rm -f venus-gateway
 	go build -o ./venus-gateway $(GOFLAGS) .
 
+debug: $(BUILD_DEPS)
+	rm -f venus-gateway
+	go build -gcflags=all="-N -l" -o ./venus-gateway $(GOFLAGS) .
 
 .PHONY: docker
 

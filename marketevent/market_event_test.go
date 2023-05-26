@@ -80,14 +80,14 @@ func TestUnsealed(t *testing.T) {
 		client.WaitReady(ctx)
 
 		sid := abi.SectorNumber(10)
-		size := abi.PaddedPieceSize(100)
-		offset := sharedTypes.PaddedByteIndex(100)
+		size := abi.UnpaddedPieceSize(100)
+		offset := sharedTypes.UnpaddedByteIndex(100)
 		dest := ""
 		pieceCid, err := cid.Decode("bafy2bzaced2kktxdkqw5pey5of3wtahz5imm7ta4ymegah466dsc5fonj73u2")
 		require.NoError(t, err)
 		handler.SetSectorsUnsealPieceExpect(pieceCid, minerAddr, sid, offset, size, dest, false)
 		// stm: @VENUSGATEWAY_MARKET_EVENT_SECTORS_UNSEAL_PIECE_001
-		err = marketEvent.SectorsUnsealPiece(ctx, minerAddr, pieceCid, sid, offset, size, dest)
+		_, err = marketEvent.SectorsUnsealPiece(ctx, minerAddr, pieceCid, sid, offset, size, dest)
 		require.NoError(t, err)
 	})
 
@@ -101,14 +101,14 @@ func TestUnsealed(t *testing.T) {
 		client.WaitReady(ctx)
 
 		sid := abi.SectorNumber(10)
-		size := abi.PaddedPieceSize(100)
-		offset := sharedTypes.PaddedByteIndex(100)
+		size := abi.UnpaddedPieceSize(100)
+		offset := sharedTypes.UnpaddedByteIndex(100)
 		dest := ""
 		pieceCid, err := cid.Decode("bafy2bzaced2kktxdkqw5pey5of3wtahz5imm7ta4ymegah466dsc5fonj73u2")
 		require.NoError(t, err)
 		handler.SetSectorsUnsealPieceExpect(pieceCid, minerAddr, sid, offset, size, dest, false)
 		// stm: @VENUSGATEWAY_MARKET_EVENT_SECTORS_UNSEAL_PIECE_002
-		err = marketEvent.SectorsUnsealPiece(ctx, addrGetter(), pieceCid, sid, offset, size, dest)
+		_, err = marketEvent.SectorsUnsealPiece(ctx, addrGetter(), pieceCid, sid, offset, size, dest)
 		require.Contains(t, err.Error(), "no connections for this miner")
 	})
 
@@ -122,14 +122,14 @@ func TestUnsealed(t *testing.T) {
 		client.WaitReady(ctx)
 
 		sid := abi.SectorNumber(10)
-		size := abi.PaddedPieceSize(100)
-		offset := sharedTypes.PaddedByteIndex(100)
+		size := abi.UnpaddedPieceSize(100)
+		offset := sharedTypes.UnpaddedByteIndex(100)
 		dest := ""
 		pieceCid, err := cid.Decode("bafy2bzaced2kktxdkqw5pey5of3wtahz5imm7ta4ymegah466dsc5fonj73u2")
 		require.NoError(t, err)
 		handler.SetSectorsUnsealPieceExpect(pieceCid, minerAddr, sid, offset, size, dest, true)
 		// stm: @VENUSGATEWAY_MARKET_EVENT_SECTORS_UNSEAL_PIECE_003
-		err = marketEvent.SectorsUnsealPiece(ctx, minerAddr, pieceCid, sid, offset, size, dest)
+		_, err = marketEvent.SectorsUnsealPiece(ctx, minerAddr, pieceCid, sid, offset, size, dest)
 		require.EqualError(t, err, "mock error")
 	})
 }

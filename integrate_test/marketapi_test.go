@@ -52,19 +52,19 @@ func TestMarketAPI(t *testing.T) {
 		proofEvent.WaitReady(ctx)
 
 		sid := abi.SectorNumber(10)
-		size := abi.PaddedPieceSize(100)
-		offset := sharedTypes.PaddedByteIndex(100)
+		size := abi.UnpaddedPieceSize(100)
+		offset := sharedTypes.UnpaddedByteIndex(100)
 		dest := ""
 		pieceCid, err := cid.Decode("bafy2bzaced2kktxdkqw5pey5of3wtahz5imm7ta4ymegah466dsc5fonj73u2")
 		require.NoError(t, err)
 		handler.SetSectorsUnsealPieceExpect(pieceCid, mAddr, sid, offset, size, dest, false)
 		// stm: @VENUSGATEWAY_API_SECTOR_UNSEAL_PRICE_001
-		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, dest)
+		_, err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, dest)
 		require.NoError(t, err)
 
 		handler.SetSectorsUnsealPieceExpect(pieceCid, mAddr, sid, offset, size, dest, true)
 		// stm: @VENUSGATEWAY_API_SECTOR_UNSEAL_PRICE_002
-		err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, dest)
+		_, err = sAPi.SectorsUnsealPiece(ctx, mAddr, pieceCid, sid, offset, size, dest)
 		require.EqualError(t, err, "mock error")
 	})
 

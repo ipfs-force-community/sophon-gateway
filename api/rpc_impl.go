@@ -13,7 +13,7 @@ import (
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
-	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
+	gtypes "github.com/filecoin-project/venus/venus-shared/types/gateway"
 
 	"github.com/ipfs-force-community/venus-gateway/marketevent"
 	"github.com/ipfs-force-community/venus-gateway/proofevent"
@@ -70,7 +70,7 @@ func (g *GatewayAPIImpl) ListConnectedMiners(ctx context.Context) ([]address.Add
 	return g.pe.ListConnectedMiners(ctx)
 }
 
-func (g *GatewayAPIImpl) ListMinerConnection(ctx context.Context, addr address.Address) (*types.MinerState, error) {
+func (g *GatewayAPIImpl) ListMinerConnection(ctx context.Context, addr address.Address) (*gtypes.MinerState, error) {
 	return g.pe.ListMinerConnection(ctx, addr)
 }
 
@@ -82,19 +82,19 @@ func (g *GatewayAPIImpl) WalletSign(ctx context.Context, addr address.Address, a
 	return g.we.WalletSign(ctx, addr, accounts, toSign, meta)
 }
 
-func (g *GatewayAPIImpl) ListWalletInfo(ctx context.Context) ([]*types.WalletDetail, error) {
+func (g *GatewayAPIImpl) ListWalletInfo(ctx context.Context) ([]*gtypes.WalletDetail, error) {
 	return g.we.ListWalletInfo(ctx)
 }
 
-func (g *GatewayAPIImpl) ListWalletInfoByWallet(ctx context.Context, wallet string) (*types.WalletDetail, error) {
+func (g *GatewayAPIImpl) ListWalletInfoByWallet(ctx context.Context, wallet string) (*gtypes.WalletDetail, error) {
 	return g.we.ListWalletInfoByWallet(ctx, wallet)
 }
 
-func (g *GatewayAPIImpl) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.PaddedByteIndex, size abi.PaddedPieceSize, dest string) error {
+func (g *GatewayAPIImpl) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.UnpaddedByteIndex, size abi.UnpaddedPieceSize, dest string) (gtypes.UnsealState, error) {
 	return g.me.SectorsUnsealPiece(ctx, miner, pieceCid, sid, offset, size, dest)
 }
 
-func (g *GatewayAPIImpl) ListMarketConnectionsState(ctx context.Context) ([]types.MarketConnectionState, error) {
+func (g *GatewayAPIImpl) ListMarketConnectionsState(ctx context.Context) ([]gtypes.MarketConnectionState, error) {
 	return g.me.ListMarketConnectionsState(ctx)
 }
 
