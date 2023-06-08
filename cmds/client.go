@@ -11,7 +11,7 @@ import (
 	_ "github.com/filecoin-project/venus/venus-shared/api"
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 
-	"github.com/ipfs-force-community/venus-gateway/config"
+	"github.com/ipfs-force-community/sophon-gateway/config"
 )
 
 func NewGatewayClient(ctx *cli.Context) (v2API.IGateway, jsonrpc.ClientCloser, error) {

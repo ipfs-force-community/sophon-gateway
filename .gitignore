@@ -1,7 +1,7 @@
 ./venus*
 .idea
 .vscode
-venus-gateway
+sophon-gateway
 server
 client
 token

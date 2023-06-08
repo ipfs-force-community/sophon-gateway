@@ -9,7 +9,7 @@ all: build
 # git modules that need to be loaded
 MODULES:=
 
-ldflags=-X=github.com/ipfs-force-community/venus-gateway/version.CurrentCommit=+git.$(subst -,.,$(shell git describe --always --match=NeVeRmAtCh --dirty 2>/dev/null || git rev-parse --short HEAD 2>/dev/null))
+ldflags=-X=github.com/ipfs-force-community/sophon-gateway/version.CurrentCommit=+git.$(subst -,.,$(shell git describe --always --match=NeVeRmAtCh --dirty 2>/dev/null || git rev-parse --short HEAD 2>/dev/null))
 ifneq ($(strip $(LDFLAGS)),)
 	    ldflags+=-extldflags=$(LDFLAGS)
 	endif
@@ -57,12 +57,12 @@ dist-clean:
 	git submodule deinit --all -f
 
 build: $(BUILD_DEPS)
-	rm -f venus-gateway
-	go build -o ./venus-gateway $(GOFLAGS) .
+	rm -f sophon-gateway
+	go build -o ./sophon-gateway $(GOFLAGS) .
 
 debug: $(BUILD_DEPS)
-	rm -f venus-gateway
-	go build -gcflags=all="-N -l" -o ./venus-gateway $(GOFLAGS) .
+	rm -f sophon-gateway
+	go build -gcflags=all="-N -l" -o ./sophon-gateway $(GOFLAGS) .
 
 .PHONY: docker
 
@@ -73,11 +73,11 @@ ifdef DOCKERFILE
 else
 	curl -o dockerfile https://raw.githubusercontent.com/filecoin-project/venus-docs/master/script/docker/dockerfile
 endif
-	docker build --build-arg HTTPS_PROXY=$(BUILD_DOCKER_PROXY) --build-arg BUILD_TARGET=venus-gateway -t venus-gateway .
-	docker tag venus-gateway filvenus/venus-gateway:$(TAG)
+	docker build --build-arg HTTPS_PROXY=$(BUILD_DOCKER_PROXY) --build-arg BUILD_TARGET=sophon-gateway -t sophon-gateway .
+	docker tag sophon-gateway filvenus/sophon-gateway:$(TAG)
 ifdef PRIVATE_REGISTRY
-	docker tag venus-gateway $(PRIVATE_REGISTRY)/filvenus/venus-gateway:$(TAG)
+	docker tag sophon-gateway $(PRIVATE_REGISTRY)/filvenus/sophon-gateway:$(TAG)
 endif
 
 docker-push: docker
-	docker push $(PRIVATE_REGISTRY)/filvenus/venus-gateway:$(TAG)
+	docker push $(PRIVATE_REGISTRY)/filvenus/sophon-gateway:$(TAG)

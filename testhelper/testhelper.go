@@ -14,7 +14,7 @@ import (
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 
-	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/sophon-gateway/types"
 
 	"github.com/stretchr/testify/require"
 )

@@ -16,25 +16,25 @@ import (
 
 	"github.com/ipfs-force-community/metrics"
 	"github.com/ipfs-force-community/metrics/ratelimit"
-	"github.com/ipfs-force-community/venus-gateway/config"
+	"github.com/ipfs-force-community/sophon-gateway/config"
 
-	"github.com/filecoin-project/venus-auth/auth"
-	"github.com/filecoin-project/venus-auth/core"
-	"github.com/filecoin-project/venus-auth/jwtclient"
+	"github.com/ipfs-force-community/sophon-auth/auth"
+	"github.com/ipfs-force-community/sophon-auth/core"
+	"github.com/ipfs-force-community/sophon-auth/jwtclient"
 
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	"github.com/filecoin-project/venus/venus-shared/api/permission"
 
-	"github.com/ipfs-force-community/venus-gateway/api"
-	"github.com/ipfs-force-community/venus-gateway/api/v1api"
-	"github.com/ipfs-force-community/venus-gateway/marketevent"
-	metrics2 "github.com/ipfs-force-community/venus-gateway/metrics"
-	"github.com/ipfs-force-community/venus-gateway/proofevent"
-	"github.com/ipfs-force-community/venus-gateway/types"
-	"github.com/ipfs-force-community/venus-gateway/validator"
-	"github.com/ipfs-force-community/venus-gateway/validator/mocks"
-	"github.com/ipfs-force-community/venus-gateway/version"
-	"github.com/ipfs-force-community/venus-gateway/walletevent"
+	"github.com/ipfs-force-community/sophon-gateway/api"
+	"github.com/ipfs-force-community/sophon-gateway/api/v1api"
+	"github.com/ipfs-force-community/sophon-gateway/marketevent"
+	metrics2 "github.com/ipfs-force-community/sophon-gateway/metrics"
+	"github.com/ipfs-force-community/sophon-gateway/proofevent"
+	"github.com/ipfs-force-community/sophon-gateway/types"
+	"github.com/ipfs-force-community/sophon-gateway/validator"
+	"github.com/ipfs-force-community/sophon-gateway/validator/mocks"
+	"github.com/ipfs-force-community/sophon-gateway/version"
+	"github.com/ipfs-force-community/sophon-gateway/walletevent"
 )
 
 var log = logging.Logger("mock main")
@@ -82,7 +82,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 
 	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream)
 
-	log.Infof("venus-gateway current version %s", version.UserVersion)
+	log.Infof("sophon-gateway current version %s", version.UserVersion)
 	log.Info("Setting up control endpoint at " + cfg.API.ListenAddress)
 
 	var fullNode v2API.IGatewayStruct

@@ -17,7 +17,7 @@ import (
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/filecoin-project/venus/venus-shared/types/gateway"
 
-	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/sophon-gateway/types"
 )
 
 type ProofEvent struct {

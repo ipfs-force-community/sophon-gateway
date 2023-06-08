@@ -8,7 +8,7 @@ import (
 	"github.com/filecoin-project/go-address"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types2 "github.com/filecoin-project/venus/venus-shared/types/gateway"
-	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/sophon-gateway/types"
 )
 
 type walletChannelInfo struct {

@@ -13,14 +13,14 @@ import (
 	"github.com/filecoin-project/go-address"
 	logging "github.com/ipfs/go-log/v2"
 
-	"github.com/filecoin-project/venus-auth/auth"
-	"github.com/filecoin-project/venus-auth/core"
 	_ "github.com/filecoin-project/venus/pkg/crypto/secp"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	"github.com/ipfs-force-community/sophon-auth/auth"
+	"github.com/ipfs-force-community/sophon-auth/core"
 
-	"github.com/ipfs-force-community/venus-gateway/testhelper"
-	"github.com/ipfs-force-community/venus-gateway/types"
-	"github.com/ipfs-force-community/venus-gateway/validator/mocks"
+	"github.com/ipfs-force-community/sophon-gateway/testhelper"
+	"github.com/ipfs-force-community/sophon-gateway/types"
+	"github.com/ipfs-force-community/sophon-gateway/validator/mocks"
 )
 
 func TestListenWalletEvent(t *testing.T) {

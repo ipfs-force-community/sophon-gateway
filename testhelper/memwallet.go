@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/sophon-gateway/types"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"

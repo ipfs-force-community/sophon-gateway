@@ -1,13 +1,13 @@
-# venus-gateway
+# sophon-gateway
 
-The venus-gateway is used for registering wallets, keeping track of miner-related information, and as a liaison between wallets and other components. It could be also used for proxy requests from chain services (shared modules/components) to independent modules/components.
+The sophon-gateway is used for registering wallets, keeping track of miner-related information, and as a liaison between wallets and other components. It could be also used for proxy requests from chain services (shared modules/components) to independent modules/components.
 
-## Start venus-gateway
+## Start sophon-gateway
 
 Download source code.
 
 ```shell script
-git clone https://github.com/ipfs-force-community/venus-gateway.git
+git clone https://github.com/ipfs-force-community/sophon-gateway.git
 ```
 
 Compile.
@@ -19,12 +19,12 @@ make
 Start service.
 
 ```shell script
-./venus-gateway run
+./sophon-gateway run
 ```
 
 :::tip
 
-A successful startup will generate two files, `config.toml` and `token`, in the default repo directory `~/.venusgateway`. Inside `config.toml` is the configuration item for `venus-gateway`. `token` file is stored in JWT token, used for command execution.
+A successful startup will generate two files, `config.toml` and `token`, in the default repo directory `~/.sophon-gateway`. Inside `config.toml` is the configuration item for `sophon-gateway`. `token` file is stored in JWT token, used for command execution.
 
 :::
 
@@ -33,19 +33,19 @@ A successful startup will generate two files, `config.toml` and `token`, in the 
 Check help information.
 
 ```shell script
-./venus-gateway -h
+./sophon-gateway -h
 
 NAME:
-   venus-gateway - venus-gateway for proxy incoming wallet and proof
+   sophon-gateway - sophon-gateway for proxy incoming wallet and proof
 
 USAGE:
-   venus-gateway [global options] command [command options] [arguments...]
+   sophon-gateway [global options] command [command options] [arguments...]
 
 VERSION:
    0.0.1'+gitc2048fb'
 
 COMMANDS:
-   run      start venus-gateway daemon
+   run      start sophon-gateway daemon
    miner    miner cmds
    wallet   wallet cmds
    help, h  Shows a list of commands or help for one command
@@ -63,7 +63,7 @@ GLOBAL OPTIONS:
 List all miners.
 
 ```shell script
-$ ./venus-gateway miner list
+$ ./sophon-gateway miner list
 
 # output
 t01561
@@ -74,7 +74,7 @@ t02082
 Check miner status.
 
 ```shell script
-$ ./venus-gateway miner <MINER_ID>
+$ ./sophon-gateway miner <MINER_ID>
 
 # output
 {
@@ -95,7 +95,7 @@ $ ./venus-gateway miner <MINER_ID>
 List all wallets.
 
 ```shell script
-$ ./venus-gateway wallet list
+$ ./sophon-gateway wallet list
 
 # output
 [
@@ -140,9 +140,9 @@ $ ./venus-gateway wallet list
 Check individual wallet.
 
 ```shell script
-$ ./venus-gateway wallet <wallet-account>
+$ ./sophon-gateway wallet <wallet-account>
 ```
 
 ### Check if wallet address exists
 
-Everytime gateway starts up, it will generate a random string (`gateway_string`). When a wallet tries to connect to gateway, it will carry a randomly generated string by itself (`wallet_string`). Gateway will then check each wallet address by calling `sign` interface with hash of gateway_string + wallet_string as payload. Through `MsgMeta.Extra`, `gateway_string` will also be transferred to wallet. And finally the result of wallet's `sign` will be validatated by gateway. 
+Every time gateway starts up, it will generate a random string (`gateway_string`). When a wallet tries to connect to gateway, it will carry a randomly generated string by itself (`wallet_string`). Gateway will then check each wallet address by calling `sign` interface with hash of gateway_string + wallet_string as payload. Through `MsgMeta.Extra`, `gateway_string` will also be transferred to wallet. And finally the result of wallet's `sign` will be validated by gateway.
