@@ -26,8 +26,8 @@ import (
 
 	"github.com/filecoin-project/go-jsonrpc"
 
-	"github.com/filecoin-project/venus-auth/core"
-	"github.com/filecoin-project/venus-auth/jwtclient"
+	"github.com/ipfs-force-community/sophon-auth/core"
+	"github.com/ipfs-force-community/sophon-auth/jwtclient"
 
 	_ "github.com/filecoin-project/venus/pkg/crypto/bls"
 	_ "github.com/filecoin-project/venus/pkg/crypto/delegated"
@@ -38,17 +38,22 @@ import (
 	"github.com/ipfs-force-community/metrics"
 	"github.com/ipfs-force-community/metrics/ratelimit"
 
-	"github.com/ipfs-force-community/venus-gateway/api"
-	"github.com/ipfs-force-community/venus-gateway/api/v1api"
-	"github.com/ipfs-force-community/venus-gateway/cmds"
-	"github.com/ipfs-force-community/venus-gateway/config"
-	"github.com/ipfs-force-community/venus-gateway/marketevent"
-	metrics2 "github.com/ipfs-force-community/venus-gateway/metrics"
-	"github.com/ipfs-force-community/venus-gateway/proofevent"
-	"github.com/ipfs-force-community/venus-gateway/types"
-	"github.com/ipfs-force-community/venus-gateway/validator"
-	"github.com/ipfs-force-community/venus-gateway/version"
-	"github.com/ipfs-force-community/venus-gateway/walletevent"
+	"github.com/ipfs-force-community/sophon-gateway/api"
+	"github.com/ipfs-force-community/sophon-gateway/api/v1api"
+	"github.com/ipfs-force-community/sophon-gateway/cmds"
+	"github.com/ipfs-force-community/sophon-gateway/config"
+	"github.com/ipfs-force-community/sophon-gateway/marketevent"
+	metrics2 "github.com/ipfs-force-community/sophon-gateway/metrics"
+	"github.com/ipfs-force-community/sophon-gateway/proofevent"
+	"github.com/ipfs-force-community/sophon-gateway/types"
+	"github.com/ipfs-force-community/sophon-gateway/validator"
+	"github.com/ipfs-force-community/sophon-gateway/version"
+	"github.com/ipfs-force-community/sophon-gateway/walletevent"
+)
+
+const (
+	oldRepoPath = "~/.venusgateway"
+	defRepoPath = "~/.sophon-gateway"
 )
 
 var log = logging.Logger("main")
@@ -57,8 +62,8 @@ func main() {
 	_ = logging.SetLogLevel("*", "INFO")
 
 	app := &cli.App{
-		Name:  "venus-gateway",
-		Usage: "venus-gateway for proxy incoming wallet and proof",
+		Name:  "sophon-gateway",
+		Usage: "sophon-gateway for proxy incoming wallet and proof",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "listen",
@@ -67,8 +72,8 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:    "repo",
-				Value:   "~/.venusgateway",
-				EnvVars: []string{"VENUS_GATEWAY"},
+				Value:   defRepoPath,
+				EnvVars: []string{"SOPHON_GATEWAY"},
 			},
 		},
 		Commands: []*cli.Command{
@@ -84,13 +89,13 @@ func main() {
 
 var runCmd = &cli.Command{
 	Name:  "run",
-	Usage: "start venus-gateway daemon",
+	Usage: "start sophon-gateway daemon",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "auth-url", Usage: "venus auth url"},
-		&cli.StringFlag{Name: "auth-token", Usage: "venus auth token"},
-		&cli.StringFlag{Name: "jaeger-proxy", EnvVars: []string{"VENUS_GATEWAY_JAEGER_PROXY"}},
-		&cli.Float64Flag{Name: "trace-sampler", EnvVars: []string{"VENUS_GATEWAY_TRACE_SAMPLER"}, Value: 1.0},
-		&cli.StringFlag{Name: "trace-node-name", Value: "venus-gateway"},
+		&cli.StringFlag{Name: "auth-url", Usage: "sophon auth url"},
+		&cli.StringFlag{Name: "auth-token", Usage: "sophon auth token"},
+		&cli.StringFlag{Name: "jaeger-proxy", EnvVars: []string{"SOPHON_GATEWAY_JAEGER_PROXY"}},
+		&cli.Float64Flag{Name: "trace-sampler", EnvVars: []string{"SOPHON_GATEWAY_TRACE_SAMPLER"}, Value: 1.0},
+		&cli.StringFlag{Name: "trace-node-name", Value: "sophon-gateway"},
 		&cli.StringFlag{Name: "rate-limit-redis", Hidden: true},
 	},
 	Action: func(cctx *cli.Context) error {
@@ -100,6 +105,12 @@ var runCmd = &cli.Command{
 		if err != nil {
 			return err
 		}
+		// todo: remove compatibility code
+		repoPath, err = getRepoPath(repoPath)
+		if err != nil {
+			return err
+		}
+
 		hasRepo, err := hasRepo(repoPath)
 		if err != nil {
 			return err
@@ -139,6 +150,28 @@ func hasRepo(path string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func getRepoPath(repoPath string) (string, error) {
+	has, err := hasRepo(repoPath)
+	if err != nil {
+		return "", err
+	}
+	if !has {
+		// check old repo path
+		rPath, err := homedir.Expand(oldRepoPath)
+		if err != nil {
+			return "", err
+		}
+		has, err = hasRepo(rPath)
+		if err != nil {
+			return "", err
+		}
+		if has {
+			return rPath, nil
+		}
+	}
+	return repoPath, nil
 }
 
 func parseFlag(cctx *cli.Context, cfg *config.Config) {
@@ -187,7 +220,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 
 	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream)
 
-	log.Infof("venus-gateway current version %s", version.UserVersion)
+	log.Infof("sophon-gateway current version %s", version.UserVersion)
 	log.Infof("Setting up control endpoint at %v", cfg.API.ListenAddress)
 
 	var fullNode v2API.IGatewayStruct

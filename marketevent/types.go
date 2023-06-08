@@ -6,7 +6,7 @@ import (
 
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	types3 "github.com/filecoin-project/venus/venus-shared/types/gateway"
-	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/sophon-gateway/types"
 )
 
 type channelStore struct {

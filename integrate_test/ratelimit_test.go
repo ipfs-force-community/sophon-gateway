@@ -6,7 +6,7 @@ import (
 
 	"github.com/filecoin-project/go-address"
 	"github.com/ipfs-force-community/metrics"
-	"github.com/ipfs-force-community/venus-gateway/config"
+	"github.com/ipfs-force-community/sophon-gateway/config"
 	"github.com/stretchr/testify/require"
 )
 

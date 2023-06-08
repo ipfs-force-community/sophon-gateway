@@ -18,7 +18,7 @@ import (
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	sharedGatewayTypes "github.com/filecoin-project/venus/venus-shared/types/gateway"
 
-	"github.com/ipfs-force-community/venus-gateway/types"
+	"github.com/ipfs-force-community/sophon-gateway/types"
 )
 
 var RandomBytes = func() []byte {

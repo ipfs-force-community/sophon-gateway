@@ -15,10 +15,10 @@ import (
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	gtypes "github.com/filecoin-project/venus/venus-shared/types/gateway"
 
-	"github.com/ipfs-force-community/venus-gateway/marketevent"
-	"github.com/ipfs-force-community/venus-gateway/proofevent"
-	"github.com/ipfs-force-community/venus-gateway/version"
-	"github.com/ipfs-force-community/venus-gateway/walletevent"
+	"github.com/ipfs-force-community/sophon-gateway/marketevent"
+	"github.com/ipfs-force-community/sophon-gateway/proofevent"
+	"github.com/ipfs-force-community/sophon-gateway/version"
+	"github.com/ipfs-force-community/sophon-gateway/walletevent"
 )
 
 type IGatewayPushAPI interface {

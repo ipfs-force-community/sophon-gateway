@@ -46,7 +46,7 @@ func DefaultConfig() *Config {
 	cfg.Metrics.Exporter.Graphite.Namespace = namespace
 	cfg.Metrics.Exporter.Prometheus.EndPoint = "/ip4/0.0.0.0/tcp/4569"
 	cfg.Metrics.Exporter.Graphite.Port = 4569
-	cfg.Trace.ServerName = "venus-gateway"
+	cfg.Trace.ServerName = "sophon-gateway"
 	cfg.Trace.JaegerEndpoint = ""
 
 	return cfg

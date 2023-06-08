@@ -10,17 +10,17 @@ import (
 
 	"github.com/ipfs/go-cid"
 
-	"github.com/ipfs-force-community/venus-gateway/testhelper"
+	"github.com/ipfs-force-community/sophon-gateway/testhelper"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/network"
-	"github.com/filecoin-project/venus-auth/core"
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	types2 "github.com/filecoin-project/venus/venus-shared/types"
 	types "github.com/filecoin-project/venus/venus-shared/types/gateway"
-	gtypes "github.com/ipfs-force-community/venus-gateway/types"
-	"github.com/ipfs-force-community/venus-gateway/validator"
+	"github.com/ipfs-force-community/sophon-auth/core"
+	gtypes "github.com/ipfs-force-community/sophon-gateway/types"
+	"github.com/ipfs-force-community/sophon-gateway/validator"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )

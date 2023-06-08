@@ -19,9 +19,9 @@ import (
 
 	"github.com/ipfs-force-community/metrics"
 
-	"github.com/ipfs-force-community/venus-gateway/config"
-	"github.com/ipfs-force-community/venus-gateway/testhelper"
-	"github.com/ipfs-force-community/venus-gateway/walletevent"
+	"github.com/ipfs-force-community/sophon-gateway/config"
+	"github.com/ipfs-force-community/sophon-gateway/testhelper"
+	"github.com/ipfs-force-community/sophon-gateway/walletevent"
 
 	"github.com/stretchr/testify/require"
 )

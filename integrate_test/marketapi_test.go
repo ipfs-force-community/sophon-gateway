@@ -24,9 +24,9 @@ import (
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 
-	"github.com/ipfs-force-community/venus-gateway/config"
-	"github.com/ipfs-force-community/venus-gateway/marketevent"
-	"github.com/ipfs-force-community/venus-gateway/testhelper"
+	"github.com/ipfs-force-community/sophon-gateway/config"
+	"github.com/ipfs-force-community/sophon-gateway/marketevent"
+	"github.com/ipfs-force-community/sophon-gateway/testhelper"
 )
 
 func TestMarketAPI(t *testing.T) {
