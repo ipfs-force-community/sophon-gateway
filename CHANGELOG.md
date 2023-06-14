@@ -1,5 +1,13 @@
 # sophon-gateway changelog
 
+## v1.12.0-rc1
+
+* chore: merge release/v1.11 into master [[#131](https://github.com/ipfs-force-community/sophon-gateway/pull/131)]
+* chore: upgrade venus and venus-auth by [[#132](https://github.com/ipfs-force-community/sophon-gateway/pull/132)]
+* Feat/tanlang/add unseal state[[#133](https://github.com/ipfs-force-community/sophon-gateway/pull/133)]
+* feat: replace venus-gateway with sophon-gateway by [[#135](https://github.com/ipfs-force-community/sophon-gateway/pull/135)]
+* build(deps): bump github.com/gin-gonic/gin from 1.9.0 to 1.9.1 [[#134](https://github.com/ipfs-force-community/sophon-gateway/pull/134)]
+
 ## v1.11.1
 
 * bump up ffi
