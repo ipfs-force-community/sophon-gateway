@@ -106,12 +106,12 @@ var runCmd = &cli.Command{
 			return err
 		}
 		// todo: remove compatibility code
-		repoPath, err = getRepoPath(repoPath)
+		repoPath, err = cmds.GetRepoPath(repoPath)
 		if err != nil {
 			return err
 		}
 
-		hasRepo, err := hasRepo(repoPath)
+		hasRepo, err := cmds.HasRepo(repoPath)
 		if err != nil {
 			return err
 		}
@@ -135,43 +135,6 @@ var runCmd = &cli.Command{
 
 		return RunMain(cctx.Context, repoPath, cfg)
 	},
-}
-
-func hasRepo(path string) (bool, error) {
-	fi, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-	if !fi.IsDir() {
-		return false, fmt.Errorf("%s is not a directory", path)
-	}
-
-	return true, nil
-}
-
-func getRepoPath(repoPath string) (string, error) {
-	has, err := hasRepo(repoPath)
-	if err != nil {
-		return "", err
-	}
-	if !has {
-		// check old repo path
-		rPath, err := homedir.Expand(oldRepoPath)
-		if err != nil {
-			return "", err
-		}
-		has, err = hasRepo(rPath)
-		if err != nil {
-			return "", err
-		}
-		if has {
-			return rPath, nil
-		}
-	}
-	return repoPath, nil
 }
 
 func parseFlag(cctx *cli.Context, cfg *config.Config) {
