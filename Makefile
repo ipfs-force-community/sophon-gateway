@@ -80,4 +80,10 @@ ifdef PRIVATE_REGISTRY
 endif
 
 docker-push: docker
+ifdef PRIVATE_REGISTRY
 	docker push $(PRIVATE_REGISTRY)/filvenus/sophon-gateway:$(TAG)
+else
+	docker push filvenus/sophon-gateway:$(TAG)
+	docker tag filvenus/sophon-gateway:$(TAG) filvenus/sophon-gateway:latest
+	docker push filvenus/sophon-gateway:latest
+endif
