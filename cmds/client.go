@@ -1,7 +1,9 @@
 package cmds
 
 import (
+	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/filecoin-project/go-jsonrpc"
@@ -14,8 +16,14 @@ import (
 	"github.com/ipfs-force-community/sophon-gateway/config"
 )
 
+const oldRepoPath = "~/.venusgateway"
+
 func NewGatewayClient(ctx *cli.Context) (v2API.IGateway, jsonrpc.ClientCloser, error) {
 	repoPath, err := homedir.Expand(ctx.String("repo"))
+	if err != nil {
+		return nil, nil, err
+	}
+	repoPath, err = GetRepoPath(repoPath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -36,4 +44,41 @@ func NewGatewayClient(ctx *cli.Context) (v2API.IGateway, jsonrpc.ClientCloser, e
 	}
 
 	return v2API.DialIGatewayRPC(ctx.Context, listen, string(token), nil)
+}
+
+func HasRepo(path string) (bool, error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	if !fi.IsDir() {
+		return false, fmt.Errorf("%s is not a directory", path)
+	}
+
+	return true, nil
+}
+
+func GetRepoPath(repoPath string) (string, error) {
+	has, err := HasRepo(repoPath)
+	if err != nil {
+		return "", err
+	}
+	if !has {
+		// check old repo path
+		rPath, err := homedir.Expand(oldRepoPath)
+		if err != nil {
+			return "", err
+		}
+		has, err = HasRepo(rPath)
+		if err != nil {
+			return "", err
+		}
+		if has {
+			return rPath, nil
+		}
+	}
+	return repoPath, nil
 }
