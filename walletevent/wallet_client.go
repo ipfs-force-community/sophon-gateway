@@ -2,7 +2,6 @@ package walletevent
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -20,14 +19,6 @@ import (
 
 	"github.com/ipfs-force-community/sophon-gateway/types"
 )
-
-var RandomBytes = func() []byte {
-	buf := make([]byte, 32)
-	if _, err := rand.Read(buf); err != nil {
-		panic(fmt.Sprintf("init random bytes for address verify failed:%s", err))
-	}
-	return buf
-}()
 
 func NewWalletRegisterClient(ctx context.Context, url, token string) (v2API.IWalletServiceProvider, jsonrpc.ClientCloser, error) {
 	headers := http.Header{}
@@ -55,7 +46,7 @@ func NewWalletEventClient(ctx context.Context, process types.IWalletHandler, cli
 		client:          client,
 		log:             log,
 		supportAccounts: supportAccounts,
-		randomBytes:     RandomBytes,
+		randomBytes:     sharedGatewayTypes.RandomBytes,
 		readyCh:         make(chan struct{}, 1),
 	}
 }
