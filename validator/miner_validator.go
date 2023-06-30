@@ -25,17 +25,15 @@ func (amv *AuthMinerValidator) Validate(ctx context.Context, miner address.Addre
 	if !exist {
 		return fmt.Errorf("user name not exist in rpc context")
 	}
-	user, err := amv.authClient.GetUserByMiner(ctx, miner)
+
+	ok, err := amv.authClient.MinerExistInUser(ctx, account, miner)
 	if err != nil {
-		return fmt.Errorf("get user by miner(%s), failed:%w", miner.String(), err)
+		return fmt.Errorf("check miner(%s) exist in user(%s), failed:%w", miner.String(), account, err)
 	}
-	if user.State != core.UserStateEnabled {
-		return fmt.Errorf("user:%s is disabled, please enable it on 'venus-auth'", account)
+	if !ok {
+		return fmt.Errorf("miner:%s not exist in user:%s, please bind it on 'venus-auth'", miner.String(), account)
 	}
-	if user.Name != account {
-		return fmt.Errorf("your account is:%s, but miner:%s is currently bind to user:%s, change this on 'venus-auth'",
-			account, miner.String(), user.Name)
-	}
+
 	return nil
 }
 
