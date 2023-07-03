@@ -31,7 +31,7 @@ func (amv *AuthMinerValidator) Validate(ctx context.Context, miner address.Addre
 		return fmt.Errorf("check miner(%s) exist in user(%s), failed:%w", miner.String(), account, err)
 	}
 	if !ok {
-		return fmt.Errorf("miner:%s not exist in user:%s, please bind it on 'venus-auth'", miner.String(), account)
+		return fmt.Errorf("miner:%s not exist in user:%s, please bind it on 'sophon-auth'", miner.String(), account)
 	}
 
 	return nil
