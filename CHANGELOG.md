@@ -1,5 +1,10 @@
 # sophon-gateway changelog
 
+## v1.12.0
+
+* feat: move RandomBytes to venus share by @LinZexiao in [[#141](https://github.com/ipfs-force-community/sophon-gateway/pull/141)]
+* doc: fix link by @0x5459 in [[#139](https://github.com/ipfs-force-community/sophon-gateway/pull/139)]
+
 ## v1.12.0-rc1
 
 * chore: merge release/v1.11 into master [[#131](https://github.com/ipfs-force-community/sophon-gateway/pull/131)]

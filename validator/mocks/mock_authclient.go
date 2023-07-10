@@ -180,8 +180,21 @@ func (m *AuthClient) GetUserRateLimit(ctx context.Context, name, id string) (aut
 	panic("Don't call me")
 }
 
-func (m *AuthClient) MinerExistInUser(ctx context.Context, user string, miner address.Address) (bool, error) {
-	panic("Don't call me")
+func (m *AuthClient) MinerExistInUser(ctx context.Context, targetUser string, miner address.Address) (bool, error) {
+	m.lkUser.Lock()
+	defer m.lkUser.Unlock()
+
+	for _, user := range m.users {
+		if user.Name == targetUser {
+			for _, m := range user.Miners {
+				if m.Miner == miner {
+					return true, nil
+				}
+			}
+		}
+	}
+
+	return false, nil
 }
 
 func (m *AuthClient) SignerExistInUser(ctx context.Context, user string, signer address.Address) (bool, error) {
