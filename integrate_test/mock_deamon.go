@@ -134,14 +134,14 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	}
 
 	log.Infof("trace config %v", cfg.Trace)
-	repoter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
+	repoter, err := metrics.SetupJaegerTracing(cfg.Trace.ServerName, cfg.Trace)
 	if err != nil {
 		return "", nil, fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
 	}
 	if repoter != nil {
 		log.Info("register jaeger exporter success!")
 
-		defer metrics.UnregisterJaeger(repoter)
+		defer metrics.ShutdownJaeger(ctx, repoter) // nolint
 		handler = &ochttp.Handler{Handler: handler}
 	}
 

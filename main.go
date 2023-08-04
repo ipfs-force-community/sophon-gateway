@@ -238,7 +238,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	handler := (http.Handler)(authMux)
 	if cfg.Trace.JaegerTracingEnabled {
 		log.Infof("trace config %+v", cfg.Trace)
-		reporter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
+		reporter, err := metrics.SetupJaegerTracing(cfg.Trace.ServerName, cfg.Trace)
 		if err != nil {
 			return fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
 		}
@@ -246,7 +246,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		if reporter != nil {
 			log.Info("register jaeger exporter success!")
 
-			defer metrics.UnregisterJaeger(reporter)
+			defer metrics.ShutdownJaeger(ctx, reporter) // nolint
 			handler = &ochttp.Handler{Handler: handler}
 		}
 	}
