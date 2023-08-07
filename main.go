@@ -78,7 +78,7 @@ func main() {
 			},
 		},
 		Commands: []*cli.Command{
-			runCmd, cmds.MinerCmds, cmds.WalletCmds, cmds.MarketCmds,
+			runCmd, cmds.MinerCmds, cmds.WalletCmds, cmds.MarketCmds, cmds.ProxyCmds,
 		},
 	}
 	app.Version = version.UserVersion

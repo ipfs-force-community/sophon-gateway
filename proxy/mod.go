@@ -76,10 +76,17 @@ func (p *Proxy) RegisterReverseHandler(hostKey HostKey, server http.Handler) {
 }
 
 func (p *Proxy) RegisterReverseByAddr(hostKey HostKey, address string) error {
+	// unregister handler if address is empty
+	if address == "" {
+		delete(p.handler, hostKey)
+		return nil
+	}
 	u, err := parseAddr(address)
 	if err != nil {
 		return err
 	}
+
+	log.Infof("register reverse proxy for %s: %s", hostKey, u.String())
 
 	p.handler[hostKey] = NewReverseServer(u)
 	return nil
