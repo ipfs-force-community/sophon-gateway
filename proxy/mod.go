@@ -119,8 +119,9 @@ func parseAddr(address string) (*url.URL, error) {
 
 		if hasTLS {
 			address = "https://" + addr
+		} else {
+			address = "http://" + addr
 		}
-		address = "http://" + addr
 	}
 
 	return url.Parse(address)

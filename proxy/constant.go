@@ -16,21 +16,32 @@ import (
 	gatewayTypes "github.com/filecoin-project/venus/venus-shared/types/gateway"
 )
 
-// map head -> addr
-// key -> header ; key -> addr
-
 type HostKey = gatewayTypes.HostKey
 
 const (
-	HostUnknown  = gatewayTypes.HostUnknown
+	// HostUnknown is the default host key
+	HostUnknown = gatewayTypes.HostUnknown
+
+	// HostMessager is the host key for messager
 	HostMessager = gatewayTypes.HostMessager
-	HostDroplet  = gatewayTypes.HostDroplet
-	HostNode     = gatewayTypes.HostNode
-	HostAuth     = gatewayTypes.HostAuth
-	HostMiner    = gatewayTypes.HostMiner
-	HostGateway  = gatewayTypes.HostGateway
+
+	// HostDroplet is the host key for droplet
+	HostDroplet = gatewayTypes.HostDroplet
+
+	// HostNode is the host key for node
+	HostNode = gatewayTypes.HostNode
+
+	// HostAuth is the host key for auth
+	HostAuth = gatewayTypes.HostAuth
+
+	// HostMiner is the host key for miner
+	HostMiner = gatewayTypes.HostMiner
+
+	// HostGateway is the host key for gateway
+	HostGateway = gatewayTypes.HostGateway
 )
 
+// constant for Header
 const (
 	VenusAPINamespaceHeader = api.VenusAPINamespaceHeader
 	emptyHeaderValue        = ""

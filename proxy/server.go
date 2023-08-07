@@ -48,7 +48,12 @@ func NewReverseServer(u *url.URL) http.Handler {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer proxyConn.Close()
+		defer func() {
+			err := proxyConn.Close()
+			if err != nil {
+				log.Errorf("close proxyConn: %w", err)
+			}
+		}()
 
 		upgrader := websocket.Upgrader{}
 		clientConn, err := upgrader.Upgrade(w, r, nil)
@@ -58,7 +63,12 @@ func NewReverseServer(u *url.URL) http.Handler {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer clientConn.Close()
+		defer func() {
+			err := clientConn.Close()
+			if err != nil {
+				log.Errorf("close clientConn: %w", err)
+			}
+		}()
 
 		signal := make(chan struct{})
 

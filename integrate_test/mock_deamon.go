@@ -141,7 +141,12 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	if repoter != nil {
 		log.Info("register jaeger exporter success!")
 
-		defer metrics.ShutdownJaeger(ctx, repoter)
+		defer func() {
+			err := metrics.ShutdownJaeger(ctx, repoter)
+			if err != nil {
+				log.Errorf("shutdown jaeger failed %v", err)
+			}
+		}()
 		handler = &ochttp.Handler{Handler: handler}
 	}
 

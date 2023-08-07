@@ -61,7 +61,8 @@ func TestRegisterReverseProxy(t *testing.T) {
 		require.NoError(t, err)
 
 		// unset by empty addr
-		proxy.RegisterReverseByAddr(HostNode, "")
+		err = proxy.RegisterReverseByAddr(HostNode, "")
+		require.NoError(t, err)
 		_, err = proxy.getReverseHandler(chainV0.APINamespace)
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrorNoReverseProxyRegistered)

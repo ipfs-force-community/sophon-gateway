@@ -249,25 +249,46 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		if reporter != nil {
 			log.Info("register jaeger exporter success!")
 
-			defer metrics.ShutdownJaeger(ctx, reporter)
+			defer func() {
+				err := metrics.ShutdownJaeger(ctx, reporter)
+				if err != nil {
+					log.Errorf("shutdown jaeger failed: %s", err)
+				}
+			}()
 			handler = &ochttp.Handler{Handler: handler}
 		}
 	}
 
-	chainServiceProxy.RegisterReverseByAddr(proxy.HostAuth, cfg.Auth.URL)
+	err = chainServiceProxy.RegisterReverseByAddr(proxy.HostAuth, cfg.Auth.URL)
+	if err != nil {
+		return err
+	}
 	if cfg.Node != nil {
-		chainServiceProxy.RegisterReverseByAddr(proxy.HostNode, *cfg.Node)
+		err := chainServiceProxy.RegisterReverseByAddr(proxy.HostNode, *cfg.Node)
+		if err != nil {
+			return err
+		}
 	}
 	if cfg.Messager != nil {
-		chainServiceProxy.RegisterReverseByAddr(proxy.HostMessager, *cfg.Messager)
+		err := chainServiceProxy.RegisterReverseByAddr(proxy.HostMessager, *cfg.Messager)
+		if err != nil {
+			return err
+		}
 	}
 	if cfg.Miner != nil {
-		chainServiceProxy.RegisterReverseByAddr(proxy.HostMiner, *cfg.Miner)
+		err := chainServiceProxy.RegisterReverseByAddr(proxy.HostMiner, *cfg.Miner)
+		if err != nil {
+			return err
+		}
 	}
 	if cfg.Droplet != nil {
-		chainServiceProxy.RegisterReverseByAddr(proxy.HostDroplet, *cfg.Droplet)
+		err := chainServiceProxy.RegisterReverseByAddr(proxy.HostDroplet, *cfg.Droplet)
+		if err != nil {
+			return err
+		}
 	}
 	chainServiceProxy.RegisterReverseHandler(proxy.HostGateway, handler)
+
 	handler = chainServiceProxy.ProxyMiddleware(handler)
 
 	httptest.NewServer(handler)
