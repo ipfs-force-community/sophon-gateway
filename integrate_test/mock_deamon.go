@@ -80,7 +80,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 		ClearInterval:    time.Hour,
 	})
 
-	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream)
+	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream, nil)
 
 	log.Infof("sophon-gateway current version %s", version.UserVersion)
 	log.Info("Setting up control endpoint at " + cfg.API.ListenAddress)

@@ -12,21 +12,23 @@ import (
 	messager "github.com/filecoin-project/venus/venus-shared/api/messager"
 	authCore "github.com/ipfs-force-community/sophon-auth/core"
 	minerClient "github.com/ipfs-force-community/sophon-miner/api/client"
+
+	gatewayTypes "github.com/filecoin-project/venus/venus-shared/types/gateway"
 )
 
 // map head -> addr
 // key -> header ; key -> addr
 
-type HostKey string
+type HostKey = gatewayTypes.HostKey
 
 const (
-	HostUnknown  HostKey = ""
-	HostMessager HostKey = "MESSAGER"
-	HostDroplet  HostKey = "DROPLET"
-	HostNode     HostKey = "VENUS"
-	HostAuth     HostKey = "AUTH"
-	HostMiner    HostKey = "MINER"
-	HostGateway  HostKey = "GATEWAY"
+	HostUnknown  = gatewayTypes.HostUnknown
+	HostMessager = gatewayTypes.HostMessager
+	HostDroplet  = gatewayTypes.HostDroplet
+	HostNode     = gatewayTypes.HostNode
+	HostAuth     = gatewayTypes.HostAuth
+	HostMiner    = gatewayTypes.HostMiner
+	HostGateway  = gatewayTypes.HostGateway
 )
 
 const (

@@ -17,6 +17,7 @@ import (
 
 	"github.com/ipfs-force-community/sophon-gateway/marketevent"
 	"github.com/ipfs-force-community/sophon-gateway/proofevent"
+	"github.com/ipfs-force-community/sophon-gateway/proxy"
 	"github.com/ipfs-force-community/sophon-gateway/version"
 	"github.com/ipfs-force-community/sophon-gateway/walletevent"
 )
@@ -39,6 +40,8 @@ var (
 )
 
 type GatewayAPIImpl struct {
+	proxy proxy.IProxy
+
 	v2API.IProofServiceProvider
 	pe *proofevent.ProofEventStream
 
@@ -50,11 +53,12 @@ type GatewayAPIImpl struct {
 	me *marketevent.MarketEventStream
 }
 
-func NewGatewayAPIImpl(pe *proofevent.ProofEventStream, we *walletevent.WalletEventStream, me *marketevent.MarketEventStream) *GatewayAPIImpl {
+func NewGatewayAPIImpl(pe *proofevent.ProofEventStream, we *walletevent.WalletEventStream, me *marketevent.MarketEventStream, p proxy.IProxy) *GatewayAPIImpl {
 	return &GatewayAPIImpl{
-		pe: pe,
-		we: we,
-		me: me,
+		pe:    pe,
+		we:    we,
+		me:    me,
+		proxy: p,
 
 		IProofServiceProvider:  pe,
 		IWalletServiceProvider: we,
@@ -100,4 +104,8 @@ func (g *GatewayAPIImpl) ListMarketConnectionsState(ctx context.Context) ([]gtyp
 
 func (g *GatewayAPIImpl) Version(context.Context) (sharedTypes.Version, error) {
 	return sharedTypes.Version{Version: version.UserVersion}, nil
+}
+
+func (g *GatewayAPIImpl) RegisterReverse(ctx context.Context, hostKey gtypes.HostKey, address string) error {
+	return g.proxy.RegisterReverseByAddr(hostKey, address)
 }

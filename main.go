@@ -182,7 +182,9 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		ClearInterval:    time.Minute * 5,
 	})
 
-	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream)
+	chainServiceProxy := proxy.NewProxy()
+
+	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream, chainServiceProxy)
 
 	log.Infof("sophon-gateway current version %s", version.UserVersion)
 	log.Infof("Setting up control endpoint at %v", cfg.API.ListenAddress)
@@ -252,22 +254,21 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		}
 	}
 
-	p := proxy.NewProxy()
-	p.RegisterReverseByAddr(proxy.HostAuth, cfg.Auth.URL)
+	chainServiceProxy.RegisterReverseByAddr(proxy.HostAuth, cfg.Auth.URL)
 	if cfg.Node != nil {
-		p.RegisterReverseByAddr(proxy.HostNode, *cfg.Node)
+		chainServiceProxy.RegisterReverseByAddr(proxy.HostNode, *cfg.Node)
 	}
 	if cfg.Messager != nil {
-		p.RegisterReverseByAddr(proxy.HostMessager, *cfg.Messager)
+		chainServiceProxy.RegisterReverseByAddr(proxy.HostMessager, *cfg.Messager)
 	}
 	if cfg.Miner != nil {
-		p.RegisterReverseByAddr(proxy.HostMiner, *cfg.Miner)
+		chainServiceProxy.RegisterReverseByAddr(proxy.HostMiner, *cfg.Miner)
 	}
 	if cfg.Droplet != nil {
-		p.RegisterReverseByAddr(proxy.HostDroplet, *cfg.Droplet)
+		chainServiceProxy.RegisterReverseByAddr(proxy.HostDroplet, *cfg.Droplet)
 	}
-	p.RegisterReverseHandler(proxy.HostGateway, handler)
-	handler = p.ProxyMiddleware(handler)
+	chainServiceProxy.RegisterReverseHandler(proxy.HostGateway, handler)
+	handler = chainServiceProxy.ProxyMiddleware(handler)
 
 	httptest.NewServer(handler)
 	srv := &http.Server{Handler: handler}
