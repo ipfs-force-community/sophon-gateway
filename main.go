@@ -45,6 +45,7 @@ import (
 	"github.com/ipfs-force-community/sophon-gateway/marketevent"
 	metrics2 "github.com/ipfs-force-community/sophon-gateway/metrics"
 	"github.com/ipfs-force-community/sophon-gateway/proofevent"
+	"github.com/ipfs-force-community/sophon-gateway/proxy"
 	"github.com/ipfs-force-community/sophon-gateway/types"
 	"github.com/ipfs-force-community/sophon-gateway/validator"
 	"github.com/ipfs-force-community/sophon-gateway/version"
@@ -238,7 +239,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	handler := (http.Handler)(authMux)
 	if cfg.Trace.JaegerTracingEnabled {
 		log.Infof("trace config %+v", cfg.Trace)
-		reporter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
+		reporter, err := metrics.SetupJaegerTracing(cfg.Trace.ServerName, cfg.Trace)
 		if err != nil {
 			return fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
 		}
@@ -246,10 +247,27 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		if reporter != nil {
 			log.Info("register jaeger exporter success!")
 
-			defer metrics.UnregisterJaeger(reporter)
+			defer metrics.ShutdownJaeger(ctx, reporter)
 			handler = &ochttp.Handler{Handler: handler}
 		}
 	}
+
+	p := proxy.NewProxy()
+	p.RegisterReverseByAddr(proxy.HostAuth, cfg.Auth.URL)
+	if cfg.Node != nil {
+		p.RegisterReverseByAddr(proxy.HostNode, *cfg.Node)
+	}
+	if cfg.Messager != nil {
+		p.RegisterReverseByAddr(proxy.HostMessager, *cfg.Messager)
+	}
+	if cfg.Miner != nil {
+		p.RegisterReverseByAddr(proxy.HostMiner, *cfg.Miner)
+	}
+	if cfg.Droplet != nil {
+		p.RegisterReverseByAddr(proxy.HostDroplet, *cfg.Droplet)
+	}
+	p.RegisterReverseHandler(proxy.HostGateway, handler)
+	handler = p.ProxyMiddleware(handler)
 
 	httptest.NewServer(handler)
 	srv := &http.Server{Handler: handler}
