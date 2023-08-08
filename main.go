@@ -45,6 +45,7 @@ import (
 	"github.com/ipfs-force-community/sophon-gateway/marketevent"
 	metrics2 "github.com/ipfs-force-community/sophon-gateway/metrics"
 	"github.com/ipfs-force-community/sophon-gateway/proofevent"
+	"github.com/ipfs-force-community/sophon-gateway/proxy"
 	"github.com/ipfs-force-community/sophon-gateway/types"
 	"github.com/ipfs-force-community/sophon-gateway/validator"
 	"github.com/ipfs-force-community/sophon-gateway/version"
@@ -77,7 +78,7 @@ func main() {
 			},
 		},
 		Commands: []*cli.Command{
-			runCmd, cmds.MinerCmds, cmds.WalletCmds, cmds.MarketCmds,
+			runCmd, cmds.MinerCmds, cmds.WalletCmds, cmds.MarketCmds, cmds.ProxyCmds,
 		},
 	}
 	app.Version = version.UserVersion
@@ -181,7 +182,9 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		ClearInterval:    time.Minute * 5,
 	})
 
-	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream)
+	chainServiceProxy := proxy.NewProxy()
+
+	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream, chainServiceProxy)
 
 	log.Infof("sophon-gateway current version %s", version.UserVersion)
 	log.Infof("Setting up control endpoint at %v", cfg.API.ListenAddress)
@@ -238,7 +241,7 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 	handler := (http.Handler)(authMux)
 	if cfg.Trace.JaegerTracingEnabled {
 		log.Infof("trace config %+v", cfg.Trace)
-		reporter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
+		reporter, err := metrics.SetupJaegerTracing(cfg.Trace.ServerName, cfg.Trace)
 		if err != nil {
 			return fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
 		}
@@ -246,10 +249,47 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		if reporter != nil {
 			log.Info("register jaeger exporter success!")
 
-			defer metrics.UnregisterJaeger(reporter)
+			defer func() {
+				err := metrics.ShutdownJaeger(ctx, reporter)
+				if err != nil {
+					log.Errorf("shutdown jaeger failed: %s", err)
+				}
+			}()
 			handler = &ochttp.Handler{Handler: handler}
 		}
 	}
+
+	err = chainServiceProxy.RegisterReverseByAddr(proxy.HostAuth, cfg.Auth.URL)
+	if err != nil {
+		return err
+	}
+	if cfg.Node != nil {
+		err := chainServiceProxy.RegisterReverseByAddr(proxy.HostNode, *cfg.Node)
+		if err != nil {
+			return err
+		}
+	}
+	if cfg.Messager != nil {
+		err := chainServiceProxy.RegisterReverseByAddr(proxy.HostMessager, *cfg.Messager)
+		if err != nil {
+			return err
+		}
+	}
+	if cfg.Miner != nil {
+		err := chainServiceProxy.RegisterReverseByAddr(proxy.HostMiner, *cfg.Miner)
+		if err != nil {
+			return err
+		}
+	}
+	if cfg.Droplet != nil {
+		err := chainServiceProxy.RegisterReverseByAddr(proxy.HostDroplet, *cfg.Droplet)
+		if err != nil {
+			return err
+		}
+	}
+	chainServiceProxy.RegisterReverseHandler(proxy.HostGateway, handler)
+
+	handler = chainServiceProxy.ProxyMiddleware(handler)
 
 	httptest.NewServer(handler)
 	srv := &http.Server{Handler: handler}

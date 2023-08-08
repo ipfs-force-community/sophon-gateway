@@ -13,8 +13,14 @@ const (
 )
 
 type Config struct {
-	API       *APIConfig
-	Auth      *AuthConfig
+	API  *APIConfig
+	Auth *AuthConfig
+
+	Node     *string
+	Messager *string
+	Miner    *string
+	Droplet  *string
+
 	Metrics   *metrics.MetricsConfig
 	Trace     *metrics.TraceConfig
 	RateLimit *RateLimitCofnig

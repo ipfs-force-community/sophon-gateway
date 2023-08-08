@@ -80,7 +80,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 		ClearInterval:    time.Hour,
 	})
 
-	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream)
+	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream, nil)
 
 	log.Infof("sophon-gateway current version %s", version.UserVersion)
 	log.Info("Setting up control endpoint at " + cfg.API.ListenAddress)
@@ -134,14 +134,19 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	}
 
 	log.Infof("trace config %v", cfg.Trace)
-	repoter, err := metrics.RegisterJaeger(cfg.Trace.ServerName, cfg.Trace)
+	repoter, err := metrics.SetupJaegerTracing(cfg.Trace.ServerName, cfg.Trace)
 	if err != nil {
 		return "", nil, fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
 	}
 	if repoter != nil {
 		log.Info("register jaeger exporter success!")
 
-		defer metrics.UnregisterJaeger(repoter)
+		defer func() {
+			err := metrics.ShutdownJaeger(ctx, repoter)
+			if err != nil {
+				log.Errorf("shutdown jaeger failed %v", err)
+			}
+		}()
 		handler = &ochttp.Handler{Handler: handler}
 	}
 
