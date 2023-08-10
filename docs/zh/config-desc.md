@@ -3,6 +3,14 @@
 默认在～/.sophon-gateway/config.toml。
 
 ```toml
+# 被代理线上组件的服务地址
+# 可选
+Node = "/dns/node/tcp/3453"
+Messager = "/dns/messager/tcp/39812"
+Droplet = "/dns/market/tcp/41235"
+Miner = "/dns/miner/tcp/12308"
+
+
 [API]
   ListenAddress = "/ip4/127.0.0.1/tcp/45132" # 本地组件wallet和damocles-manager通过长连接和gateway保持通信
 
