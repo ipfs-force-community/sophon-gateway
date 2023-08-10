@@ -70,6 +70,7 @@ func (p *Proxy) getReverseHandler(header string) (http.Handler, error) {
 func (p *Proxy) RegisterReverseHandler(hostKey HostKey, server http.Handler) {
 	if server == nil {
 		delete(p.handler, hostKey)
+		log.Info("unregister reverse proxy for ", hostKey)
 		return
 	}
 	p.handler[hostKey] = server
@@ -79,6 +80,7 @@ func (p *Proxy) RegisterReverseByAddr(hostKey HostKey, address string) error {
 	// unregister handler if address is empty
 	if address == "" {
 		delete(p.handler, hostKey)
+		log.Info("unregister reverse proxy for ", hostKey)
 		return nil
 	}
 	u, err := parseAddr(address)
