@@ -7,11 +7,11 @@ require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-jsonrpc v0.1.8
 	github.com/filecoin-project/go-state-types v0.11.1
-	github.com/filecoin-project/venus v1.12.1-0.20230807061937-01ad3f300023
+	github.com/filecoin-project/venus v1.13.0-rc1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v1.0.1-0.20230626064437-eed34cb166f5
-	github.com/ipfs-force-community/sophon-auth v1.12.1-0.20230801033929-4ecc519befff
+	github.com/ipfs-force-community/sophon-auth v1.13.0-rc1
 	github.com/ipfs-force-community/sophon-miner v1.12.1-0.20230801052317-e5fd969af458
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-log/v2 v2.5.1
