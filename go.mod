@@ -7,12 +7,12 @@ require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-jsonrpc v0.1.8
 	github.com/filecoin-project/go-state-types v0.11.1
-	github.com/filecoin-project/venus v1.13.0-rc1
+	github.com/filecoin-project/venus v1.13.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v1.0.1-0.20230626064437-eed34cb166f5
-	github.com/ipfs-force-community/sophon-auth v1.13.0-rc1
-	github.com/ipfs-force-community/sophon-miner v1.12.1-0.20230801052317-e5fd969af458
+	github.com/ipfs-force-community/sophon-auth v1.13.0
+	github.com/ipfs-force-community/sophon-miner v1.13.0-rc1
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/modern-go/reflect2 v1.0.2
@@ -34,8 +34,8 @@ require (
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
 	github.com/filecoin-project/go-cbor-util v0.0.1 // indirect
-	github.com/filecoin-project/go-data-transfer/v2 v2.0.0-rc4 // indirect
-	github.com/filecoin-project/go-fil-markets v1.27.0-rc1 // indirect
+	github.com/filecoin-project/go-data-transfer/v2 v2.0.0-rc6 // indirect
+	github.com/filecoin-project/go-fil-markets v1.28.2 // indirect
 	github.com/filecoin-project/go-padreader v0.0.1 // indirect
 	github.com/filecoin-project/go-statemachine v1.0.3 // indirect
 	github.com/filecoin-project/go-statestore v0.2.0 // indirect
