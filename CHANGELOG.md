@@ -1,5 +1,6 @@
 # sophon-gateway changelog
 
+## v1.13.0
 ## v1.13.0-rc1
 
 ### New Feature
