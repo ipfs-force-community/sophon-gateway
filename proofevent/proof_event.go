@@ -170,13 +170,13 @@ func (e *ProofEventStream) getChannels(mAddr address.Address) ([]*types.ChannelI
 	var ok bool
 	if channelStore, ok = e.minerConnections[mAddr]; !ok {
 		e.connLk.Unlock()
-		return nil, fmt.Errorf("no connections for this miner %s", mAddr)
+		return nil, fmt.Errorf("for miner %s : %w", mAddr, sharedGatewayTypes.ErrNoConnection)
 	}
 	e.connLk.Unlock()
 
 	channels, err := channelStore.getChannelListByMiners()
 	if err != nil {
-		return nil, fmt.Errorf("cannot find any connection for miner %s", mAddr)
+		return nil, fmt.Errorf("for miner %s : %w", mAddr, sharedGatewayTypes.ErrNoConnection)
 	}
 	return channels, nil
 }

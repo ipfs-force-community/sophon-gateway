@@ -160,13 +160,13 @@ func (m *MarketEventStream) getChannels(mAddr address.Address) ([]*types.Channel
 	var ok bool
 	if channelStore, ok = m.minerConnections[mAddr]; !ok {
 		m.connLk.Unlock()
-		return nil, fmt.Errorf("no connections for this miner %s", mAddr)
+		return nil, fmt.Errorf("miner(%s): %w", mAddr, gtypes.ErrNoConnection)
 	}
 	m.connLk.Unlock()
 
 	channels, err := channelStore.getChannelListByMiners()
 	if err != nil {
-		return nil, fmt.Errorf("cannot find any connection for miner %s", mAddr)
+		return nil, fmt.Errorf("miner(%s): %w", mAddr, gtypes.ErrNoConnection)
 	}
 	return channels, nil
 }
