@@ -23,6 +23,9 @@ type AuthClient struct {
 	// key: signer address, v: username
 	signers  map[string][]string
 	lkSigner sync.RWMutex
+
+	token   map[string]*auth.VerifyResponse
+	lkToken sync.RWMutex
 }
 
 func (m *AuthClient) GetUser(ctx context.Context, name string) (*auth.OutputUser, error) {
@@ -149,6 +152,16 @@ func (m *AuthClient) AddMockUser(ctx context.Context, users ...*auth.OutputUser)
 	}
 }
 
+func (m *AuthClient) AddMockToken(ctx context.Context, token string) {
+	m.lkToken.Lock()
+	defer m.lkToken.Unlock()
+
+	m.token[token] = &auth.JWTPayload{
+		Name: "admin",
+		Perm: core.PermAdmin,
+	}
+}
+
 func (m *AuthClient) GetUserLimit(username, service, api string) (*ratelimit.Limit, error) {
 	m.lkUser.Lock()
 	defer m.lkUser.Unlock()
@@ -161,7 +174,11 @@ func (m *AuthClient) GetUserLimit(username, service, api string) (*ratelimit.Lim
 }
 
 func (m *AuthClient) Verify(ctx context.Context, token string) (*auth.VerifyResponse, error) {
-	panic("Don't call me")
+	payload, ok := m.token[token]
+	if !ok {
+		return nil, fmt.Errorf("invalid token")
+	}
+	return payload, nil
 }
 
 func (m *AuthClient) HasUser(ctx context.Context, name string) (bool, error) {
@@ -225,6 +242,7 @@ func NewMockAuthClient() *AuthClient {
 	return &AuthClient{
 		users:   make(map[string]*auth.OutputUser),
 		signers: make(map[string][]string),
+		token:   make(map[string]*auth.JWTPayload),
 	}
 }
 

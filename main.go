@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"os/signal"
 	"path"
@@ -40,6 +39,7 @@ import (
 
 	"github.com/ipfs-force-community/sophon-gateway/api"
 	"github.com/ipfs-force-community/sophon-gateway/api/v1api"
+	"github.com/ipfs-force-community/sophon-gateway/cluster"
 	"github.com/ipfs-force-community/sophon-gateway/cmds"
 	"github.com/ipfs-force-community/sophon-gateway/config"
 	"github.com/ipfs-force-community/sophon-gateway/marketevent"
@@ -182,9 +182,18 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		ClearInterval:    time.Minute * 5,
 	})
 
+	listenAddressForCluster := ""
+	if cfg.Cluster != nil {
+		listenAddressForCluster = cfg.Cluster.ListenAddress
+	}
+	cluster, err := cluster.NewCluster(ctx, cfg.API.ListenAddress, listenAddressForCluster, cfg.Auth.Token)
+	if err != nil {
+		return err
+	}
+
 	chainServiceProxy := proxy.NewProxy()
 
-	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream, chainServiceProxy)
+	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream, chainServiceProxy, cluster)
 
 	log.Infof("sophon-gateway current version %s", version.UserVersion)
 	log.Infof("Setting up control endpoint at %v", cfg.API.ListenAddress)
@@ -291,7 +300,6 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 
 	handler = chainServiceProxy.ProxyMiddleware(handler)
 
-	httptest.NewServer(handler)
 	srv := &http.Server{Handler: handler}
 
 	sigCh := make(chan os.Signal, 2)

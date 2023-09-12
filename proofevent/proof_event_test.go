@@ -226,7 +226,7 @@ func TestComputeProofEvent(t *testing.T) {
 		addr3 := addrGetter()
 		_, err = proof.ComputeProof(ctx, addr3, expectInfo, expectRand, expectEpoch, expectVersion)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "no connections for this miner")
+		require.ErrorIs(t, err, types.ErrNoConnection)
 	})
 
 	t.Run("incorrect result  error", func(t *testing.T) {

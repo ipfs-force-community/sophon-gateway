@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 
 	"github.com/ipfs/go-cid"
 
@@ -15,6 +16,7 @@ import (
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
 	gtypes "github.com/filecoin-project/venus/venus-shared/types/gateway"
 
+	"github.com/ipfs-force-community/sophon-gateway/cluster"
 	"github.com/ipfs-force-community/sophon-gateway/marketevent"
 	"github.com/ipfs-force-community/sophon-gateway/proofevent"
 	"github.com/ipfs-force-community/sophon-gateway/proxy"
@@ -40,7 +42,8 @@ var (
 )
 
 type GatewayAPIImpl struct {
-	proxy proxy.IProxy
+	proxy   proxy.IProxy
+	cluster *cluster.Cluster
 
 	v2API.IProofServiceProvider
 	pe *proofevent.ProofEventStream
@@ -53,12 +56,13 @@ type GatewayAPIImpl struct {
 	me *marketevent.MarketEventStream
 }
 
-func NewGatewayAPIImpl(pe *proofevent.ProofEventStream, we *walletevent.WalletEventStream, me *marketevent.MarketEventStream, p proxy.IProxy) *GatewayAPIImpl {
+func NewGatewayAPIImpl(pe *proofevent.ProofEventStream, we *walletevent.WalletEventStream, me *marketevent.MarketEventStream, p proxy.IProxy, cluster *cluster.Cluster) *GatewayAPIImpl {
 	return &GatewayAPIImpl{
-		pe:    pe,
-		we:    we,
-		me:    me,
-		proxy: p,
+		pe:      pe,
+		we:      we,
+		me:      me,
+		proxy:   p,
+		cluster: cluster,
 
 		IProofServiceProvider:  pe,
 		IWalletServiceProvider: we,
@@ -67,7 +71,11 @@ func NewGatewayAPIImpl(pe *proofevent.ProofEventStream, we *walletevent.WalletEv
 }
 
 func (g *GatewayAPIImpl) ComputeProof(ctx context.Context, miner address.Address, sectorInfos []builtin.ExtendedSectorInfo, rand abi.PoStRandomness, height abi.ChainEpoch, nwVersion network.Version) ([]builtin.PoStProof, error) {
-	return g.pe.ComputeProof(ctx, miner, sectorInfos, rand, height, nwVersion)
+	ret, err := g.pe.ComputeProof(ctx, miner, sectorInfos, rand, height, nwVersion)
+	if !cluster.PreventBroadcast(ctx) && errors.Is(err, gtypes.ErrNoConnection) {
+		return g.cluster.ComputeProof(ctx, miner, sectorInfos, rand, height, nwVersion)
+	}
+	return ret, err
 }
 
 func (g *GatewayAPIImpl) ListConnectedMiners(ctx context.Context) ([]address.Address, error) {
@@ -79,11 +87,21 @@ func (g *GatewayAPIImpl) ListMinerConnection(ctx context.Context, addr address.A
 }
 
 func (g *GatewayAPIImpl) WalletHas(ctx context.Context, addr address.Address, accounts []string) (bool, error) {
-	return g.we.WalletHas(ctx, addr, accounts)
+	localExist, err := g.we.WalletHas(ctx, addr, accounts)
+	if !cluster.PreventBroadcast(ctx) {
+		if errors.Is(err, gtypes.ErrNoConnection) || !localExist {
+			return g.cluster.WalletHas(ctx, addr, accounts)
+		}
+	}
+	return localExist, err
 }
 
 func (g *GatewayAPIImpl) WalletSign(ctx context.Context, addr address.Address, accounts []string, toSign []byte, meta sharedTypes.MsgMeta) (*crypto.Signature, error) {
-	return g.we.WalletSign(ctx, addr, accounts, toSign, meta)
+	ret, err := g.we.WalletSign(ctx, addr, accounts, toSign, meta)
+	if !cluster.PreventBroadcast(ctx) && errors.Is(err, gtypes.ErrNoConnection) {
+		return g.cluster.WalletSign(ctx, addr, accounts, toSign, meta)
+	}
+	return ret, err
 }
 
 func (g *GatewayAPIImpl) ListWalletInfo(ctx context.Context) ([]*gtypes.WalletDetail, error) {
@@ -95,7 +113,11 @@ func (g *GatewayAPIImpl) ListWalletInfoByWallet(ctx context.Context, wallet stri
 }
 
 func (g *GatewayAPIImpl) SectorsUnsealPiece(ctx context.Context, miner address.Address, pieceCid cid.Cid, sid abi.SectorNumber, offset sharedTypes.UnpaddedByteIndex, size abi.UnpaddedPieceSize, dest string) (gtypes.UnsealState, error) {
-	return g.me.SectorsUnsealPiece(ctx, miner, pieceCid, sid, offset, size, dest)
+	ret, err := g.me.SectorsUnsealPiece(ctx, miner, pieceCid, sid, offset, size, dest)
+	if !cluster.PreventBroadcast(ctx) && errors.Is(err, gtypes.ErrNoConnection) {
+		return g.cluster.SectorsUnsealPiece(ctx, miner, pieceCid, sid, offset, size, dest)
+	}
+	return ret, err
 }
 
 func (g *GatewayAPIImpl) ListMarketConnectionsState(ctx context.Context) ([]gtypes.MarketConnectionState, error) {
@@ -108,4 +130,12 @@ func (g *GatewayAPIImpl) Version(context.Context) (sharedTypes.Version, error) {
 
 func (g *GatewayAPIImpl) RegisterReverse(ctx context.Context, hostKey gtypes.HostKey, address string) error {
 	return g.proxy.RegisterReverseByAddr(hostKey, address)
+}
+
+func (g *GatewayAPIImpl) Join(ctx context.Context, address string) error {
+	return g.cluster.Join(address)
+}
+
+func (g *GatewayAPIImpl) MemberInfos(ctx context.Context) ([]v2API.MemberInfo, error) {
+	return g.cluster.MemberInfos()
 }

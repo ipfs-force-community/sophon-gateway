@@ -3,12 +3,14 @@ package integrate
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
-	"net/http/httptest"
 	"time"
 
 	"github.com/gorilla/mux"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/multiformats/go-multiaddr"
+	manet "github.com/multiformats/go-multiaddr/net"
 	"go.opencensus.io/plugin/ochttp"
 
 	"github.com/filecoin-project/go-address"
@@ -16,6 +18,7 @@ import (
 
 	"github.com/ipfs-force-community/metrics"
 	"github.com/ipfs-force-community/metrics/ratelimit"
+	"github.com/ipfs-force-community/sophon-gateway/cluster"
 	"github.com/ipfs-force-community/sophon-gateway/config"
 
 	"github.com/ipfs-force-community/sophon-auth/auth"
@@ -51,7 +54,7 @@ func defaultTestConfig() testConfig {
 	}
 }
 
-func MockMain(ctx context.Context, validateMiner []address.Address, repoPath string, cfg *config.Config, tcfg testConfig) (string, []byte, error) {
+func MockMain(ctx context.Context, validateMiner []address.Address, repoPath string, cfg *config.Config, tcfg testConfig) (net.Addr, []byte, error) {
 	requestCfg := &types.RequestConfig{
 		RequestQueueSize: 30,
 		RequestTimeout:   tcfg.requestTimeout,
@@ -71,6 +74,9 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 	}
 	authClient := mocks.NewMockAuthClient()
 	authClient.AddMockUser(ctx, user...)
+	if cfg.Auth.Token != "" {
+		authClient.AddMockToken(ctx, cfg.Auth.Token)
+	}
 	walletStream := walletevent.NewWalletEventStream(ctx, authClient, requestCfg)
 
 	proofStream := proofevent.NewProofEventStream(ctx, minerValidator, requestCfg)
@@ -80,7 +86,12 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 		ClearInterval:    time.Hour,
 	})
 
-	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream, nil)
+	cluster, err := cluster.NewCluster(ctx, cfg.API.ListenAddress, ":0", cfg.Auth.Token)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	gatewayAPIImpl := api.NewGatewayAPIImpl(proofStream, walletStream, marketStream, nil, cluster)
 
 	log.Infof("sophon-gateway current version %s", version.UserVersion)
 	log.Info("Setting up control endpoint at " + cfg.API.ListenAddress)
@@ -96,7 +107,7 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 			logging.Logger("rate-limit"))
 		_ = logging.SetLogLevel("rate-limit", "info")
 		if err != nil {
-			return "", nil, err
+			return nil, nil, err
 		}
 		var rateLimitAPI v2API.IGatewayStruct
 		limiter.ProxyLimitFullAPI(gatewayAPI, &rateLimitAPI)
@@ -124,19 +135,19 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 
 	localJwtCli, localToken, err := jwtclient.NewLocalAuthClient()
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to generate local jwt client: %v", err)
+		return nil, nil, fmt.Errorf("failed to generate local jwt client: %v", err)
 	}
 
 	handler := (http.Handler)(jwtclient.NewAuthMux(localJwtCli, jwtclient.WarpIJwtAuthClient(authClient), mux))
 
 	if err := metrics2.SetupMetrics(ctx, cfg.Metrics, gatewayAPIImpl); err != nil {
-		return "", nil, err
+		return nil, nil, err
 	}
 
 	log.Infof("trace config %v", cfg.Trace)
 	repoter, err := metrics.SetupJaegerTracing(cfg.Trace.ServerName, cfg.Trace)
 	if err != nil {
-		return "", nil, fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
+		return nil, nil, fmt.Errorf("register jaeger exporter failed %v", cfg.Trace)
 	}
 	if repoter != nil {
 		log.Info("register jaeger exporter success!")
@@ -150,6 +161,23 @@ func MockMain(ctx context.Context, validateMiner []address.Address, repoPath str
 		handler = &ochttp.Handler{Handler: handler}
 	}
 
-	srv := httptest.NewServer(handler)
-	return srv.URL, localToken, nil
+	srv := &http.Server{Handler: handler}
+
+	addr, err := multiaddr.NewMultiaddr(cfg.API.ListenAddress)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	nl, err := manet.Listen(addr)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	go func() {
+		if err = srv.Serve(manet.NetListener(nl)); err != nil && err != http.ErrServerClosed {
+			log.Error(err)
+		}
+	}()
+
+	return nl.Addr(), localToken, nil
 }

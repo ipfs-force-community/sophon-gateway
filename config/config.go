@@ -21,9 +21,15 @@ type Config struct {
 	Miner    *string
 	Droplet  *string
 
+	Cluster *ClusterConfig
+
 	Metrics   *metrics.MetricsConfig
 	Trace     *metrics.TraceConfig
 	RateLimit *RateLimitCofnig
+}
+
+type ClusterConfig struct {
+	ListenAddress string
 }
 
 type APIConfig struct {

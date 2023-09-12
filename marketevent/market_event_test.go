@@ -15,6 +15,7 @@ import (
 	"github.com/ipfs-force-community/sophon-auth/core"
 
 	sharedTypes "github.com/filecoin-project/venus/venus-shared/types"
+	gtypes "github.com/filecoin-project/venus/venus-shared/types/gateway"
 
 	"github.com/ipfs-force-community/sophon-gateway/testhelper"
 	"github.com/ipfs-force-community/sophon-gateway/types"
@@ -109,7 +110,7 @@ func TestUnsealed(t *testing.T) {
 		handler.SetSectorsUnsealPieceExpect(pieceCid, minerAddr, sid, offset, size, dest, false)
 		// stm: @VENUSGATEWAY_MARKET_EVENT_SECTORS_UNSEAL_PIECE_002
 		_, err = marketEvent.SectorsUnsealPiece(ctx, addrGetter(), pieceCid, sid, offset, size, dest)
-		require.Contains(t, err.Error(), "no connections for this miner")
+		require.ErrorIs(t, err, gtypes.ErrNoConnection)
 	})
 
 	t.Run("response error", func(t *testing.T) {

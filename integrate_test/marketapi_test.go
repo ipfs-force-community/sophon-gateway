@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"net/http"
-	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -126,8 +125,7 @@ func setupMarketDaemon(t *testing.T, validateMiner []address.Address, ctx contex
 
 	addr, token, err := MockMain(ctx, validateMiner, t.TempDir(), cfg, defaultTestConfig())
 	require.NoError(t, err)
-	url, err := url.Parse(addr)
-	require.NoError(t, err)
-	wsUrl := fmt.Sprintf("ws://127.0.0.1:%s/rpc/v2", url.Port())
+
+	wsUrl := fmt.Sprintf("ws://%s/rpc/v2", addr.String())
 	return wsUrl, string(token)
 }
