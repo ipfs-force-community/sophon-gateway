@@ -1,5 +1,24 @@
 # sophon-gateway changelog
 
+## v1.13.0
+## v1.13.0-rc1
+
+### New Feature
+* feat: move RandomBytes to venus share by @LinZexiao in [[#141](https://github.com/ipfs-force-community/sophon-gateway/pull/141)]
+* feat: replace GetUserByMiner with MinerExistInUser by @LinZexiao in [[#143](https://github.com/ipfs-force-community/sophon-gateway/pull/143)]
+* Feat/proxy traffic to other components by @LinZexiao in [[#147](https://github.com/ipfs-force-community/sophon-gateway/pull/147)]
+
+### Documentations And Chores
+
+* doc: Update README.md by @Fatman13 in [[#137](https://github.com/ipfs-force-community/sophon-gateway/pull/137)]
+* doc: Update README.md by @0x5459 in [[#140](https://github.com/ipfs-force-community/sophon-gateway/pull/140)]
+* doc: fix link by @0x5459 in [[#139](https://github.com/ipfs-force-community/sophon-gateway/pull/139)]
+* doc: update config description / 更新config注释 by @elvin-du in [[#145](https://github.com/ipfs-force-community/sophon-gateway/pull/145)]
+* doc: how to use proxy by @LinZexiao in [[#149](https://github.com/ipfs-force-community/sophon-gateway/pull/149)]
+* chore: build(deps): bump github.com/libp2p/go-libp2p from 0.27.5 to 0.27.8 by @dependabot in [[#148](https://github.com/ipfs-force-community/sophon-gateway/pull/148)]
+* chore: merge release v1.12 by @simlecode in [[#144](https://github.com/ipfs-force-community/sophon-gateway/pull/144)]
+
+
 ## v1.12.0
 
 * feat: move RandomBytes to venus share by @LinZexiao in [[#141](https://github.com/ipfs-force-community/sophon-gateway/pull/141)]
