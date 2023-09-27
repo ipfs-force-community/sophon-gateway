@@ -3,7 +3,8 @@ package metrics
 import (
 	"time"
 
-	"github.com/filecoin-project/go-jsonrpc/metrics"
+	rpcMetrics "github.com/filecoin-project/go-jsonrpc/metrics"
+	"github.com/ipfs-force-community/metrics"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
@@ -26,26 +27,35 @@ var defaultMillisecondsDistribution = view.Distribution(0.01, 0.05, 0.1, 0.3, 0.
 
 var (
 	// wallet
-	WalletRegister   = stats.Int64("wallet_register", "Wallet register", stats.UnitDimensionless)
-	WalletUnregister = stats.Int64("wallet_unregister", "Wallet unregister", stats.UnitDimensionless)
-	WalletNum        = stats.Int64("wallet_num", "Wallet count", stats.UnitDimensionless)
-	WalletAddressNum = stats.Int64("wallet_address_num", "Address owned by wallet", stats.UnitDimensionless)
-	WalletAddAddr    = stats.Int64("wallet_add_addr", "Wallet add a new address", stats.UnitDimensionless)
-	WalletRemoveAddr = stats.Int64("wallet_remove_addr", "Wallet remove a new address", stats.UnitDimensionless)
-	WalletConnNum    = stats.Int64("wallet_conn_num", "Wallet connection count", stats.UnitDimensionless)
+	WalletRegister   = stats.Int64("wallet/register", "Wallet register", stats.UnitDimensionless)
+	WalletUnregister = stats.Int64("wallet/unregister", "Wallet unregister", stats.UnitDimensionless)
+	WalletNum        = stats.Int64("wallet/num", "Wallet count", stats.UnitDimensionless)
+	WalletAddressNum = stats.Int64("wallet/address_num", "Address owned by wallet", stats.UnitDimensionless)
+	WalletAddAddr    = stats.Int64("wallet/add_addr", "Wallet add a new address", stats.UnitDimensionless)
+	WalletRemoveAddr = stats.Int64("wallet/remove_addr", "Wallet remove a new address", stats.UnitDimensionless)
+	WalletConnNum    = stats.Int64("wallet/conn_num", "Wallet connection count", stats.UnitDimensionless)
 
 	// miner
-	MinerRegister   = stats.Int64("miner_register", "Miner register", stats.UnitDimensionless)
-	MinerUnregister = stats.Int64("miner_unregister", "Miner unregister", stats.UnitDimensionless)
-	MinerNum        = stats.Int64("miner_num", "Wallet count", stats.UnitDimensionless)
-	MinerSource     = stats.Int64("wallet_source", "Miner IP", stats.UnitDimensionless)
-	MinerConnNum    = stats.Int64("miner_conn_num", "Miner connection count", stats.UnitDimensionless)
+	MinerRegister   = metrics.NewCounter("proof/register", "Miner register", MinerAddressKey, IPKey, MinerTypeKey)
+	MinerUnregister = metrics.NewCounter("proof/unregister", "Miner unregister", MinerAddressKey, IPKey, MinerTypeKey)
+	MinerNum        = metrics.NewCounter("proof/miner_num", "Wallet count", MinerAddressKey, MinerTypeKey)
+	MinerSource     = metrics.NewCounter("proof/source", "Miner IP", MinerAddressKey, MinerTypeKey)
+	MinerConnNum    = metrics.NewCounter("proof/conn_num", "Miner connection count", MinerAddressKey, IPKey, MinerTypeKey)
 
 	// method call
 	WalletSign         = stats.Float64("wallet_sign", "Call WalletSign spent time", stats.UnitMilliseconds)
 	WalletList         = stats.Float64("wallet_list", "Call WalletList spent time", stats.UnitMilliseconds)
 	ComputeProof       = stats.Float64("compute_proof", "Call ComputeProof spent time", stats.UnitMilliseconds)
 	SectorsUnsealPiece = stats.Float64("sectors_unseal_piece", "Call SectorsUnsealPiece spent time", stats.UnitMilliseconds)
+)
+
+var (
+	// market event
+	MarketRegister   = metrics.NewCounter("market/register", "Market register", MinerAddressKey, IPKey, MinerTypeKey)
+	MarketUnregister = metrics.NewCounter("market/unregister", "Market unregister", MinerAddressKey, IPKey, MinerTypeKey)
+	MarketNum        = metrics.NewCounter("market/num", "Market count", MinerAddressKey, MinerTypeKey)
+	MarketSource     = metrics.NewCounter("market/source", "Market IP", MinerAddressKey, MinerTypeKey)
+	MarketConnNum    = metrics.NewCounter("market/conn_num", "Market connection count", MinerAddressKey, IPKey, MinerTypeKey)
 )
 
 var (
@@ -86,33 +96,6 @@ var (
 		TagKeys:     []tag.Key{WalletAccountKey, IPKey},
 	}
 
-	// miner
-	minerRegisterView = &view.View{
-		Measure:     MinerRegister,
-		Aggregation: view.Count(),
-		TagKeys:     []tag.Key{MinerAddressKey, MinerTypeKey, IPKey},
-	}
-	minerUnregisterView = &view.View{
-		Measure:     MinerUnregister,
-		Aggregation: view.Count(),
-		TagKeys:     []tag.Key{MinerAddressKey, MinerTypeKey, IPKey},
-	}
-	minerNumView = &view.View{
-		Measure:     MinerNum,
-		Aggregation: view.Count(),
-		TagKeys:     []tag.Key{MinerAddressKey, MinerTypeKey},
-	}
-	minerSourceView = &view.View{
-		Measure:     MinerSource,
-		Aggregation: view.Count(),
-		TagKeys:     []tag.Key{MinerAddressKey, MinerTypeKey},
-	}
-	minerConnNumView = &view.View{
-		Measure:     WalletConnNum,
-		Aggregation: view.Count(),
-		TagKeys:     []tag.Key{MinerAddressKey, IPKey, MinerTypeKey},
-	}
-
 	// method call
 	walletSignView = &view.View{
 		Measure:     WalletSign,
@@ -145,19 +128,18 @@ var views = append([]*view.View{
 	walletRemoveAddrView,
 	walletConnNumView,
 
-	minerRegisterView,
-	minerUnregisterView,
-	minerNumView,
-	minerSourceView,
-	minerConnNumView,
-
 	walletSignView,
 	walletListView,
 	computeProofView,
 	sectorsUnsealPieceView,
-}, metrics.DefaultViews...)
+}, rpcMetrics.DefaultViews...)
 
 // SinceInMilliseconds returns the duration of time since the provide time as a float64.
 func SinceInMilliseconds(startTime time.Time) float64 {
 	return float64(time.Since(startTime).Nanoseconds()) / 1e6
+}
+
+func init() {
+	// register metrics
+	_ = view.Register(views...)
 }

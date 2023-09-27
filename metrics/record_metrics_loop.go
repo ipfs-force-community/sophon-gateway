@@ -65,9 +65,10 @@ func recordMarketConnectionInfo(ctx context.Context, api v2API.IGateway) {
 	for _, state := range connsState {
 		ctx, _ = tag.New(ctx, tag.Upsert(MinerAddressKey, state.Addr.String()), tag.Upsert(MinerTypeKey, "market"))
 		for _, conn := range state.Conn.Connections {
-			_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(IPKey, conn.IP)}, MinerConnNum.M(1))
+			ctx, _ := tag.New(ctx, tag.Upsert(IPKey, conn.IP))
+			MarketConnNum.Tick(ctx)
 		}
-		stats.Record(ctx, MinerNum.M(1))
+		MarketNum.Tick(ctx)
 	}
 }
 
@@ -87,8 +88,9 @@ func recordMinerConnectionInfo(ctx context.Context, api v2API.IGateway) {
 
 		ctx, _ = tag.New(ctx, tag.Upsert(MinerTypeKey, "pprof"), tag.Upsert(MinerAddressKey, miner.String()))
 		for _, conn := range state.Connections {
-			_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(IPKey, conn.IP)}, MinerConnNum.M(1))
+			ctx, _ := tag.New(ctx, tag.Upsert(IPKey, conn.IP))
+			MinerNum.Tick(ctx)
 		}
-		stats.Record(ctx, MinerNum.M(1))
+		MinerNum.Tick(ctx)
 	}
 }

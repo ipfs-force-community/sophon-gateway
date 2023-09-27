@@ -87,8 +87,8 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *gtype
 
 		ctx, _ = tag.New(ctx, tag.Upsert(metrics.IPKey, ip), tag.Upsert(metrics.MinerAddressKey, mAddr.String()),
 			tag.Upsert(metrics.MinerTypeKey, "market"))
-		stats.Record(ctx, metrics.MinerRegister.M(1))
-		stats.Record(ctx, metrics.MinerSource.M(1))
+		metrics.MarketRegister.Tick(ctx)
+		metrics.MarketSource.Tick(ctx)
 
 		out <- &gtypes.RequestEvent{
 			ID:         sharedTypes.NewUUID(),

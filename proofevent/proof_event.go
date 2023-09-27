@@ -103,8 +103,8 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *sharedG
 
 		ctx, _ = tag.New(ctx, tag.Upsert(metrics.IPKey, ip), tag.Upsert(metrics.MinerAddressKey, mAddr.String()),
 			tag.Upsert(metrics.MinerTypeKey, "pprof"))
-		stats.Record(ctx, metrics.MinerRegister.M(1))
-		stats.Record(ctx, metrics.MinerSource.M(1))
+		metrics.MinerRegister.Tick(ctx)
+		metrics.MinerSource.Tick(ctx)
 
 		reqEventChan <- &sharedGatewayTypes.RequestEvent{
 			ID:         sharedTypes.NewUUID(),
@@ -120,7 +120,7 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *sharedG
 			case <-ctx.Done():
 				removeChannel()
 				close(out)
-				stats.Record(ctx, metrics.MinerUnregister.M(1))
+				metrics.MinerUnregister.Tick(ctx)
 				return
 			case c := <-reqEventChan:
 				out <- c
