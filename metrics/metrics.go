@@ -29,18 +29,15 @@ var (
 	// wallet
 	WalletRegister   = stats.Int64("wallet/register", "Wallet register", stats.UnitDimensionless)
 	WalletUnregister = stats.Int64("wallet/unregister", "Wallet unregister", stats.UnitDimensionless)
-	WalletNum        = stats.Int64("wallet/num", "Wallet count", stats.UnitDimensionless)
-	WalletAddressNum = stats.Int64("wallet/address_num", "Address owned by wallet", stats.UnitDimensionless)
 	WalletAddAddr    = stats.Int64("wallet/add_addr", "Wallet add a new address", stats.UnitDimensionless)
 	WalletRemoveAddr = stats.Int64("wallet/remove_addr", "Wallet remove a new address", stats.UnitDimensionless)
-	WalletConnNum    = stats.Int64("wallet/conn_num", "Wallet connection count", stats.UnitDimensionless)
 
 	// miner
 	MinerRegister   = metrics.NewCounter("proof/register", "Miner register", MinerAddressKey, IPKey, MinerTypeKey)
 	MinerUnregister = metrics.NewCounter("proof/unregister", "Miner unregister", MinerAddressKey, IPKey, MinerTypeKey)
-	MinerNum        = metrics.NewCounter("proof/miner_num", "Wallet count", MinerAddressKey, MinerTypeKey)
 	MinerSource     = metrics.NewCounter("proof/source", "Miner IP", MinerAddressKey, MinerTypeKey)
-	MinerConnNum    = metrics.NewCounter("proof/conn_num", "Miner connection count", MinerAddressKey, IPKey, MinerTypeKey)
+	MinerNum        = metrics.NewInt64("proof/miner_num", "Wallet count", "", MinerTypeKey)
+	MinerConnNum    = metrics.NewInt64("proof/conn_num", "Miner connection count", "", MinerTypeKey)
 
 	// method call
 	WalletSign         = stats.Float64("wallet_sign", "Call WalletSign spent time", stats.UnitMilliseconds)
@@ -50,12 +47,11 @@ var (
 )
 
 var (
-	// market event
-	MarketRegister   = metrics.NewCounter("market/register", "Market register", MinerAddressKey, IPKey, MinerTypeKey)
-	MarketUnregister = metrics.NewCounter("market/unregister", "Market unregister", MinerAddressKey, IPKey, MinerTypeKey)
-	MarketNum        = metrics.NewCounter("market/num", "Market count", MinerAddressKey, MinerTypeKey)
-	MarketSource     = metrics.NewCounter("market/source", "Market IP", MinerAddressKey, MinerTypeKey)
-	MarketConnNum    = metrics.NewCounter("market/conn_num", "Market connection count", MinerAddressKey, IPKey, MinerTypeKey)
+
+	// wallet event
+	WalletNum        = metrics.NewInt64("wallet/num", "Wallet count", stats.UnitDimensionless)
+	WalletAddressNum = metrics.NewInt64("wallet/address_num", "Address owned by wallet", stats.UnitDimensionless)
+	WalletConnNum    = metrics.NewInt64("wallet/conn_num", "Wallet connection count", stats.UnitDimensionless)
 )
 
 var (
@@ -70,16 +66,7 @@ var (
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{WalletAccountKey, IPKey},
 	}
-	walletNumView = &view.View{
-		Measure:     WalletNum,
-		Aggregation: view.Count(),
-		TagKeys:     []tag.Key{WalletAccountKey},
-	}
-	walletAddressNumView = &view.View{
-		Measure:     WalletAddressNum,
-		Aggregation: view.Count(),
-		TagKeys:     []tag.Key{WalletAccountKey, WalletAddressKey},
-	}
+
 	walletAddAddrView = &view.View{
 		Measure:     WalletAddAddr,
 		Aggregation: view.Count(),
@@ -89,11 +76,6 @@ var (
 		Measure:     WalletRemoveAddr,
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{WalletAccountKey, WalletAddressKey},
-	}
-	walletConnNumView = &view.View{
-		Measure:     WalletConnNum,
-		Aggregation: view.Count(),
-		TagKeys:     []tag.Key{WalletAccountKey, IPKey},
 	}
 
 	// method call
@@ -122,12 +104,8 @@ var (
 var views = append([]*view.View{
 	walletRegisterView,
 	walletUnregisterView,
-	walletNumView,
-	walletAddressNumView,
 	walletAddAddrView,
 	walletRemoveAddrView,
-	walletConnNumView,
-
 	walletSignView,
 	walletListView,
 	computeProofView,

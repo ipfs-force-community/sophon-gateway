@@ -12,7 +12,10 @@ import (
 var log = logging.Logger("metrics")
 
 func SetupMetrics(ctx context.Context, metricsConfig *metrics.MetricsConfig, api v2API.IGateway) error {
-	metrics.SetupMetrics(ctx, metricsConfig)
+	err := metrics.SetupMetrics(ctx, metricsConfig)
+	if err != nil {
+		return err
+	}
 	go recordMetricsLoop(ctx, api)
 	return nil
 }
