@@ -1,5 +1,10 @@
 # sophon-gateway changelog
 
+## v1.14.0-rc1
+
+* build(deps): bump golang.org/x/net from 0.11.0 to 0.17.0 [[#153](https://github.com/ipfs-force-community/sophon-gateway/pull/153)]
+* chore: update deps
+
 ## v1.13.0
 ## v1.13.0-rc1
 
