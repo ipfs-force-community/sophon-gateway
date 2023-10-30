@@ -94,7 +94,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 			walletLog.Errorf("validate address error %v", err)
 			return
 		}
-		walletLog.Infof("add new connections %s", walletChannelInfo.ChannelId)
+		walletLog.Infof("add new connections %s for wallet", walletChannelInfo.ChannelId)
 
 		// register signer address to venus-auth
 		for _, account := range accounts {
@@ -128,7 +128,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 		<-ctx.Done()
 		stats.Record(ctx, metrics.WalletUnregister.M(1))
 		if err = w.walletConnMgr.removeConn(walletAccount, walletChannelInfo); err != nil {
-			walletLog.Errorf("remove connect error %v", err)
+			walletLog.Errorf("remove connection %s failed: %v", walletChannelInfo.ChannelId, err)
 		} else { // nolint
 			// The records bound to the system will not have a lot of records, and there will be no additional effects.
 			// There are expenses and other potential risks for each disconnection of betting sales.
@@ -147,6 +147,7 @@ func (w *WalletEventStream) ListenWalletEvent(ctx context.Context, policy *share
 			//	log.Infof("unregister %v for %s success", signers, walletAccount)
 			//}
 		}
+		walletLog.Infof("remove connection %s of wallet", walletChannelInfo.ChannelId)
 	}()
 	return out, nil
 }
