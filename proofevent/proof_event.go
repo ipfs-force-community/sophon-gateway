@@ -84,12 +84,12 @@ func (e *ProofEventStream) ListenProofEvent(ctx context.Context, policy *sharedG
 			e.connLk.Unlock()
 		}
 
-		log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
+		log.Infof("remove connections %s of miner(proof) %s", channel.ChannelId, mAddr)
 	}
 
 	e.connLk.Unlock()
 	_ = channelStore.addChanel(channel)
-	log.Infof("add new connections %s for miner %s", channel.ChannelId, mAddr)
+	log.Infof("add new connections %s for miner(proof) %s", channel.ChannelId, mAddr)
 	go func() {
 		connectBytes, err := json.Marshal(sharedGatewayTypes.ConnectedCompleted{
 			ChannelId: channel.ChannelId,

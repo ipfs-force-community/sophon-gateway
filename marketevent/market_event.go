@@ -74,7 +74,7 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *gtype
 
 	m.connLk.Unlock()
 	_ = channelStore.addChanel(channel)
-	log.Infof("add new connections %s for miner %s", channel.ChannelId, mAddr)
+	log.Infof("add new connections %s for miner(market) %s", channel.ChannelId, mAddr)
 	go func() {
 		connectBytes, err := json.Marshal(gtypes.ConnectedCompleted{
 			ChannelId: channel.ChannelId,
@@ -105,7 +105,7 @@ func (m *MarketEventStream) ListenMarketEvent(ctx context.Context, policy *gtype
 		if channelStore.empty() {
 			delete(m.minerConnections, mAddr)
 		}
-		log.Infof("remove connections %s of miner %s", channel.ChannelId, mAddr)
+		log.Infof("remove connections %s of miner(market) %s", channel.ChannelId, mAddr)
 	}()
 	return out, nil
 }
