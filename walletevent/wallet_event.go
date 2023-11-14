@@ -165,6 +165,22 @@ func (w *WalletEventStream) SupportNewAccount(ctx context.Context, channelId sha
 	err := w.walletConnMgr.addSupportAccount(walletAccount, account)
 	if err == nil {
 		log.Infof("wallet %s add account %s", walletAccount, account)
+
+		// register signer address to venus-auth
+		walletDetail, err := w.walletConnMgr.listWalletInfoByWallet(ctx, walletAccount)
+		if err != nil {
+			log.Errorf("get wallet %s info failed %v", walletAccount, err)
+			return err
+		}
+		for _, info := range walletDetail.ConnectStates {
+			if info.ChannelID == channelId {
+				if err := w.registerSignerAddress(ctx, account, info.Addrs...); err != nil {
+					log.Errorf("register %v for %s failed: %v", info.Addrs, account, err)
+					break
+				}
+				log.Infof("register %v for %s success", info.Addrs, account)
+			}
+		}
 	} else {
 		log.Errorf("wallet %s add account %s failed %v", walletAccount, account, err)
 	}
