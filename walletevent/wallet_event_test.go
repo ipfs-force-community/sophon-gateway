@@ -325,7 +325,7 @@ func setupClient(t *testing.T, ctx context.Context, walletAccount string, suppor
 	require.NoError(t, err)
 	_, err = wallet.AddDelegatedKey(ctx)
 	require.NoError(t, err)
-	walletEventClient := NewWalletEventClient(ctx, wallet, event, logging.Logger("test").With(), supportAccounts)
+	walletEventClient := NewWalletEventClient(ctx, wallet, event, logging.Logger("test").With(), func() []string { return supportAccounts })
 	return &mockClient{
 		t:                 t,
 		walletEventClient: walletEventClient,
