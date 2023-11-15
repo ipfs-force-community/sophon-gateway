@@ -198,7 +198,19 @@ func (m *AuthClient) MinerExistInUser(ctx context.Context, targetUser string, mi
 }
 
 func (m *AuthClient) SignerExistInUser(ctx context.Context, user string, signer address.Address) (bool, error) {
-	panic("Don't call me")
+	m.lkUser.Lock()
+	defer m.lkUser.Unlock()
+
+	names, ok := m.signers[signer.String()]
+	if ok {
+		for _, name := range names {
+			if name == user {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }
 
 func (m *AuthClient) HasMiner(ctx context.Context, mienr address.Address) (bool, error) {
