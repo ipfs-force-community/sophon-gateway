@@ -85,10 +85,18 @@ func TestSupportNewAccount(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	walletEvent := setupWalletEvent(t, walletAccount, supportAccount...)
+	authClient := mocks.NewMockAuthClient()
+	walletEvent := setupWalletEventWithAuth(t, walletAccount, authClient, supportAccount...)
 	client := setupClient(t, ctx, walletAccount, supportAccount, walletEvent)
 	go client.listenWalletEvent(ctx)
 	client.walletEventClient.WaitReady(ctx)
+
+	// add users to auth
+	var users []*auth.OutputUser
+	for _, name := range []string{"ac1", "address2"} {
+		users = append(users, &auth.OutputUser{Name: name})
+	}
+	authClient.AddMockUser(ctx, users...)
 
 	// stm: @VENUSGATEWAY_WALLET_EVENT_SUPPORT_NEW_ACCOUNT_001
 	err := client.supportNewAccount(ctx, "ac1")
@@ -105,13 +113,22 @@ func TestSupportNewAccount(t *testing.T) {
 	err = client.walletEventClient.SupportAccount(ctx, "fake_acc")
 	require.EqualError(t, err, "unable to get account name in method SupportNewAccount request")
 
-	ctx = core.CtxWithName(ctx, "fac_acc")
-	err = client.walletEventClient.SupportAccount(ctx, "__")
-	require.NoError(t, err)
-
 	// wallet account not exists in context
 	// stm: @VENUSGATEWAY_WALLET_EVENT_SUPPORT_NEW_ACCOUNT_002
 	require.Error(t, client.walletEventClient.SupportAccount(context.Background(), "xxx_x"))
+
+	// test register new account and address to auth
+	addr1 := client.newkey()
+	ctx = core.CtxWithName(ctx, walletAccount)
+	err = client.walletEventClient.AddNewAddress(ctx, []address.Address{addr1}) // allow dup add
+	require.NoError(t, err)
+
+	err = client.supportNewAccount(ctx, "address2")
+	require.NoError(t, err)
+
+	isExist, err := authClient.SignerExistInUser(ctx, "address2", addr1)
+	require.NoError(t, err)
+	require.True(t, isExist)
 }
 
 func TestAddNewAddress(t *testing.T) {
@@ -283,6 +300,10 @@ func TestWalletSign(t *testing.T) {
 }
 
 func setupWalletEvent(t *testing.T, walletAccount string, accounts ...string) *WalletEventStream {
+	return setupWalletEventWithAuth(t, walletAccount, mocks.NewMockAuthClient(), accounts...)
+}
+
+func setupWalletEventWithAuth(t *testing.T, walletAccount string, authClient *mocks.AuthClient, accounts ...string) *WalletEventStream {
 	ctx := context.Background()
 	users := make([]*auth.OutputUser, 0)
 	for _, account := range accounts {
@@ -293,7 +314,6 @@ func setupWalletEvent(t *testing.T, walletAccount string, accounts ...string) *W
 	users = append(users, &auth.OutputUser{
 		Name: walletAccount,
 	})
-	authClient := mocks.NewMockAuthClient()
 	authClient.AddMockUser(ctx, users...)
 
 	return NewWalletEventStream(ctx, authClient, types.DefaultConfig())
