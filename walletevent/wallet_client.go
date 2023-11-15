@@ -31,23 +31,23 @@ func NewWalletRegisterClient(ctx context.Context, url, token string) (v2API.IWal
 }
 
 type WalletEventClient struct {
-	processor       types.IWalletHandler
-	client          v2API.IWalletServiceProvider
-	randomBytes     []byte
-	log             *zap.SugaredLogger
-	channel         sharedTypes.UUID
-	supportAccounts []string
-	readyCh         chan struct{}
+	processor          types.IWalletHandler
+	client             v2API.IWalletServiceProvider
+	randomBytes        []byte
+	log                *zap.SugaredLogger
+	channel            sharedTypes.UUID
+	getSupportAccounts func() []string
+	readyCh            chan struct{}
 }
 
-func NewWalletEventClient(ctx context.Context, process types.IWalletHandler, client v2API.IWalletServiceProvider, log *zap.SugaredLogger, supportAccounts []string) *WalletEventClient {
+func NewWalletEventClient(ctx context.Context, process types.IWalletHandler, client v2API.IWalletServiceProvider, log *zap.SugaredLogger, getSupportAccounts func() []string) *WalletEventClient {
 	return &WalletEventClient{
-		processor:       process,
-		client:          client,
-		log:             log,
-		supportAccounts: supportAccounts,
-		randomBytes:     sharedGatewayTypes.RandomBytes,
-		readyCh:         make(chan struct{}, 1),
+		processor:          process,
+		client:             client,
+		log:                log,
+		getSupportAccounts: getSupportAccounts,
+		randomBytes:        sharedGatewayTypes.RandomBytes,
+		readyCh:            make(chan struct{}, 1),
 	}
 }
 
@@ -99,11 +99,12 @@ func (e *WalletEventClient) WaitReady(ctx context.Context) {
 func (e *WalletEventClient) listenWalletRequestOnce(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	accounts := e.getSupportAccounts()
 	policy := &sharedGatewayTypes.WalletRegisterPolicy{
-		SupportAccounts: e.supportAccounts,
+		SupportAccounts: accounts,
 		SignBytes:       e.randomBytes,
 	}
-	e.log.Infow("", "rand sign byte", e.randomBytes)
+	e.log.Infow("", "rand sign byte", e.randomBytes, "support accounts", accounts)
 	walletEventCh, err := e.client.ListenWalletEvent(ctx, policy)
 	if err != nil {
 		// Retry is handled by caller

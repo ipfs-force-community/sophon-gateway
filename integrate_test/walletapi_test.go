@@ -26,6 +26,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var getSupportAccountsFunc = func(accounts []string) func() []string {
+	return func() []string {
+		return accounts
+	}
+}
+
 func TestWalletAPI(t *testing.T) {
 	t.Run("wallet support account", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -45,7 +51,7 @@ func TestWalletAPI(t *testing.T) {
 		_, err = wallet.AddKey(ctx)
 		require.NoError(t, err)
 
-		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
+		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), getSupportAccountsFunc([]string{"admin"}))
 		go walletEvent.ListenWalletRequest(ctx)
 		walletEvent.WaitReady(ctx)
 		err = walletEvent.SupportAccount(ctx, "123")
@@ -69,7 +75,7 @@ func TestWalletAPI(t *testing.T) {
 		defer cCloser()
 
 		wallet := testhelper.NewMemWallet()
-		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
+		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), getSupportAccountsFunc([]string{"admin"}))
 		go walletEvent.ListenWalletRequest(ctx)
 		walletEvent.WaitReady(ctx)
 
@@ -105,7 +111,7 @@ func TestWalletAPI(t *testing.T) {
 		toRemoveAddr2, err := wallet.AddKey(ctx)
 		require.NoError(t, err)
 
-		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
+		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), getSupportAccountsFunc([]string{"admin"}))
 		go walletEvent.ListenWalletRequest(ctx)
 		walletEvent.WaitReady(ctx)
 
@@ -142,7 +148,7 @@ func TestWalletAPI(t *testing.T) {
 		toRemoveAddr2, err := wallet.AddKey(ctx)
 		require.NoError(t, err)
 
-		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
+		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), getSupportAccountsFunc([]string{"admin"}))
 		go walletEvent.ListenWalletRequest(ctx)
 		walletEvent.WaitReady(ctx)
 
@@ -172,7 +178,7 @@ func TestWalletAPI(t *testing.T) {
 		addr1, err := wallet.AddKey(ctxClient01)
 		require.NoError(t, err)
 
-		walletEvent := walletevent.NewWalletEventClient(ctxClient01, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
+		walletEvent := walletevent.NewWalletEventClient(ctxClient01, wallet, walletEventClient, logging.Logger("test").With(), getSupportAccountsFunc([]string{"admin"}))
 		go walletEvent.ListenWalletRequest(ctxClient01)
 		walletEvent.WaitReady(ctxClient01)
 
@@ -182,7 +188,7 @@ func TestWalletAPI(t *testing.T) {
 		addr2, err := wallet2.AddKey(ctxClient02)
 		require.NoError(t, err)
 
-		walletEvent2 := walletevent.NewWalletEventClient(ctxClient02, wallet2, walletEventClient, logging.Logger("test").With(), []string{"admin"})
+		walletEvent2 := walletevent.NewWalletEventClient(ctxClient02, wallet2, walletEventClient, logging.Logger("test").With(), getSupportAccountsFunc([]string{"admin"}))
 		go walletEvent2.ListenWalletRequest(ctxClient02)
 		walletEvent2.WaitReady(ctxClient02)
 
@@ -218,7 +224,7 @@ func TestWalletAPI(t *testing.T) {
 		addr2, err := wallet2.AddKey(ctx)
 		require.NoError(t, err)
 
-		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
+		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), getSupportAccountsFunc([]string{"admin"}))
 		go walletEvent.ListenWalletRequest(ctx)
 		walletEvent.WaitReady(ctx)
 
@@ -250,7 +256,7 @@ func TestWalletAPI(t *testing.T) {
 		addr1, err := wallet.AddKey(ctx)
 		require.NoError(t, err)
 
-		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), []string{"admin"})
+		walletEvent := walletevent.NewWalletEventClient(ctx, wallet, walletEventClient, logging.Logger("test").With(), getSupportAccountsFunc([]string{"admin"}))
 		go walletEvent.ListenWalletRequest(ctx)
 		walletEvent.WaitReady(ctx)
 		err = walletEvent.SupportAccount(ctx, "newAccount")
