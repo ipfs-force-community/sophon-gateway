@@ -7,7 +7,7 @@ require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-jsonrpc v0.1.8
 	github.com/filecoin-project/go-state-types v0.12.5
-	github.com/filecoin-project/venus v1.14.0-rc5
+	github.com/filecoin-project/venus v1.14.0-rc6
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v1.0.1-0.20231011024528-8c881d456601
@@ -215,4 +215,4 @@ require (
 
 replace github.com/filecoin-project/filecoin-ffi => ./extern/filecoin-ffi
 
-replace github.com/filecoin-project/go-jsonrpc => github.com/ipfs-force-community/go-jsonrpc v0.1.9-0.20231019092801-cb5ae7d36fbe
+replace github.com/filecoin-project/go-jsonrpc => github.com/ipfs-force-community/go-jsonrpc v0.1.9
