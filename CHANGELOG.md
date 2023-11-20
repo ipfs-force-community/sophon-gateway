@@ -1,5 +1,11 @@
 # sophon-gateway changelog
 
+## v1.14.0-rc2
+
+* chore: add more connection log [[#156](https://github.com/ipfs-force-community/sophon-gateway/pull/156)]
+* fix: register address when add new account [[#157](https://github.com/ipfs-force-community/sophon-gateway/pull/157)]
+* fix: refresh accounts when connect to gateway [[#158](https://github.com/ipfs-force-community/sophon-gateway/pull/158)]
+
 ## v1.14.0-rc1
 
 * build(deps): bump golang.org/x/net from 0.11.0 to 0.17.0 [[#153](https://github.com/ipfs-force-community/sophon-gateway/pull/153)]
@@ -21,7 +27,7 @@
 * doc: update config description / 更新config注释 by @elvin-du in [[#145](https://github.com/ipfs-force-community/sophon-gateway/pull/145)]
 * doc: how to use proxy by @LinZexiao in [[#149](https://github.com/ipfs-force-community/sophon-gateway/pull/149)]
 * chore: build(deps): bump github.com/libp2p/go-libp2p from 0.27.5 to 0.27.8 by @dependabot in [[#148](https://github.com/ipfs-force-community/sophon-gateway/pull/148)]
-* chore: merge release v1.12 by @simlecode in [[#144](https://github.com/ipfs-force-community/sophon-gateway/pull/144)]
+* chore: merge release v1.12 [[#153]([[#144](https://github.com/ipfs-force-community/sophon-gateway/pull/144)]
 
 
 ## v1.12.0
