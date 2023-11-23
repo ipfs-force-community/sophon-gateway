@@ -1,5 +1,7 @@
 # sophon-gateway changelog
 
+## v1.14.0
+
 ## v1.14.0-rc2
 
 * chore: add more connection log [[#156](https://github.com/ipfs-force-community/sophon-gateway/pull/156)]
