@@ -6,13 +6,13 @@ require (
 	github.com/etherlabsio/healthcheck/v2 v2.0.0
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-jsonrpc v0.1.8
-	github.com/filecoin-project/go-state-types v0.12.5
-	github.com/filecoin-project/venus v1.14.0-rc6
+	github.com/filecoin-project/go-state-types v0.12.8
+	github.com/filecoin-project/venus v1.14.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/ipfs-force-community/metrics v1.0.1-0.20231011024528-8c881d456601
-	github.com/ipfs-force-community/sophon-auth v1.14.0-rc1
-	github.com/ipfs-force-community/sophon-miner v1.14.0-rc1
+	github.com/ipfs-force-community/sophon-auth v1.14.0
+	github.com/ipfs-force-community/sophon-miner v1.14.0
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/modern-go/reflect2 v1.0.2
@@ -47,7 +47,7 @@ require (
 	github.com/golang/glog v1.1.1 // indirect
 	github.com/hannahhoward/cbor-gen-for v0.0.0-20230214144701-5d17c9d5243c // indirect
 	github.com/hannahhoward/go-pubsub v0.0.0-20200423002714-8d62886cc36e // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.2 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/ipfs/boxo v0.10.1 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/klauspost/compress v1.16.6 // indirect
