@@ -41,12 +41,14 @@ func (p *Proxy) ProxyMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		apiHeader := r.Header.Get(VenusAPINamespaceHeader)
 		if apiHeader == "" {
+			log.Debugf("no api header found, skip proxy")
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		ser, err := p.getReverseHandler(apiHeader)
 		if err != nil {
+			log.Errorf("get reverse handler fail: %s", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -73,6 +75,7 @@ func (p *Proxy) RegisterReverseHandler(hostKey HostKey, server http.Handler) {
 		log.Info("unregister reverse proxy for ", hostKey)
 		return
 	}
+	log.Infof("register reverse proxy for %s", hostKey)
 	p.handler[hostKey] = server
 }
 
