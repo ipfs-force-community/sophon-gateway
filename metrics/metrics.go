@@ -27,31 +27,28 @@ var defaultMillisecondsDistribution = view.Distribution(0.01, 0.05, 0.1, 0.3, 0.
 
 var (
 	// wallet
+	WalletNum        = metrics.NewInt64("wallet/num", "Wallet count", stats.UnitDimensionless)
+	WalletAddressNum = metrics.NewInt64("wallet/address_num", "Address owned by wallet", stats.UnitDimensionless)
+	WalletConnNum    = metrics.NewInt64("wallet/conn_num", "Wallet connection count", stats.UnitDimensionless)
 	WalletRegister   = stats.Int64("wallet/register", "Wallet register", stats.UnitDimensionless)
 	WalletUnregister = stats.Int64("wallet/unregister", "Wallet unregister", stats.UnitDimensionless)
 	WalletAddAddr    = stats.Int64("wallet/add_addr", "Wallet add a new address", stats.UnitDimensionless)
 	WalletRemoveAddr = stats.Int64("wallet/remove_addr", "Wallet remove a new address", stats.UnitDimensionless)
 
 	// miner
-	MinerRegister   = metrics.NewCounter("proof/register", "Miner register", MinerAddressKey, IPKey, MinerTypeKey)
-	MinerUnregister = metrics.NewCounter("proof/unregister", "Miner unregister", MinerAddressKey, IPKey, MinerTypeKey)
-	MinerSource     = metrics.NewCounter("proof/source", "Miner IP", MinerAddressKey, MinerTypeKey)
-	MinerNum        = metrics.NewInt64("proof/miner_num", "Wallet count", "", MinerTypeKey)
-	MinerConnNum    = metrics.NewInt64("proof/conn_num", "Miner connection count", "", MinerTypeKey)
+	MinerRegister   = metrics.NewCounter("miner/register", "Miner register", MinerAddressKey, IPKey, MinerTypeKey)
+	MinerUnregister = metrics.NewCounter("miner/unregister", "Miner unregister", MinerAddressKey, IPKey, MinerTypeKey)
+	MinerSource     = metrics.NewCounter("miner/source", "Miner IP", MinerAddressKey, MinerTypeKey)
+	MinerNum        = metrics.NewInt64("miner/num", "Wallet count", "", MinerTypeKey)
+	MinerConnNum    = metrics.NewInt64("miner/conn_num", "Miner connection count", "", MinerTypeKey)
 
 	// method call
 	WalletSign         = stats.Float64("wallet_sign", "Call WalletSign spent time", stats.UnitMilliseconds)
 	WalletList         = stats.Float64("wallet_list", "Call WalletList spent time", stats.UnitMilliseconds)
 	ComputeProof       = stats.Float64("compute_proof", "Call ComputeProof spent time", stats.UnitMilliseconds)
 	SectorsUnsealPiece = stats.Float64("sectors_unseal_piece", "Call SectorsUnsealPiece spent time", stats.UnitMilliseconds)
-)
 
-var (
-
-	// wallet event
-	WalletNum        = metrics.NewInt64("wallet/num", "Wallet count", stats.UnitDimensionless)
-	WalletAddressNum = metrics.NewInt64("wallet/address_num", "Address owned by wallet", stats.UnitDimensionless)
-	WalletConnNum    = metrics.NewInt64("wallet/conn_num", "Wallet connection count", stats.UnitDimensionless)
+	ApiState = metrics.NewInt64("api/state", "api service state. 0: down, 1: up", "")
 )
 
 var (

@@ -321,6 +321,10 @@ func RunMain(ctx context.Context, repoPath string, cfg *config.Config) error {
 		return err
 	}
 
+	metrics2.ApiState.Set(ctx, 1)
+	defer func() {
+		metrics2.ApiState.Set(ctx, 0)
+	}()
 	if err = srv.Serve(manet.NetListener(nl)); err != nil && err != http.ErrServerClosed {
 		return err
 	}
