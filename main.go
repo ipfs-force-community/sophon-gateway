@@ -74,7 +74,7 @@ func main() {
 			&cli.StringFlag{
 				Name:    "repo",
 				Value:   defRepoPath,
-				EnvVars: []string{"SOPHON_GATEWAY"},
+				EnvVars: []string{"SOPHON_GATEWAY", "SOPHON_GATEWAY_PATH"},
 			},
 		},
 		Commands: []*cli.Command{
@@ -106,6 +106,8 @@ var runCmd = &cli.Command{
 		if err != nil {
 			return err
 		}
+		log.Info("repo path: ", repoPath)
+
 		// todo: remove compatibility code
 		repoPath, err = cmds.GetRepoPath(repoPath)
 		if err != nil {
