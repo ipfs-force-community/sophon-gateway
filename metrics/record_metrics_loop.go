@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/filecoin-project/go-address"
-	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
 	v2API "github.com/filecoin-project/venus/venus-shared/api/gateway/v2"
@@ -35,49 +34,55 @@ func recordWalletConnectionInfo(ctx context.Context, api v2API.IGateway) {
 		return
 	}
 
+	var walletNum, connNum int64
 	addrs := make(map[address.Address]struct{})
 	for _, detail := range walletDetails {
 		ctx, _ = tag.New(ctx, tag.Upsert(WalletAccountKey, detail.Account))
-		stats.Record(ctx, WalletNum.M(1))
+		walletNum++
 
 		for _, conn := range detail.ConnectStates {
-			_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(IPKey, conn.IP)}, WalletConnNum.M(1))
+			connNum++
 			for _, addr := range conn.Addrs {
 				if _, ok := addrs[addr]; ok {
 					continue
 				}
 				addrs[addr] = struct{}{}
-				_ = stats.RecordWithTags(ctx,
-					[]tag.Mutator{tag.Upsert(WalletAddressKey, addr.String())}, WalletAddressNum.M(1))
 			}
 		}
-		addrs = make(map[address.Address]struct{})
 	}
+
+	WalletNum.Set(ctx, walletNum)
+	WalletConnNum.Set(ctx, connNum)
+	WalletAddressNum.Set(ctx, int64(len(addrs)))
 }
 
 func recordMarketConnectionInfo(ctx context.Context, api v2API.IGateway) {
+	ctx, _ = tag.New(ctx, tag.Upsert(MinerTypeKey, "market"))
 	connsState, err := api.ListMarketConnectionsState(ctx)
 	if err != nil {
 		log.Warnf("failed to get market connections state %v", err)
 		return
 	}
 
+	var connNum int64
 	for _, state := range connsState {
-		ctx, _ = tag.New(ctx, tag.Upsert(MinerAddressKey, state.Addr.String()), tag.Upsert(MinerTypeKey, "market"))
-		for _, conn := range state.Conn.Connections {
-			_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(IPKey, conn.IP)}, MinerConnNum.M(1))
-		}
-		stats.Record(ctx, MinerNum.M(1))
+
+		connNum += int64(len(state.Conn.Connections))
 	}
+	MinerConnNum.Set(ctx, connNum)
+	MinerNum.Set(ctx, int64(len(connsState)))
 }
 
 func recordMinerConnectionInfo(ctx context.Context, api v2API.IGateway) {
+	ctx, _ = tag.New(ctx, tag.Upsert(MinerTypeKey, "pprof"))
+
 	miners, err := api.ListConnectedMiners(ctx)
 	if err != nil {
 		log.Warnf("faield to list connected miners %v", err)
 		return
 	}
 
+	var connNum int64
 	for _, miner := range miners {
 		state, err := api.ListMinerConnection(ctx, miner)
 		if err != nil {
@@ -85,10 +90,8 @@ func recordMinerConnectionInfo(ctx context.Context, api v2API.IGateway) {
 			return
 		}
 
-		ctx, _ = tag.New(ctx, tag.Upsert(MinerTypeKey, "pprof"), tag.Upsert(MinerAddressKey, miner.String()))
-		for _, conn := range state.Connections {
-			_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(IPKey, conn.IP)}, MinerConnNum.M(1))
-		}
-		stats.Record(ctx, MinerNum.M(1))
+		connNum += int64(len(state.Connections))
 	}
+	MinerConnNum.Set(ctx, connNum)
+	MinerNum.Set(ctx, int64(len(miners)))
 }

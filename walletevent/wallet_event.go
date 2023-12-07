@@ -335,8 +335,6 @@ func (w *WalletEventStream) getValidatedAddress(ctx context.Context, channel *ty
 			return nil, err
 		}
 		validAddrs = append(validAddrs, addr)
-		_ = stats.RecordWithTags(ctx, []tag.Mutator{tag.Upsert(metrics.WalletAddressKey, addr.String())},
-			metrics.WalletAddressNum.M(1))
 	}
 
 	return validAddrs, nil
