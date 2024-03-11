@@ -47,8 +47,6 @@ var (
 	WalletList         = stats.Float64("wallet_list", "Call WalletList spent time", stats.UnitMilliseconds)
 	ComputeProof       = stats.Float64("compute_proof", "Call ComputeProof spent time", stats.UnitMilliseconds)
 	SectorsUnsealPiece = stats.Float64("sectors_unseal_piece", "Call SectorsUnsealPiece spent time", stats.UnitMilliseconds)
-
-	ApiState = metrics.NewInt64("api/state", "api service state. 0: down, 1: up", "")
 )
 
 var (
