@@ -1,5 +1,12 @@
 # sophon-gateway changelog
 
+## v1.15.0-rc1
+
+* feat: add more log for proxy [[#161](https://github.com/ipfs-force-community/sophon-gateway/pull/161)]
+* chore: add repo env var [[#162](https://github.com/ipfs-force-community/sophon-gateway/pull/162)]
+* Feat/add more metrics [[#163](https://github.com/ipfs-force-community/sophon-gateway/pull/163)]
+* build(deps): bump golang.org/x/crypto from 0.14.0 to 0.17.0 [[#164](https://github.com/ipfs-force-community/sophon-gateway/pull/164)]
+
 ## v1.14.0
 
 ## v1.14.0-rc2
