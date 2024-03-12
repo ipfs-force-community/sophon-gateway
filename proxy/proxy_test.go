@@ -46,7 +46,7 @@ func TestRegisterReverseProxy(t *testing.T) {
 		u, err := url.Parse("http://localhost")
 		require.NoError(t, err)
 
-		proxy.RegisterReverseHandler(HostNode, NewReverseServer(u))
+		proxy.RegisterReverseHandler(HostNode, NewReverseServer(u, ""))
 		_, err = proxy.getReverseHandler(chainV0.APINamespace)
 		require.NoError(t, err)
 
@@ -56,7 +56,7 @@ func TestRegisterReverseProxy(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrorNoReverseProxyRegistered)
 
-		proxy.RegisterReverseHandler(HostNode, NewReverseServer(u))
+		proxy.RegisterReverseHandler(HostNode, NewReverseServer(u, ""))
 		_, err = proxy.getReverseHandler(chainV0.APINamespace)
 		require.NoError(t, err)
 

@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func NewReverseServer(u *url.URL) http.Handler {
+func NewReverseServer(u *url.URL, hostKey string) http.Handler {
 	urlForHttp := *u
 	proxy := httputil.NewSingleHostReverseProxy(&urlForHttp)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -72,12 +72,13 @@ func NewReverseServer(u *url.URL) http.Handler {
 
 		signal := make(chan struct{})
 
-		go forwardMessages(signal, proxyConn, clientConn)
-		forwardMessages(signal, clientConn, proxyConn)
+		go forwardMessages(signal, proxyConn, clientConn, hostKey)
+		forwardMessages(signal, clientConn, proxyConn, hostKey)
 	})
 }
 
-func forwardMessages(signal chan struct{}, src *websocket.Conn, dst *websocket.Conn) {
+func forwardMessages(signal chan struct{}, src *websocket.Conn, dst *websocket.Conn, hostKey string) {
+	log := log.With("host", hostKey)
 	for {
 		select {
 		case <-signal:

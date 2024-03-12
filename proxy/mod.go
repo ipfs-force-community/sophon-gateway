@@ -93,7 +93,7 @@ func (p *Proxy) RegisterReverseByAddr(hostKey HostKey, address string) error {
 
 	log.Infof("register reverse proxy for %s: %s", hostKey, u.String())
 
-	p.handler[hostKey] = NewReverseServer(u)
+	p.handler[hostKey] = NewReverseServer(u, string(hostKey))
 	return nil
 }
 
