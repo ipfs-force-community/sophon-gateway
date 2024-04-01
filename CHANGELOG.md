@@ -1,6 +1,6 @@
 # sophon-gateway changelog
 
-## v1.15.0-rc1
+## v1.15.0
 
 * feat: add more log for proxy [[#161](https://github.com/ipfs-force-community/sophon-gateway/pull/161)]
 * chore: add repo env var [[#162](https://github.com/ipfs-force-community/sophon-gateway/pull/162)]
