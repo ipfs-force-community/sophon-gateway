@@ -70,7 +70,7 @@ func NewReverseServer(u *url.URL) http.Handler {
 			}
 		}()
 
-		signal := make(chan struct{})
+		signal := make(chan struct{}, 1)
 
 		go forwardMessages(signal, proxyConn, clientConn)
 		forwardMessages(signal, clientConn, proxyConn)
