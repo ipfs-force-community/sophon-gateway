@@ -1,5 +1,9 @@
 # sophon-gateway changelog
 
+## v1.15.1
+
+* fix: not close connection [[#168](https://github.com/ipfs-force-community/sophon-gateway/pull/168)]
+
 ## v1.15.0
 
 * feat: add more log for proxy [[#161](https://github.com/ipfs-force-community/sophon-gateway/pull/161)]
