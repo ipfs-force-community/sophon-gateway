@@ -8,20 +8,20 @@ require (
 	github.com/etherlabsio/healthcheck/v2 v2.0.0
 	github.com/filecoin-project/go-address v1.2.0
 	github.com/filecoin-project/go-jsonrpc v0.6.0
-	github.com/filecoin-project/go-state-types v0.15.0
-	github.com/filecoin-project/venus v1.17.0
+	github.com/filecoin-project/go-state-types v0.16.0-rc1
+	github.com/filecoin-project/venus v1.18.0-rc1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/ipfs-force-community/metrics v1.0.1-0.20240725062356-39b286636574
 	github.com/ipfs-force-community/sophon-auth v1.16.0
-	github.com/ipfs-force-community/sophon-miner v1.17.0
+	github.com/ipfs-force-community/sophon-miner v1.18.0-rc1
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/modern-go/reflect2 v1.0.2
 	github.com/multiformats/go-multiaddr v0.13.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v2 v2.25.5
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
@@ -38,7 +38,7 @@ require (
 	github.com/filecoin-project/go-cbor-util v0.0.1 // indirect
 	github.com/filecoin-project/go-clock v0.1.0 // indirect
 	github.com/filecoin-project/go-data-transfer/v2 v2.0.0-rc7 // indirect
-	github.com/filecoin-project/go-f3 v0.7.2 // indirect
+	github.com/filecoin-project/go-f3 v0.7.3 // indirect
 	github.com/filecoin-project/go-fil-markets v1.28.2 // indirect
 	github.com/filecoin-project/go-padreader v0.0.1 // indirect
 	github.com/filecoin-project/go-statemachine v1.0.3 // indirect
@@ -128,12 +128,12 @@ require (
 	github.com/go-redis/redis_rate/v7 v7.0.1 // indirect
 	github.com/go-resty/resty/v2 v2.4.0 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
-	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/flatbuffers v23.5.26+incompatible // indirect
+	github.com/google/flatbuffers v24.3.25+incompatible // indirect
 	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -191,7 +191,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sirupsen/logrus v1.9.2 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	github.com/spf13/afero v1.8.2 // indirect
+	github.com/spf13/afero v1.10.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -202,13 +202,13 @@ require (
 	github.com/whyrusleeping/go-logging v0.0.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.28.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.26.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/crypto v0.29.0 // indirect
+	golang.org/x/sync v0.9.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
+	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
-	google.golang.org/api v0.81.0 // indirect
+	google.golang.org/api v0.169.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
