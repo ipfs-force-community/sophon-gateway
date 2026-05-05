@@ -2,6 +2,7 @@
 package proofevent
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -22,7 +23,6 @@ import (
 	gtypes "github.com/ipfs-force-community/sophon-gateway/types"
 	"github.com/ipfs-force-community/sophon-gateway/validator"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/context"
 )
 
 func TestListenProofEvent(t *testing.T) {
@@ -82,7 +82,7 @@ func TestListenProofEvent(t *testing.T) {
 		}
 		wg.Wait()
 
-		//cancel and got a close request channel
+		// cancel and got a close request channel
 		cancel()
 
 		wg2 := sync.WaitGroup{}
