@@ -12,7 +12,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/ipfs-force-community/metrics v1.0.1-0.20240725062356-39b286636574
 	github.com/ipfs-force-community/sophon-auth v1.16.0
-	github.com/ipfs-force-community/sophon-miner v1.18.0
+	github.com/ipfs-force-community/sophon-miner v1.20.0-rc1
 	github.com/ipfs/go-cid v0.6.0
 	github.com/ipfs/go-log/v2 v2.9.0
 	github.com/modern-go/reflect2 v1.0.2
@@ -23,7 +23,6 @@ require (
 	github.com/urfave/cli/v2 v2.27.5
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.1
-	golang.org/x/net v0.51.0
 )
 
 require (
@@ -82,6 +81,7 @@ require (
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/exp v0.0.0-20250813145105-42675adae3e6 // indirect
 	golang.org/x/mod v0.33.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/tools v0.42.0 // indirect
 )
 
