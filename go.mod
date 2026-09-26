@@ -12,7 +12,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/ipfs-force-community/metrics v1.0.1-0.20240725062356-39b286636574
 	github.com/ipfs-force-community/sophon-auth v1.16.0
-	github.com/ipfs-force-community/sophon-miner v1.20.0
+	github.com/ipfs-force-community/sophon-miner v1.21.0-rc1
 	github.com/ipfs/go-cid v0.6.2
 	github.com/ipfs/go-log/v2 v2.9.2
 	github.com/modern-go/reflect2 v1.0.2
